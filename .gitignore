@@ -1,0 +1,14 @@
+.DS_Store
+venv/
+__pycache__/
+*.pyc
+*.log
+server.log
+sports_intel.db
+sports_intel.db.bak
+ssh
+ssh.pub
+.env
+.env.*
+*.sqlite
+*.db
