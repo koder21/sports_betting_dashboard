@@ -1,0 +1,67 @@
+.aai-bets-page {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.aai-bets-page .page-header {
+  margin-bottom: 2rem;
+}
+
+.aai-bets-page .page-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 0.5rem 0;
+}
+
+.aai-bets-page .page-subtitle {
+  font-size: 1rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.aai-content {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 12px;
+  padding: 3rem;
+  min-height: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.coming-soon {
+  text-align: center;
+  color: #9ca3af;
+}
+
+.coming-soon .icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.coming-soon h2 {
+  font-size: 2rem;
+  color: #cbd5e1;
+  margin: 0 0 1rem 0;
+}
+
+.coming-soon p {
+  font-size: 1.1rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}

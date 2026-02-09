@@ -1,0 +1,265 @@
+INFO:     Started server process [34718]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:62713 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62715 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62719 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62724 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62727 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62731 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62736 - "GET /live HTTP/1.1" 200 OK
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10de5a3c0>
+INFO:     127.0.0.1:62740 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62746 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62749 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62753 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62756 - "GET /live HTTP/1.1" 200 OK
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+INFO:     127.0.0.1:62763 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62766 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62770 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62774 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62777 - "GET /live HTTP/1.1" 200 OK
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10de5b770>
+INFO:     127.0.0.1:62783 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62786 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62795 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62798 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62863 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62870 - "GET /live HTTP/1.1" 200 OK
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+INFO:     127.0.0.1:62934 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62941 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63004 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63011 - "GET /live HTTP/1.1" 200 OK
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+INFO:     127.0.0.1:63041 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63044 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63050 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63053 - "GET /live HTTP/1.1" 200 OK
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+INFO:     127.0.0.1:63061 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63064 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63096 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63101 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63149 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63152 - "GET /live HTTP/1.1" 200 OK
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+INFO:     127.0.0.1:63161 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63164 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63168 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63171 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63174 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63177 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63181 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63184 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63188 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63191 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63194 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63197 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63200 - "GET /live HTTP/1.1" 200 OK
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+INFO:     127.0.0.1:63206 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63209 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63213 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63216 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63219 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63224 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63227 - "GET /live HTTP/1.1" 200 OK
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+INFO:     127.0.0.1:63238 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63242 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63261 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63264 - "GET /live HTTP/1.1" 200 OK
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+INFO:     127.0.0.1:63276 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63279 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63282 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63288 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63293 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63297 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63303 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63309 - "GET /bets/all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63312 - "GET /bets/all HTTP/1.1" 200 OK
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+INFO:     127.0.0.1:63316 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63319 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63338 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63348 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63353 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63358 - "GET /live HTTP/1.1" 200 OK
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+INFO:     127.0.0.1:63367 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63370 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63373 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63376 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63379 - "GET /live HTTP/1.1" 200 OK
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+INFO:     127.0.0.1:63387 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63391 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63394 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63398 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63401 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63409 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63411 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63413 - "GET /live HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63415 - "GET /live HTTP/1.1" 200 OK
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed connector
+connections: ['deque([(<aiohttp.client_proto.ResponseHandler object at 0x10dd6dc70>, 138549.620079083)])']
+connector: <aiohttp.connector.TCPConnector object at 0x10de90cd0>
+Future exception was never retrieved
+future: <Future finished exception=ClientConnectionError('Connection lost: [Errno 54] Connection reset by peer')>
+ConnectionResetError: [Errno 54] Connection reset by peer
+
+The above exception was the direct cause of the following exception:
+
+aiohttp.client_exceptions.ClientConnectionError: Connection lost: [Errno 54] Connection reset by peer
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10de5ba10>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10de5ba10>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x10d7c9be0>
+Unclosed connector
+connections: ['deque([(<aiohttp.client_proto.ResponseHandler object at 0x10dd6dc70>, 140159.06524775)])', 'deque([(<aiohttp.client_proto.ResponseHandler object at 0x10de4b9b0>, 140161.678778541)])']
+connector: <aiohttp.connector.TCPConnector object at 0x10de920d0>
+INFO:     Application shutdown complete.
+INFO:     Finished server process [34718]
