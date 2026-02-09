@@ -233,4 +233,4 @@ Check the documentation guides in [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.m
 ---
 
 **Last Updated**: February 2026  
-**Status**: Production Ready
+**Status**: For private use only, bettings bad, this git can't be blamed for any losses you accrue.
