@@ -7,6 +7,7 @@ from .player_stat_repo import PlayerStatRepository
 from .bet_repo import BetRepository
 from .alert_repo import AlertRepository
 from .injury_repo import InjuryRepository
+from .forecaster_leaderboard import ForecasterLeaderboardRepo
 
 __all__ = [
     "BaseRepository",
@@ -18,4 +19,5 @@ __all__ = [
     "BetRepository",
     "AlertRepository",
     "InjuryRepository",
+    "ForecasterLeaderboardRepo",
 ]

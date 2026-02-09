@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import api from "../services/api.js";
+import { convertToUserTimezone } from "../services/timezoneService.js";
+import { getOddsFormat, formatOdds } from "../services/oddsService.js";
 import "./BetsPage.css";
 
 function BetsPage() {
@@ -7,6 +9,7 @@ function BetsPage() {
   const [bets, setBets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [copyingAI, setCopyingAI] = useState(false);
+  const [oddsFormat, setOddsFormat] = useState(getOddsFormat());
   const [error, setError] = useState(null);
   const [groupedBets, setGroupedBets] = useState({});
   const [activeTab, setActiveTab] = useState("pending");
@@ -19,6 +22,14 @@ function BetsPage() {
 
   useEffect(() => {
     fetchBets();
+  }, []);
+
+  useEffect(() => {
+    const handleOddsFormatChange = (e) => {
+      setOddsFormat(e.detail.format);
+    };
+    window.addEventListener('oddsFormatChanged', handleOddsFormatChange);
+    return () => window.removeEventListener('oddsFormatChanged', handleOddsFormatChange);
   }, []);
 
   const fetchBets = async () => {
@@ -51,14 +62,8 @@ function BetsPage() {
   const toPST = (dateString) => {
     if (!dateString) return null;
     try {
-      const date = new Date(dateString);
-      // Convert to PST (UTC-8) or PDT (UTC-7)
-      return new Intl.DateTimeFormat('en-US', {
-        timeZone: 'America/Los_Angeles',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      }).format(date);
+      // For date filtering, we need the date in user's timezone
+      return convertToUserTimezone(dateString, "date");
     } catch {
       return null;
     }
@@ -128,7 +133,7 @@ function BetsPage() {
         
         // Show success message
         const originalError = error;
-        setError(`✓ Copied ${response.data.yesterday_count} yesterday's results and ${response.data.today_count} today's games!`);
+        setError(`✓ Copied ${response.data.yesterday_count} yesterday's results and ${response.data.today_count} upcoming games!`);
         setTimeout(() => {
           setError(originalError);
         }, 3000);
@@ -451,7 +456,7 @@ Type: prop, Selection: Anthony Edwards over 27.5 pts, Game: Timberwolves vs Peli
 
         {loading && <div className="loading">Loading...</div>}
         {Object.entries(filteredGroupedBets).map(([groupId, groupBets]) => (
-          <BetGroup key={groupId} bets={groupBets} />
+          <BetGroup key={groupId} bets={groupBets} oddsFormat={oddsFormat} />
         ))}
         {Object.keys(filteredGroupedBets).length === 0 && !loading && (
           <div className="no-bets">
@@ -473,7 +478,7 @@ Type: prop, Selection: Anthony Edwards over 27.5 pts, Game: Timberwolves vs Peli
   );
 }
 
-function BetGroup({ bets }) {
+function BetGroup({ bets, oddsFormat }) {
   const isParlay = bets.length > 1;
   const parlayName = bets[0]?.parlay_id?.substring(0, 8) || `Single #${bets[0]?.id}`;
   // For parlays, use original_stake from any bet in the group (they're all the same parlay)
@@ -544,14 +549,14 @@ function BetGroup({ bets }) {
 
       <div className="bets-in-group">
         {bets.map((bet) => (
-          <BetCard key={bet.id} bet={bet} />
+          <BetCard key={bet.id} bet={bet} oddsFormat={oddsFormat} />
         ))}
       </div>
     </div>
   );
 }
 
-function BetCard({ bet }) {
+function BetCard({ bet, oddsFormat }) {
   const statusColor =
     bet.status === "won" ? "#4CAF50" : bet.status === "lost" ? "#f44336" : "#FF9800";
 
@@ -622,7 +627,7 @@ function BetCard({ bet }) {
             <span>Type:</span> <strong>{bet.bet_type}</strong>
           </div>
           <div className="detail-item">
-            <span>Odds:</span> <strong>{bet.odds > 0 ? '+' : ''}{Math.round(bet.odds)}</strong>
+            <span>Odds:</span> <strong>{formatOdds(bet.odds, oddsFormat)}</strong>
           </div>
           <div className="detail-item">
             <span>Stake:</span> <strong>${Math.round(bet.stake)}</strong>
@@ -658,14 +663,8 @@ function BetCard({ bet }) {
 function formatDate(dateString) {
   if (!dateString) return "";
   try {
-    const date = new Date(dateString);
-    // Display in PST timezone
-    return date.toLocaleDateString("en-US", {
-      timeZone: "America/Los_Angeles",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    // Display date in user's selected timezone
+    return convertToUserTimezone(dateString, "date");
   } catch {
     return dateString;
   }

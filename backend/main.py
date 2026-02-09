@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 from .config import settings
 from .db import init_db, AsyncSessionLocal
-from .routers import health, games, props, bets, alerts, analytics, live, scraping, sports_analytics
+from .routers import health, games, props, bets, alerts, analytics, live, scraping, sports_analytics, aai_bets, leaderboards, bet_placement
 from .scheduler.tasks import Scheduler
 
 app = FastAPI(title="Sports Intelligence Platform", version="1.0.0")
@@ -114,5 +114,8 @@ app.include_router(bets.router, prefix="/bets", tags=["bets"])
 app.include_router(alerts.router, prefix="/alerts", tags=["alerts"])
 app.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
 app.include_router(sports_analytics.router, prefix="/sports-analytics", tags=["sports-analytics"])
+app.include_router(aai_bets.router, prefix="/aai-bets", tags=["aai-bets"])
+app.include_router(bet_placement.router, tags=["bet-placement"])
 app.include_router(live.router, prefix="/live", tags=["live"])
+app.include_router(leaderboards.router, prefix="/leaderboards", tags=["leaderboards"])
 app.include_router(scraping.router, tags=["scrape"])

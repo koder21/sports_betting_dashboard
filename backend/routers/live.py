@@ -4,7 +4,7 @@ from sqlalchemy import select, text
 from datetime import datetime, timedelta
 
 from ..db import get_session
-from ..models import GameLive, Game
+from ..models import GameLive, Game, GameUpcoming
 
 router = APIRouter()
 
@@ -40,15 +40,29 @@ async def _get_live_scores(session: AsyncSession):
         else:
             status = "scheduled"
         
-        # Get start time from games table
+        # Get start time - check GameUpcoming first (freshest data), then Game table
         start_time = None
         try:
-            games_result = await session.execute(
-                select(Game).where(Game.game_id == game.game_id)
+            # Try GameUpcoming first since scheduler updates it with fresh times
+            upcoming_result = await session.execute(
+                select(GameUpcoming).where(GameUpcoming.game_id == game.game_id)
             )
-            game_record = games_result.scalar()
-            if game_record and game_record.start_time:
-                start_time = game_record.start_time
+            upcoming_record = upcoming_result.scalar()
+            if upcoming_record and upcoming_record.start_time:
+                start_time = upcoming_record.start_time
+            
+            # Fallback to games table if not in GameUpcoming
+            if not start_time:
+                games_result = await session.execute(
+                    select(Game).where(Game.game_id == game.game_id)
+                )
+                game_record = games_result.scalar()
+                if game_record and game_record.start_time:
+                    start_time = game_record.start_time
+            
+            # Last resort: try GameLive itself if it has start_time
+            if not start_time and hasattr(game, 'start_time') and game.start_time:
+                start_time = game.start_time
         except:
             pass
         
@@ -62,16 +76,14 @@ async def _get_live_scores(session: AsyncSession):
             "sport": (game.sport or "Unknown").upper(),
         }
         
-        # Format start time in EST
+        # Return start time as ISO string for frontend timezone conversion
         if start_time:
             try:
                 if isinstance(start_time, str):
-                    dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                    game_dict["start_time"] = start_time
                 else:
-                    dt = start_time
-                # Convert UTC to EST (UTC-5 hours)
-                dt_est = dt - timedelta(hours=5)
-                game_dict["start_time"] = dt_est.strftime("%I:%M %p EST")
+                    # Convert datetime to ISO format string
+                    game_dict["start_time"] = start_time.isoformat() if hasattr(start_time, 'isoformat') else str(start_time)
             except:
                 pass
         

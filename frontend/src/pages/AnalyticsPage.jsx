@@ -34,7 +34,7 @@ function AnalyticsPage() {
     );
   }
 
-  const { roi, trends, markets, by_sport, by_bet_type, over_time, parlay_performance, streaks, ev_kelly, player_trends, team_momentum, team_splits, betting_patterns } = summary;
+  const { roi, trends, markets, by_sport, by_bet_type, over_time, parlay_performance, streaks, ev_kelly, player_trends, team_momentum, team_splits, betting_patterns, by_source } = summary;
 
   // Colors for charts
   const COLORS = ['#4a90e2', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22'];
@@ -248,6 +248,38 @@ function AnalyticsPage() {
             <div className="no-chart-data">No parlay/single data available</div>
           )}
         </div>
+
+        {/* Bet Source Performance (AAI, Custom, Manual) */}
+        {by_source && Object.keys(by_source).length > 0 && (
+          <div className="chart-card">
+            <h2 className="chart-title">Performance by Source</h2>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={Object.entries(by_source).map(([source, stats]) => ({
+                name: source,
+                winRate: parseFloat(stats.win_rate?.toFixed(1) || 0),
+                roi: parseFloat(stats.roi?.toFixed(1) || 0),
+                profit: parseFloat(stats.total_profit?.toFixed(2) || 0),
+                total: stats.total || 0
+              }))}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                <XAxis dataKey="name" stroke="#ccc" />
+                <YAxis stroke="#ccc" />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #444' }}
+                  labelStyle={{ color: '#fff' }}
+                  formatter={(value, name) => {
+                    if (name === 'winRate' || name === 'roi') return `${value}%`;
+                    if (name === 'profit') return `$${value}`;
+                    return value;
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="winRate" fill="#4a90e2" name="Win Rate %" />
+                <Bar dataKey="roi" fill="#2ecc71" name="ROI %" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
 
         {/* Weekly Performance Trend */}
         {over_time?.weekly && over_time.weekly.length > 0 && (

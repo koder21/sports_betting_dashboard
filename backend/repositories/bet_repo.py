@@ -13,7 +13,7 @@ class BetRepository(BaseRepository[Bet]):
         super().__init__(session, Bet)
 
     async def list_pending(self) -> Sequence[Bet]:
-        stmt = select(Bet).where(Bet.status == "pending")
+        stmt = select(Bet).options(selectinload(Bet.sport)).where(Bet.status == "pending")
         result = await self.session.execute(stmt)
         return result.scalars().all()
 

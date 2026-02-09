@@ -78,6 +78,16 @@ function Layout({ children }) {
               <span className="alert-badge">{alertItem.badge}</span>
             )}
           </Link>
+          <Link
+            to="/settings"
+            className={
+              location.pathname.startsWith("/settings")
+                ? "nav-link active"
+                : "nav-link"
+            }
+          >
+            ⚙️ Settings
+          </Link>
         </nav>
       </aside>
       <main className="main-content">

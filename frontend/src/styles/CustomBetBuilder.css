@@ -1,0 +1,538 @@
+/* CustomBetBuilder.css */
+
+.custom-bet-builder-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.custom-bet-builder-modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  min-height: 400px;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease-out;
+  color: #333;
+  border: 2px solid #e0e0e0;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .custom-bet-builder-modal {
+    background: #1e1e1e;
+    color: #e0e0e0;
+    border-color: #444;
+  }
+}
+
+.builder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 100;
+}
+
+@media (prefers-color-scheme: dark) {
+  .builder-header {
+    background: #1e1e1e;
+    border-bottom-color: #444;
+  }
+}
+
+.builder-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+@media (prefers-color-scheme: dark) {
+  .builder-header h2 {
+    color: #e0e0e0;
+  }
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+@media (prefers-color-scheme: dark) {
+  .close-btn {
+    color: #999;
+  }
+  
+  .close-btn:hover {
+    color: #e0e0e0;
+  }
+}
+.builder-content {
+  padding: 20px;
+}
+
+.bet-type-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.type-btn {
+  padding: 12px;
+  border: 2px solid #ddd;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+  color: #333;
+}
+
+.type-btn.active {
+  border-color: #007bff;
+  background: #007bff;
+  color: white;
+}
+
+.type-btn:hover:not(.active) {
+  border-color: #007bff;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .type-btn {
+    background: #2a2a2a;
+    border-color: #444;
+    color: #e0e0e0;
+  }
+  
+  .type-btn:hover:not(.active) {
+    border-color: #0d6efd;
+  }
+  
+  .type-btn.active {
+    border-color: #0d6efd;
+    background: #0d6efd;
+  }
+}
+
+.games-selection {
+  margin-bottom: 20px;
+}
+
+.games-selection h3 {
+  margin: 0 0 15px 0;
+  font-size: 1rem;
+  color: #333;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .games-selection h3 {
+    color: #e0e0e0;
+  }
+}
+
+.games-list {
+  display: grid;
+  gap: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.game-card {
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+}
+
+.game-card:hover {
+  border-color: #007bff;
+  background: #f8fbff;
+}
+
+.game-card.selected {
+  border-color: #007bff;
+  background: #f0f8ff;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .game-card {
+    background: #2a2a2a;
+    border-color: #444;
+  }
+  
+  .game-card:hover {
+    border-color: #0d6efd;
+    background: #1a3a52;
+  }
+  
+  .game-card.selected {
+    border-color: #0d6efd;
+    background: #1a3a52;
+  }
+}
+
+.game-matchup {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.team {
+  text-align: center;
+  color: #333;
+}
+
+.at {
+  color: #999;
+  font-size: 0.8rem;
+}
+
+.game-time {
+  font-size: 0.8rem;
+  color: #999;
+  margin-bottom: 10px;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .game-matchup {
+    color: #e0e0e0;
+  }
+  
+  .team {
+    color: #e0e0e0;
+  }
+  
+  .at {
+    color: #666;
+  }
+  
+  .game-time {
+    color: #666;
+  }
+}
+
+.game-leg-editor {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #ddd;
+}
+
+.leg-input {
+  display: flex;
+  flex-direction: column;
+}
+
+.leg-input label {
+  font-size: 0.75rem;
+  color: #666;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.leg-input select,
+.leg-input input {
+  padding: 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: white;
+  color: #333;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .game-leg-editor {
+    border-top-color: #444;
+  }
+  
+  .leg-input label {
+    color: #999;
+  }
+  
+  .leg-input select,
+  .leg-input input {
+    background: #2a2a2a;
+    color: #e0e0e0;
+    border-color: #444;
+  }
+}
+
+.no-games {
+  text-align: center;
+  padding: 30px;
+  color: #999;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .no-games {
+    color: #666;
+  }
+}
+
+.builder-inputs {
+  display: grid;
+  gap: 15px;
+  margin-bottom: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .builder-inputs {
+    border-top-color: #444;
+  }
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group label {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.input-group input,
+.input-group textarea {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  background: white;
+  color: #333;
+}
+
+.input-group input:focus,
+.input-group textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.input-group textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .input-group label {
+    color: #999;
+  }
+  
+  .input-group input,
+  .input-group textarea {
+    background: #2a2a2a;
+    color: #e0e0e0;
+    border-color: #444;
+  }
+  
+  .input-group input:focus,
+  .input-group textarea:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+  }
+}
+
+.parlay-summary {
+  background: #f0f8ff;
+  border-left: 4px solid #007bff;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.summary-row:last-child {
+  margin-bottom: 0;
+}
+
+.summary-row.highlight {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #007bff;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .parlay-summary {
+    background: #1a3a52;
+    border-left-color: #0d6efd;
+  }
+  
+  .summary-row {
+    color: #e0e0e0;
+  }
+  
+  .summary-row.highlight {
+    color: #66b3ff;
+  }
+}
+
+.builder-error {
+  background: #ffe0e0;
+  color: #d32f2f;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .builder-error {
+    background: #3d1a1a;
+    color: #ff6b6b;
+  }
+}
+
+.builder-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding-top: 15px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.builder-cancel-btn,
+.builder-submit-btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.builder-cancel-btn {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.builder-cancel-btn:hover {
+  background: #e0e0e0;
+}
+
+.builder-cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.builder-submit-btn {
+  background: #28a745;
+  color: white;
+}
+
+.builder-submit-btn:hover:not(:disabled) {
+  background: #218838;
+}
+
+.builder-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .builder-actions {
+    border-top-color: #444;
+  }
+  
+  .builder-cancel-btn {
+    background: #333;
+    color: #e0e0e0;
+  }
+  
+  .builder-cancel-btn:hover {
+    background: #444;
+  }
+  
+  .builder-submit-btn {
+    background: #198754;
+  }
+  
+  .builder-submit-btn:hover:not(:disabled) {
+    background: #157347;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

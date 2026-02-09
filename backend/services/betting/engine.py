@@ -14,6 +14,7 @@ from ...repositories.game_repo import GameRepository
 from ...repositories.player_repo import PlayerRepository
 from ...services.alerts.manager import AlertManager
 from ...models.games_results import GameResult
+from ...models.games_live import GameLive
 
 
 class BettingEngine:
@@ -50,13 +51,20 @@ class BettingEngine:
                         "reason": f"Could not find game matching '{bet_data.get('game_str', 'unknown')}' on the date specified"
                     })
                 else:
-                    # Check if game actually exists in the database (don't require sport_id match)
+                    # Check if game actually exists in the database (check games first, then games_live)
                     game = await self.games.get_by_espn(str(game_id))
+                    
+                    # If not in games table, check games_live table
                     if not game:
-                        invalid_bets.append({
-                            "selection": selection,
-                            "reason": f"Game ID {game_id} not found in database. Game may not have been scraped yet."
-                        })
+                        result = await self.session.execute(
+                            select(GameLive).where(GameLive.game_id == str(game_id))
+                        )
+                        game_live = result.scalar()
+                        if not game_live:
+                            invalid_bets.append({
+                                "selection": selection,
+                                "reason": f"Game ID {game_id} not found in database. Game may not have been scraped yet."
+                            })
             # Prop bets should have either player_id or player_name
             elif bet_type == "prop":
                 if not player_id and not bet_data.get("player_name"):
@@ -364,15 +372,16 @@ class BettingEngine:
             # Calculate total profit for the parlay
             total_profit = sum(leg.profit for leg in legs if leg.profit)
             
+            is_single = len(legs) == 1
             metadata = json.dumps({
                 "parlay_id": parlay_id,
                 "status": parlay_status,
                 "leg_count": len(legs),
-                "selection": f"{len(legs)}-Leg Parlay",
+                "selection": "Single Bet" if is_single else f"{len(legs)}-Leg Parlay",
                 "odds": legs[0].parlay_odds if legs else 0,
-                "stake": legs[0].original_stake if legs else 0,
+                "stake": (legs[0].stake if is_single else legs[0].original_stake) if legs else 0,
                 "profit": total_profit,
-                "bet_type": "parlay",
+                "bet_type": "single" if is_single else "parlay",
                 "sport": legs[0].sport.name if legs and legs[0].sport else None,
                 "legs": [{"selection": leg.selection, "status": leg.status} for leg in legs],
             })
@@ -390,7 +399,8 @@ class BettingEngine:
         return {"status": "ok", "graded": results}
 
     async def _get_parlay_legs(self, parlay_id: str):
-        stmt = select(self.bets.model).where(self.bets.model.parlay_id == parlay_id)
+        from sqlalchemy.orm import selectinload
+        stmt = select(self.bets.model).options(selectinload(self.bets.model.sport)).where(self.bets.model.parlay_id == parlay_id)
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
@@ -432,6 +442,9 @@ class BettingEngine:
         return f"Single bet {status_label}: {bet_label}"
 
     async def _build_parlay_alert_message(self, parlay_id: str, legs: List[Any], status: str) -> str:
+        if len(legs) == 1:
+            return await self._build_single_alert_message(legs[0])
+
         stake = legs[0].original_stake if legs else 0
         parlay_odds = legs[0].parlay_odds or legs[0].odds if legs else 0
         odds_label = f"{parlay_odds:+.0f}" if parlay_odds else "N/A"

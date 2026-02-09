@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { convertToUserTimezone } from "../services/timezoneService";
 
 function LiveScoresPage() {
   const [games, setGames] = useState([]);
@@ -112,7 +113,7 @@ function LiveScoresPage() {
 
   const formatTime = (date) => {
     if (!date) return "";
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return convertToUserTimezone(date, "time-with-tz");
   };
 
   const getStatusClass = (status) => {
@@ -233,7 +234,9 @@ function LiveScoresPage() {
 
                 <td>
                   {g.start_time ? (
-                    <span className="game-start">{g.start_time}</span>
+                    <span className="game-start">
+                      {convertToUserTimezone(g.start_time, "time-with-tz")}
+                    </span>
                   ) : (
                     "-"
                   )}

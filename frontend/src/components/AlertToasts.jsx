@@ -11,13 +11,6 @@ function AlertToasts() {
 
   const dismissToast = async (id) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
-
-    try {
-      await api.post(`/alerts/${id}/ack`);
-      window.dispatchEvent(new Event("alertDismissed"));
-    } catch (err) {
-      console.error("Failed to acknowledge alert:", err);
-    }
   };
 
   const dismissAllToasts = () => {

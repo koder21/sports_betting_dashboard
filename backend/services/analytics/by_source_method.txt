@@ -1,0 +1,53 @@
+    async def by_source(self) -> Dict[str, Any]:
+        """Analyze performance by bet source (AAI, Custom, Manual)"""
+        all_bets = await self.bets.list_all_with_relations()
+        
+        source_stats = defaultdict(lambda: {
+            "total": 0,
+            "won": 0,
+            "lost": 0,
+            "pending": 0,
+            "total_staked": 0.0,
+            "total_profit": 0.0
+        })
+        
+        for bet in all_bets:
+            # Determine source based on reason field
+            # AAI bets have "confidence: XX%" in reason
+            # Custom bets have "Custom bet" in reason
+            # Manual bets are parsed from text (everything else)
+            source = "Manual"
+            if bet.reason:
+                reason_lower = bet.reason.lower()
+                if "confidence:" in reason_lower or "aai" in reason_lower:
+                    source = "AAI"
+                elif "custom" in reason_lower:
+                    source = "Custom"
+            
+            source_stats[source]["total"] += 1
+            source_stats[source]["total_staked"] += bet.stake or 0
+            
+            if bet.status == "won":
+                source_stats[source]["won"] += 1
+            elif bet.status == "lost":
+                source_stats[source]["lost"] += 1
+            elif bet.status == "pending":
+                source_stats[source]["pending"] += 1
+            
+            if bet.profit is not None:
+                source_stats[source]["total_profit"] += bet.profit
+        
+        # Calculate win rates and ROI
+        for source, stats in source_stats.items():
+            graded = stats["won"] + stats["lost"]
+            stats["win_rate"] = (stats["won"] / graded * 100) if graded > 0 else 0
+            if stats["total_staked"] > 0:
+                roi_value = (stats["total_profit"] / stats["total_staked"] * 100)
+                if roi_value != roi_value or roi_value == float('inf') or roi_value == float('-inf'):
+                    stats["roi"] = 0.0
+                else:
+                    stats["roi"] = roi_value
+            else:
+                stats["roi"] = 0.0
+        
+        return dict(source_stats)

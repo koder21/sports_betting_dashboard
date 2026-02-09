@@ -9,6 +9,7 @@ import AlertsPage from "./pages/AlertsPage.jsx";
 import AnalyticsPage from "./pages/AnalyticsPage.jsx";
 import SportsAnalyticsPage from "./pages/SportsAnalyticsPage.jsx";
 import LiveScoresPage from "./pages/LiveScoresPage";
+import SettingsPage from "./pages/SettingsPage";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/alerts" element={<AlertsPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/sports-analytics" element={<SportsAnalyticsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/live" element={<LiveScoresPage />} /> 
           <Route path="/live/*" element={<LiveScoresPage />} />
         </Routes>
