@@ -122,6 +122,13 @@ function LiveScoresPage() {
 
   const SPORT_ORDER = ["NFL", "NBA", "NCAAF", "NHL", "NCAAB", "SOCCER"];
 
+  // Separate live games with active bets (sticky at top)
+  const liveGamesWithBets = games.filter(g => 
+    g.status === "in" && pendingBetsByGame[g.game_id]
+  );
+  const liveGamesWithoutBets = games.filter(g => 
+    g.status === "in" && !pendingBetsByGame[g.game_id]
+  );
   const liveGames = games.filter(g => g.status === "in");
   const finishedGames = games.filter(g => g.status === "final");
   const upcomingGames = games
@@ -274,27 +281,17 @@ function LiveScoresPage() {
                   </>
                 )}
 
-                {title !== "✅ Finished Games" && (
+                {title === "📅 Upcoming Games" && (
                   <td>
                     {g.start_time ? (
-                      <>
-                        {title !== "📅 Upcoming Games" ? (
-                          <span className="game-start">
-                            {g.status === "final" 
-                              ? convertToUserTimezone(g.start_time, "date")
-                              : convertToUserTimezone(g.start_time, "time-with-tz")}
-                          </span>
-                        ) : (
-                          <div className="game-time-stack">
-                            <span className="game-date">
-                              {convertToUserTimezone(g.start_time, "date")}
-                            </span>
-                            <span className="game-time">
-                              {convertToUserTimezone(g.start_time, "time-with-tz")}
-                            </span>
-                          </div>
-                        )}
-                      </>
+                      <div className="game-time-stack">
+                        <span className="game-date">
+                          {convertToUserTimezone(g.start_time, "date")}
+                        </span>
+                        <span className="game-time">
+                          {convertToUserTimezone(g.start_time, "time-with-tz")}
+                        </span>
+                      </div>
                     ) : (
                       "-"
                     )}
@@ -362,7 +359,93 @@ function LiveScoresPage() {
 
       {games.length > 0 && (
         <>
-          {renderGamesTable(liveGames, "🔴 Live Games")}
+          {liveGamesWithBets.length > 0 && (
+            <div className="sticky-games-section">
+              <h2 className="sticky-games-title">
+                📌 Live Games with Active Bets
+              </h2>
+              <div className="sticky-games-container">
+                {liveGamesWithBets.map((g) => (
+                  (() => {
+                    const pendingInfo = pendingBetsByGame[g.game_id];
+                    const selections = pendingInfo?.selections || [];
+                    const players = pendingInfo?.players || [];
+                    const finished = pendingInfo?.finished || [];
+                    const hasHomeBet = teamMatchesSelection(g.home_team, selections);
+                    const hasAwayBet = teamMatchesSelection(g.away_team, selections);
+                    const hasPlayerBet = players.length > 0;
+                    const homeMomentum = getMomentumStatus(g.home_team_id);
+                    const awayMomentum = getMomentumStatus(g.away_team_id);
+                    return (
+                      <table key={g.game_id} className="table live-table sticky-game-table">
+                        <tbody>
+                          <tr
+                            className={`game-row ${getStatusClass(g.status)}`}
+                            onClick={() => navigate(`/games/${g.game_id}/details`)}>
+                            <td>
+                              <div className="matchup-container">
+                                <span className="team-name">
+                                  {g.home_logo && <img src={g.home_logo} className="team-logo" alt="" />}
+                                  {g.home_team}
+                                  {homeMomentum === "FIRE" && <span className="momentum-badge fire">🔥 FIRE</span>}
+                                  {homeMomentum === "FREEZING" && <span className="momentum-badge freezing">🧊 FREEZING</span>}
+                                </span>
+                                <span className="vs-text"> vs </span>
+                                <span className="team-name">
+                                  {g.away_logo && <img src={g.away_logo} className="team-logo" alt="" />}
+                                  {g.away_team}
+                                  {awayMomentum === "FIRE" && <span className="momentum-badge fire">🔥 FIRE</span>}
+                                  {awayMomentum === "FREEZING" && <span className="momentum-badge freezing">🧊 FREEZING</span>}
+                                </span>
+                              </div>
+                            </td>
+                            <td>
+                              <div className="bet-badges">
+                                {hasHomeBet && <span className="bet-badge home">Home</span>}
+                                {hasAwayBet && <span className="bet-badge away">Away</span>}
+                                {hasPlayerBet && (
+                                  <span
+                                    className="bet-badge player"
+                                    title={players.join(", ")}
+                                  >
+                                    Player ({players.length})
+                                  </span>
+                                )}
+                                {finished.length > 0 && (
+                                  <>
+                                    {finished.map((result, idx) => (
+                                      <span
+                                        key={idx}
+                                        className={`bet-badge ${result === "W" ? "win" : "loss"}`}
+                                      >
+                                        {result}
+                                      </span>
+                                    ))}
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                            <td>
+                              <span className={g.homeScoreChanged ? "score flash" : "score"}>
+                                {g.home_score}
+                              </span>
+                              {" - "}
+                              <span className={g.awayScoreChanged ? "score flash" : "score"}>
+                                {g.away_score}
+                              </span>
+                            </td>
+                            <td>{g.clock || "-"}</td>
+                            <td>{g.period || "-"}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    );
+                  })()
+                ))}
+              </div>
+            </div>
+          )}
+          {renderGamesTable(liveGamesWithoutBets, "🔴 Live Games")}
           {renderGamesTable(upcomingGames, "📅 Upcoming Games")}
           {renderGamesTable(finishedGames, "✅ Finished Games")}
         </>
@@ -382,6 +465,50 @@ function LiveScoresPage() {
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
+        }
+
+        .sticky-games-section {
+          margin-bottom: 32px;
+          padding: 20px;
+          background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.1) 100%);
+          border: 2px solid rgba(239, 68, 68, 0.3);
+          border-radius: 16px;
+          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
+
+        .sticky-games-title {
+          font-size: 1.3rem;
+          font-weight: 800;
+          margin: 0 0 16px 0;
+          color: #ef4444;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .sticky-games-container {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .sticky-game-table {
+          margin: 0 !important;
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .sticky-game-table .game-row {
+          background: rgba(255, 255, 255, 0.95) !important;
+        }
+
+        .sticky-game-table .game-row:hover {
+          background: rgba(255, 255, 255, 1) !important;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
         }
 
         .games-section {
