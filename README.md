@@ -49,7 +49,6 @@ alembic upgrade head
 ### 🏟️ Community Insights
 See what the betting community is picking:
 - **Reddit** - Trending props from r/sportsbooks, r/nba, r/nfl
-- **Vegas** - Featured sportsbook props & line movements
 - **Discord** - Sharp bettors' picks from betting channels
 - **Anonymized** - Aggregate statistics, no personal info
 - **Real-time** - Updates as community discusses props
@@ -246,6 +245,17 @@ MIT
 
 Check the documentation guides in [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) for detailed help on specific features.
 
+## Screengrabs
+![BetsTracker1](images/BettingTracker1.png)
+![BetsTracker2](images/BettingTracker2.png)
+![AAI1](images/AAI1.png)
+![AAI2](images/AAI2.png)
+![BetAnalytics](images/BetAnalytics.png)
+![SportsAnalytics](images/SportsAnalytics.png)
+![LiveScores](images/LiveScores.png)
+![Settings](images/Settings.png)
+![GameDetails](images/GameDetails.png)
+![PropExplorer](images/PropExplorer.png)
 ---
 
 **Last Updated**: February 2026  
