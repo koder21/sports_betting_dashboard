@@ -179,13 +179,21 @@ class TeamTrendAnalytics:
             record = f"{wins}-{losses}"
             win_rate = (wins / len(games)) * 100 if games else 0
             
+            # Determine momentum status: FIRE (4+ wins in last 5) or FREEZING (4+ losses in last 5)
+            momentum_status = None
+            if wins >= 4:
+                momentum_status = "FIRE"
+            elif losses >= 4:
+                momentum_status = "FREEZING"
+            
             momentum_data.append({
                 "team_id": team["id"],
                 "team_name": team["name"],
                 "sport": games[0][2] if games else "Unknown",
                 "record": record,
                 "win_rate": round(win_rate, 1),
-                "games": games_window
+                "games": games_window,
+                "momentum_status": momentum_status
             })
         
         momentum_data.sort(key=lambda x: x["win_rate"], reverse=True)

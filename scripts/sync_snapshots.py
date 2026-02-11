@@ -36,6 +36,23 @@ async def sync_snapshots():
         
         now = datetime.utcnow()
         
+        # OPTIMIZATION: Bulk fetch all snapshot records at once instead of checking per game (Nx speedup)
+        import asyncio
+        game_ids = [g.game_id for g in games if g.game_id]
+        
+        if game_ids:
+            upcoming_batch, live_batch, results_batch = await asyncio.gather(
+                session.execute(select(GameUpcoming.game_id).where(GameUpcoming.game_id.in_(game_ids))),
+                session.execute(select(GameLive.game_id).where(GameLive.game_id.in_(game_ids))),
+                session.execute(select(GameResult.game_id).where(GameResult.game_id.in_(game_ids))),
+                return_exceptions=False
+            )
+            existing_upcoming = {r[0] for r in upcoming_batch.all()}
+            existing_live = {r[0] for r in live_batch.all()}
+            existing_results = {r[0] for r in results_batch.all()}
+        else:
+            existing_upcoming = existing_live = existing_results = set()
+        
         for game in games:
             status = (game.status or "").upper()
             start_time = game.start_time
@@ -46,17 +63,7 @@ async def sync_snapshots():
                 continue
             
             # Check if game already in any snapshot table
-            upcoming_exists = await session.execute(
-                select(GameUpcoming).where(GameUpcoming.game_id == game.game_id)
-            )
-            live_exists = await session.execute(
-                select(GameLive).where(GameLive.game_id == game.game_id)
-            )
-            results_exists = await session.execute(
-                select(GameResult).where(GameResult.game_id == game.game_id)
-            )
-            
-            if upcoming_exists.scalars().first() or live_exists.scalars().first() or results_exists.scalars().first():
+            if game.game_id in existing_upcoming or game.game_id in existing_live or game.game_id in existing_results:
                 continue
             
             # Get sport from sport_id if available, otherwise look for it from game.sport field
@@ -101,7 +108,19 @@ async def sync_snapshots():
                 session.add(snapshot)
                 live_count += 1
             else:
-                # Game is upcoming
+                # Game is upcoming - fetch logos from GameResult if available
+                home_logo = None
+                away_logo = None
+                
+                # Try to get logos from GameResult table
+                result_check = await session.execute(
+                    select(GameResult).where(GameResult.game_id == game.game_id)
+                )
+                result_record = result_check.scalar()
+                if result_record:
+                    home_logo = result_record.home_logo
+                    away_logo = result_record.away_logo
+                
                 snapshot = GameUpcoming(
                     game_id=game.game_id,
                     start_time=start_time,
@@ -109,6 +128,8 @@ async def sync_snapshots():
                     home_team_name=game.home_team_name or None,
                     away_team_name=game.away_team_name or None,
                     status=game.status,
+                    home_logo=home_logo,
+                    away_logo=away_logo,
                 )
                 session.add(snapshot)
                 upcoming_count += 1

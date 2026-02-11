@@ -4,7 +4,7 @@ from sqlalchemy import select, text
 from datetime import datetime, timedelta
 
 from ..db import get_session
-from ..models import GameLive, Game, GameUpcoming
+from ..models import GameLive, Game, GameUpcoming, GameResult
 
 router = APIRouter()
 
@@ -17,9 +17,36 @@ SPORTS = {
 }
 
 async def _get_live_scores(session: AsyncSession):
-    """Fetch live games from the database with start times from games table."""
-    result = await session.execute(select(GameLive))
-    live_games = result.scalars().all()
+    """Fetch live games from the database with start times from games table.
+    
+    OPTIMIZED: Fetch all GameLive records along with GameUpcoming and GameResult
+    in bulk queries to avoid N+1 query problem.
+    """
+    # Fetch all live games
+    live_result = await session.execute(select(GameLive))
+    live_games = live_result.scalars().all()
+    
+    if not live_games:
+        return []
+    
+    # Extract all game IDs for bulk lookup
+    game_ids = [game.game_id for game in live_games]
+    
+    # Bulk fetch all related records in one query each
+    upcoming_result = await session.execute(
+        select(GameUpcoming).where(GameUpcoming.game_id.in_(game_ids))
+    )
+    upcoming_records = {r.game_id: r for r in upcoming_result.scalars()}
+    
+    result_result = await session.execute(
+        select(GameResult).where(GameResult.game_id.in_(game_ids))
+    )
+    result_records = {r.game_id: r for r in result_result.scalars()}
+    
+    games_result = await session.execute(
+        select(Game).where(Game.game_id.in_(game_ids))
+    )
+    game_records = {g.game_id: g for g in games_result.scalars()}
     
     games_list = []
     for game in live_games:
@@ -40,31 +67,37 @@ async def _get_live_scores(session: AsyncSession):
         else:
             status = "scheduled"
         
-        # Get start time - check GameUpcoming first (freshest data), then Game table
+        # Get start time and logos from pre-fetched records (no queries in loop)
         start_time = None
-        try:
-            # Try GameUpcoming first since scheduler updates it with fresh times
-            upcoming_result = await session.execute(
-                select(GameUpcoming).where(GameUpcoming.game_id == game.game_id)
-            )
-            upcoming_record = upcoming_result.scalar()
-            if upcoming_record and upcoming_record.start_time:
+        home_logo = None
+        away_logo = None
+        
+        # Check GameUpcoming first since scheduler updates it with fresh times
+        upcoming_record = upcoming_records.get(game.game_id)
+        if upcoming_record:
+            if upcoming_record.start_time:
                 start_time = upcoming_record.start_time
-            
-            # Fallback to games table if not in GameUpcoming
-            if not start_time:
-                games_result = await session.execute(
-                    select(Game).where(Game.game_id == game.game_id)
-                )
-                game_record = games_result.scalar()
-                if game_record and game_record.start_time:
-                    start_time = game_record.start_time
-            
-            # Last resort: try GameLive itself if it has start_time
-            if not start_time and hasattr(game, 'start_time') and game.start_time:
-                start_time = game.start_time
-        except:
-            pass
+            home_logo = upcoming_record.home_logo
+            away_logo = upcoming_record.away_logo
+        
+        # Fallback to GameResult for finished games
+        if not home_logo or not away_logo:
+            result_record = result_records.get(game.game_id)
+            if result_record:
+                if not home_logo:
+                    home_logo = result_record.home_logo
+                if not away_logo:
+                    away_logo = result_record.away_logo
+        
+        # Fallback to games table if no start time yet
+        if not start_time:
+            game_record = game_records.get(game.game_id)
+            if game_record and game_record.start_time:
+                start_time = game_record.start_time
+        
+        # Last resort: try GameLive itself if it has start_time
+        if not start_time and hasattr(game, 'start_time') and game.start_time:
+            start_time = game.start_time
         
         game_dict = {
             "game_id": game.game_id,
@@ -78,14 +111,12 @@ async def _get_live_scores(session: AsyncSession):
         
         # Return start time as ISO string for frontend timezone conversion
         if start_time:
-            try:
-                if isinstance(start_time, str):
-                    game_dict["start_time"] = start_time
-                else:
-                    # Convert datetime to ISO format string
-                    game_dict["start_time"] = start_time.isoformat() if hasattr(start_time, 'isoformat') else str(start_time)
-            except:
-                pass
+            if isinstance(start_time, str):
+                game_dict["start_time"] = start_time
+            elif hasattr(start_time, 'isoformat'):
+                game_dict["start_time"] = start_time.isoformat()
+            else:
+                game_dict["start_time"] = str(start_time)
         
         # Add optional fields if they exist
         if game.period is not None:
@@ -94,6 +125,10 @@ async def _get_live_scores(session: AsyncSession):
             game_dict["clock"] = game.clock
         if game.possession is not None:
             game_dict["possession"] = game.possession
+        if home_logo:
+            game_dict["home_logo"] = home_logo
+        if away_logo:
+            game_dict["away_logo"] = away_logo
         
         games_list.append(game_dict)
     

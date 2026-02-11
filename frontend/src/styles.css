@@ -207,3 +207,33 @@ button:hover {
   border-bottom-color: var(--accent);
   background: transparent;
 }
+
+/* Game Details Button */
+.action-cell {
+  padding: 8px !important;
+}
+
+.details-btn {
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
+}
+
+.details-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 212, 255, 0.4);
+  background: linear-gradient(135deg, #00e6ff 0%, #00aadd 100%);
+}
+
+.details-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 212, 255, 0.3);
+}

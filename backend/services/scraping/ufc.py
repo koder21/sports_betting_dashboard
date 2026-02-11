@@ -8,6 +8,7 @@ from ...repositories.players import PlayerRepository
 from ...repositories.injuries import InjuryRepository
 from ...models import Sport, Game, PlayerStat
 from ...utils import safe_sleep, safe_get
+from ...utils.json import normalize_json_payload
 from ...models.alert import Alert
 
 
@@ -81,14 +82,14 @@ class UFCScraper(BaseScraper):
 
             if "odds" in comp:
                 odds = comp["odds"][0]
-                game_data["lines_json"] = odds
+                game_data["lines_json"] = normalize_json_payload(odds)
             else:
                 odds_url = f"{BASE_CORE}{full_path}/events/{espn_id}/competitions/{espn_id}/odds"
                 try:
                     odds_resp = await self.client.get_json(odds_url)
                     odds_items = (odds_resp or {}).get("items") or (odds_resp or {}).get("odds") or []
                     if odds_items:
-                        game_data["lines_json"] = odds_items[0]
+                        game_data["lines_json"] = normalize_json_payload(odds_items[0])
                 except Exception:
                     pass
 
@@ -99,8 +100,8 @@ class UFCScraper(BaseScraper):
             try:
                 summary = await self.client.get_json(summary_url)
                 if summary:
-                    game.boxscore_json = summary.get("boxscore", {})
-                    game.play_by_play_json = summary.get("plays", [])
+                    game.boxscore_json = normalize_json_payload(summary.get("boxscore", {}))
+                    game.play_by_play_json = normalize_json_payload(summary.get("plays", []))
                     await self.session.flush()
             except Exception:
                 pass

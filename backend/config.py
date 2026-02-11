@@ -12,6 +12,9 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "sqlite+aiosqlite:///./sports_intel.db"
 
+    # Betting Configuration
+    BANKROLL: float = 2000.0  # Initial bankroll for ROI calculation
+
     CORS_ORIGINS: List[AnyHttpUrl] = []
 
     @field_validator("CORS_ORIGINS", mode="before")

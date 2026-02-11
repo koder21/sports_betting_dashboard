@@ -31,11 +31,20 @@ engine = create_async_engine(
 
 @event.listens_for(engine.sync_engine, "connect")
 def set_sqlite_pragma(dbapi_conn, connection_record):
-    """Enable WAL mode and other SQLite optimizations"""
+    """Enable WAL mode and other SQLite optimizations for performance and concurrency"""
     cursor = dbapi_conn.cursor()
-    cursor.execute("PRAGMA journal_mode=WAL")  # Write-Ahead Logging
-    cursor.execute("PRAGMA synchronous=NORMAL")  # Faster writes
-    cursor.execute("PRAGMA busy_timeout=30000")  # 30 second timeout
+    # Write-Ahead Logging allows concurrent reads while writes are happening
+    cursor.execute("PRAGMA journal_mode=WAL")
+    # NORMAL mode: good balance between speed and crash safety
+    cursor.execute("PRAGMA synchronous=NORMAL")
+    # 30 second timeout prevents "database locked" errors
+    cursor.execute("PRAGMA busy_timeout=30000")
+    # Larger cache improves query performance significantly
+    cursor.execute("PRAGMA cache_size=10000")
+    # Query optimizer analyzes frequently accessed tables
+    cursor.execute("PRAGMA optimize")
+    # Memory-mapped I/O is faster on modern systems
+    cursor.execute("PRAGMA mmap_size=30000000")
     cursor.close()
 
 

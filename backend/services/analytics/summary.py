@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from .roi import ROIAnalytics, calculate_profit_from_american_odds
+from .roi import ROIAnalytics, calculate_profit_from_american_odds, calculate_profit_from_decimal_odds, calculate_profit_from_parlay_odds
 from .trends import TrendAnalytics
 from .ev_kelly import EVKellyAnalytics
 from .trends_detailed import PlayerTrendAnalytics, TeamTrendAnalytics
@@ -68,27 +68,82 @@ class AnalyticsSummary:
             "total_profit": 0.0
         })
         
-        # Count each leg individually
+        # Group bets by parlay_id; treat singles separately
+        parlays_by_id = defaultdict(list)
+        singles = []
         for bet in all_bets:
-            # Try to get sport from game first, then from sport relationship
-            sport_name = "Unknown"
-            if bet.game and hasattr(bet.game, 'sport') and bet.game.sport:
-                sport_name = bet.game.sport
-            elif bet.sport and hasattr(bet.sport, 'name') and bet.sport.name:
-                sport_name = bet.sport.name
-            
+            if bet.parlay_id:
+                parlays_by_id[bet.parlay_id].append(bet)
+            else:
+                singles.append(bet)
+        
+        # Separate 1-leg parlays into singles (treat as singles, not parlays)
+        one_leg_parlays = [pid for pid, legs in parlays_by_id.items() if len(legs) == 1]
+        for pid in one_leg_parlays:
+            singles.extend(parlays_by_id[pid])
+            del parlays_by_id[pid]
+
+        # Helper to get sport name (normalized to uppercase)
+        def get_sport_name(bet_obj):
+            if bet_obj.game and hasattr(bet_obj.game, 'sport') and bet_obj.game.sport:
+                return bet_obj.game.sport.upper()
+            if bet_obj.sport and hasattr(bet_obj.sport, 'name') and bet_obj.sport.name:
+                return bet_obj.sport.name.upper()
+            return "UNKNOWN"
+
+        # Parlays (count once per parlay)
+        for _, legs in parlays_by_id.items():
+            if any(l.status == "void" for l in legs):
+                continue
+            status = "pending"
+            graded = [l for l in legs if l.status in ["won", "lost", "push", "void"]]
+            pending = [l for l in legs if l.status == "pending"]
+            if pending:
+                status = "pending"
+            elif all(l.status == "won" for l in graded) and len(graded) == len(legs):
+                status = "won"
+            elif any(l.status == "lost" for l in legs):
+                status = "lost"
+
+            stake = legs[0].original_stake or sum(l.stake or 0 for l in legs)
+            profit = 0.0
+            if status == "won":
+                profit = calculate_profit_from_parlay_odds(stake, legs[0].parlay_odds or 0.0)
+            elif status == "lost":
+                profit = -stake
+
+            sport_name = get_sport_name(legs[0])
             sport_stats[sport_name]["total"] += 1
-            sport_stats[sport_name]["total_staked"] += bet.stake or 0
-            
+            sport_stats[sport_name]["total_staked"] += stake
+            sport_stats[sport_name]["total_profit"] += profit
+            if status == "won":
+                sport_stats[sport_name]["won"] += 1
+            elif status == "lost":
+                sport_stats[sport_name]["lost"] += 1
+            elif status == "pending":
+                sport_stats[sport_name]["pending"] += 1
+
+        # Singles
+        for bet in singles:
+            if bet.status == "void":
+                continue
+            sport_name = get_sport_name(bet)
+            stake = bet.original_stake or bet.stake or 0
+            profit = 0.0
+            if bet.status == "won":
+                profit = calculate_profit_from_american_odds(stake, bet.odds or 0.0)
+            elif bet.status == "lost":
+                profit = -stake
+
+            sport_stats[sport_name]["total"] += 1
+            sport_stats[sport_name]["total_staked"] += stake
+            sport_stats[sport_name]["total_profit"] += profit
             if bet.status == "won":
                 sport_stats[sport_name]["won"] += 1
             elif bet.status == "lost":
                 sport_stats[sport_name]["lost"] += 1
             elif bet.status == "pending":
                 sport_stats[sport_name]["pending"] += 1
-            
-            if bet.profit is not None:
-                sport_stats[sport_name]["total_profit"] += bet.profit
         
         # Calculate win rates and ROI
         for sport, stats in sport_stats.items():
@@ -120,22 +175,74 @@ class AnalyticsSummary:
             "total_profit": 0.0
         })
         
-        # Count each leg individually
+        # Group bets by parlay_id; treat singles separately
+        parlays_by_id = defaultdict(list)
+        singles = []
         for bet in all_bets:
-            bet_type = bet.bet_type or "unknown"
-            
+            if bet.parlay_id:
+                parlays_by_id[bet.parlay_id].append(bet)
+            else:
+                singles.append(bet)
+        
+        # Separate 1-leg parlays into singles (treat as singles, not parlays)
+        one_leg_parlays = [pid for pid, legs in parlays_by_id.items() if len(legs) == 1]
+        for pid in one_leg_parlays:
+            singles.extend(parlays_by_id[pid])
+            del parlays_by_id[pid]
+
+        # Parlays
+        for _, legs in parlays_by_id.items():
+            if any(l.status == "void" for l in legs):
+                continue
+            status = "pending"
+            graded = [l for l in legs if l.status in ["won", "lost", "push", "void"]]
+            pending = [l for l in legs if l.status == "pending"]
+            if pending:
+                status = "pending"
+            elif all(l.status == "won" for l in graded) and len(graded) == len(legs):
+                status = "won"
+            elif any(l.status == "lost" for l in legs):
+                status = "lost"
+
+            stake = legs[0].original_stake or sum(l.stake or 0 for l in legs)
+            profit = 0.0
+            if status == "won":
+                profit = calculate_profit_from_parlay_odds(stake, legs[0].parlay_odds or 0.0)
+            elif status == "lost":
+                profit = -stake
+
+            bet_type = "parlay"
             type_stats[bet_type]["total"] += 1
-            type_stats[bet_type]["total_staked"] += bet.stake or 0
-            
+            type_stats[bet_type]["total_staked"] += stake
+            type_stats[bet_type]["total_profit"] += profit
+            if status == "won":
+                type_stats[bet_type]["won"] += 1
+            elif status == "lost":
+                type_stats[bet_type]["lost"] += 1
+            elif status == "pending":
+                type_stats[bet_type]["pending"] += 1
+
+        # Singles
+        for bet in singles:
+            if bet.status == "void":
+                continue
+            bet_type = bet.bet_type or "unknown"
+            stake = bet.original_stake or bet.stake or 0
+            profit = 0.0
+            if bet.status == "won":
+                profit = calculate_profit_from_american_odds(stake, bet.odds or 0.0)
+            elif bet.status == "lost":
+                profit = -stake
+
+            type_stats[bet_type]["total"] += 1
+            type_stats[bet_type]["total_staked"] += stake
+            type_stats[bet_type]["total_profit"] += profit
             if bet.status == "won":
                 type_stats[bet_type]["won"] += 1
             elif bet.status == "lost":
                 type_stats[bet_type]["lost"] += 1
             elif bet.status == "pending":
                 type_stats[bet_type]["pending"] += 1
-            
-            if bet.profit is not None:
-                type_stats[bet_type]["total_profit"] += bet.profit
         
         # Calculate win rates and ROI
         for bet_type, stats in type_stats.items():
@@ -160,11 +267,14 @@ class AnalyticsSummary:
         
         # Group by parlay_id first
         parlays_by_id = {}
+        singles = []
         for bet in all_bets:
             if bet.parlay_id:
                 if bet.parlay_id not in parlays_by_id:
                     parlays_by_id[bet.parlay_id] = []
                 parlays_by_id[bet.parlay_id].append(bet)
+            else:
+                singles.append(bet)
         
         now = datetime.utcnow()
         thirty_days_ago = now - timedelta(days=30)
@@ -190,16 +300,30 @@ class AnalyticsSummary:
                     graded_legs = [l for l in legs if l.status in ["won", "lost", "push", "void"]]
                     pending_legs = [l for l in legs if l.status == "pending"]
                     
+                    if any(l.status == "void" for l in legs):
+                        continue
                     if not pending_legs:
+                        bet_stake = legs[0].original_stake or sum(leg.stake or 0 for leg in legs)
                         if all(l.status == "won" for l in graded_legs) and len(graded_legs) == len(legs):
                             won += 1
-                            bet_stake = sum(leg.stake or 0 for leg in legs)
                             parlay_odds = legs[0].parlay_odds or 0.0
-                            profit += calculate_profit_from_american_odds(bet_stake, parlay_odds)
+                            profit += calculate_profit_from_parlay_odds(bet_stake, parlay_odds)
                         elif any(l.status == "lost" for l in legs):
                             lost += 1
-                            bet_stake = sum(leg.stake or 0 for leg in legs)
                             profit -= bet_stake
+
+            # Singles in this week
+            for bet in singles:
+                if bet.status == "void":
+                    continue
+                if bet.placed_at and week_start <= bet.placed_at < week_end:
+                    total += 1
+                    if bet.status == "won":
+                        won += 1
+                        profit += calculate_profit_from_american_odds(bet.original_stake or bet.stake or 0, bet.odds or 0.0)
+                    elif bet.status == "lost":
+                        lost += 1
+                        profit -= (bet.original_stake or bet.stake or 0)
             
             weekly_stats.append({
                 "week": f"Week {4 - week}",
@@ -228,18 +352,55 @@ class AnalyticsSummary:
         
         # Group ALL bets by parlay_id first
         bets_by_parlay_id = {}
+        singles = []
         for bet in all_bets:
             if bet.parlay_id:
                 if bet.parlay_id not in bets_by_parlay_id:
                     bets_by_parlay_id[bet.parlay_id] = []
                 bets_by_parlay_id[bet.parlay_id].append(bet)
+            else:
+                singles.append(bet)
         
         # Separate singles (1 leg) from parlays (2+ legs)
         single_outcomes = []
         parlay_outcomes = []
         
         for parlay_id, legs in bets_by_parlay_id.items():
-            stake = sum(leg.stake or 0 for leg in legs)
+            if any(l.status == "void" for l in legs):
+                continue
+            
+            # 1-leg parlays are treated as singles
+            if len(legs) == 1:
+                bet = legs[0]
+                stake = bet.original_stake or bet.stake or 0
+                status = "pending"
+                profit = 0.0
+                
+                if bet.status == "pending":
+                    status = "pending"
+                    profit = 0.0
+                elif bet.status == "won":
+                    status = "won"
+                    profit = calculate_profit_from_american_odds(stake, bet.odds or 0.0)
+                elif bet.status == "lost":
+                    status = "lost"
+                    profit = -stake
+                else:
+                    status = "pending"
+                    profit = 0.0
+                
+                single_outcomes.append({
+                    "parlay_id": parlay_id,
+                    "status": status,
+                    "legs": 1,
+                    "profit": profit,
+                    "stake": stake,
+                    "parlay_odds": None
+                })
+                continue
+            
+            # 2+ leg parlays
+            stake = legs[0].original_stake or sum(leg.stake or 0 for leg in legs)
             parlay_odds = legs[0].parlay_odds or 0.0
             
             # Determine status
@@ -251,7 +412,7 @@ class AnalyticsSummary:
                 profit = 0.0
             elif all(l.status == "won" for l in graded_legs) and len(graded_legs) == len(legs):
                 status = "won"
-                profit = calculate_profit_from_american_odds(stake, parlay_odds)
+                profit = calculate_profit_from_parlay_odds(stake, parlay_odds)
             elif any(l.status == "lost" for l in legs):
                 status = "lost"
                 profit = -stake
@@ -273,6 +434,57 @@ class AnalyticsSummary:
                 single_outcomes.append(outcome)
             else:
                 parlay_outcomes.append(outcome)
+        
+        # Add actual singles
+        for bet in singles:
+            if bet.status == "void":
+                continue
+            stake = bet.original_stake or bet.stake or 0.0
+            if bet.status == "pending":
+                status = "pending"
+                profit = 0.0
+            elif bet.status == "won":
+                status = "won"
+                profit = calculate_profit_from_american_odds(stake, bet.odds or 0.0)
+            elif bet.status == "lost":
+                status = "lost"
+                profit = -stake
+            else:
+                status = "pending"
+                profit = 0.0
+
+            single_outcomes.append({
+                "parlay_id": f"single-{bet.id}",
+                "status": status,
+                "legs": 1,
+                "profit": profit,
+                "stake": stake,
+                "parlay_odds": None
+            })
+
+        # Calculate leg-level wins/losses across ALL bets (singles + parlay legs)
+        # Match /bets logic: skip any group with a voided leg
+        leg_wins = 0
+        leg_losses = 0
+
+        # Parlay groups (including 1-leg parlays)
+        for _, legs in bets_by_parlay_id.items():
+            if any(l.status == "void" for l in legs):
+                continue
+            for leg in legs:
+                if leg.status == "won":
+                    leg_wins += 1
+                elif leg.status == "lost":
+                    leg_losses += 1
+
+        # Actual singles (no parlay_id)
+        for bet in singles:
+            if bet.status == "void":
+                continue
+            if bet.status == "won":
+                leg_wins += 1
+            elif bet.status == "lost":
+                leg_losses += 1
         
         def calc_stats(items):
             if not items:
@@ -319,7 +531,10 @@ class AnalyticsSummary:
             "singles": calc_stats(single_outcomes),
             "parlays": calc_stats(parlay_outcomes),
             "total_parlays": len(parlay_outcomes),
-            "parlay_details": parlay_outcomes
+            "parlay_details": parlay_outcomes,
+            "leg_wins": leg_wins,
+            "leg_losses": leg_losses,
+            "leg_total": leg_wins + leg_losses
         }
 
     async def by_source(self) -> Dict[str, Any]:
@@ -335,31 +550,81 @@ class AnalyticsSummary:
             "total_profit": 0.0
         })
         
+        parlays_by_id = defaultdict(list)
+        singles = []
         for bet in all_bets:
-            # Determine source based on reason field
-            # AAI bets have "confidence: XX%" in reason
-            # Custom bets have "Custom bet" in reason
-            # Manual bets are parsed from text (everything else)
+            if bet.parlay_id:
+                parlays_by_id[bet.parlay_id].append(bet)
+            else:
+                singles.append(bet)
+        
+        # Separate 1-leg parlays into singles (treat as singles, not parlays)
+        one_leg_parlays = [pid for pid, legs in parlays_by_id.items() if len(legs) == 1]
+        for pid in one_leg_parlays:
+            singles.extend(parlays_by_id[pid])
+            del parlays_by_id[pid]
+
+        def get_source(bet_obj):
             source = "Manual"
-            if bet.reason:
-                reason_lower = bet.reason.lower()
+            if bet_obj.reason:
+                reason_lower = bet_obj.reason.lower()
                 if "confidence:" in reason_lower or "aai" in reason_lower:
                     source = "AAI"
                 elif "custom" in reason_lower:
                     source = "Custom"
-            
+            return source
+
+        for _, legs in parlays_by_id.items():
+            if any(l.status == "void" for l in legs):
+                continue
+            source = get_source(legs[0])
+            status = "pending"
+            graded = [l for l in legs if l.status in ["won", "lost", "push", "void"]]
+            pending = [l for l in legs if l.status == "pending"]
+            if pending:
+                status = "pending"
+            elif all(l.status == "won" for l in graded) and len(graded) == len(legs):
+                status = "won"
+            elif any(l.status == "lost" for l in legs):
+                status = "lost"
+
+            stake = legs[0].original_stake or sum(l.stake or 0 for l in legs)
+            profit = 0.0
+            if status == "won":
+                profit = calculate_profit_from_parlay_odds(stake, legs[0].parlay_odds or 0.0)
+            elif status == "lost":
+                profit = -stake
+
             source_stats[source]["total"] += 1
-            source_stats[source]["total_staked"] += bet.stake or 0
-            
+            source_stats[source]["total_staked"] += stake
+            source_stats[source]["total_profit"] += profit
+            if status == "won":
+                source_stats[source]["won"] += 1
+            elif status == "lost":
+                source_stats[source]["lost"] += 1
+            elif status == "pending":
+                source_stats[source]["pending"] += 1
+
+        for bet in singles:
+            if bet.status == "void":
+                continue
+            source = get_source(bet)
+            stake = bet.original_stake or bet.stake or 0
+            profit = 0.0
+            if bet.status == "won":
+                profit = calculate_profit_from_american_odds(stake, bet.odds or 0.0)
+            elif bet.status == "lost":
+                profit = -stake
+
+            source_stats[source]["total"] += 1
+            source_stats[source]["total_staked"] += stake
+            source_stats[source]["total_profit"] += profit
             if bet.status == "won":
                 source_stats[source]["won"] += 1
             elif bet.status == "lost":
                 source_stats[source]["lost"] += 1
             elif bet.status == "pending":
                 source_stats[source]["pending"] += 1
-            
-            if bet.profit is not None:
-                source_stats[source]["total_profit"] += bet.profit
         
         # Calculate win rates and ROI
         for source, stats in source_stats.items():

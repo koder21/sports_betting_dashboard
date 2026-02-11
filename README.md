@@ -41,9 +41,25 @@ alembic upgrade head
 - **[PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)** - Codebase organization and architecture
 - **[BETTING_TRACKER_README.md](BETTING_TRACKER_README.md)** - How the AI betting system works
 - **[TIMEZONE_QUICK_START.md](TIMEZONE_QUICK_START.md)** - Setting up timezone preferences
+- **[COMMUNITY_INSIGHTS_QUICKSTART.md](COMMUNITY_INSIGHTS_QUICKSTART.md)** - What's trending in betting community
 - **[LATEST_UPDATES.md](LATEST_UPDATES.md)** - Recent feature additions
 
 ## ✨ Features
+
+### 🏟️ Community Insights
+See what the betting community is picking:
+- **Reddit** - Trending props from r/sportsbooks, r/nba, r/nfl
+- **Vegas** - Featured sportsbook props & line movements
+- **Discord** - Sharp bettors' picks from betting channels
+- **Anonymized** - Aggregate statistics, no personal info
+- **Real-time** - Updates as community discusses props
+
+Find what's hot in 3 steps:
+```bash
+pip install -r backend/requirements.txt
+python -m uvicorn main:app --reload
+curl http://localhost:8000/insights/trending?time_filter=day
+```
 
 ### 📊 Live Scores
 Real-time game updates from ESPN with:
@@ -233,4 +249,4 @@ Check the documentation guides in [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.m
 ---
 
 **Last Updated**: February 2026  
-**Status**: For private use only, bettings bad, this git can't be blamed for any losses you accrue.
+**Status**: For individual use only, bettings bad, this git can't be blamed for any losses you accrue.

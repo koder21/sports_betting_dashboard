@@ -4,6 +4,7 @@ Uses the proper ESPN API endpoints for reliable data fetching
 """
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone, timedelta, date
+import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text
 from sqlalchemy.dialects.sqlite import insert
@@ -22,7 +23,10 @@ class PlayerStatsScraper:
         ("basketball", "nba", "NBA"),
         ("basketball", "mens-college-basketball", "NCAAB"),
         ("football", "nfl", "NFL"),
+        ("football", "college-football", "NCAAF"),
         ("hockey", "nhl", "NHL"),
+        ("mma", "ufc", "UFC"),
+        ("soccer", "eng.1", "EPL"),
     ]
     
     def __init__(self, client: ESPNClient, session: AsyncSession):
@@ -36,16 +40,26 @@ class PlayerStatsScraper:
         total_teams = 0
         total_players = 0
         
+        # Fetch all sports teams concurrently instead of sequentially
+        team_fetch_tasks = []
+        sports_list = []
+        
         for sport_type, league, sport_name in self.SPORTS_CONFIG:
+            teams_url = f"https://site.api.espn.com/apis/site/v2/sports/{sport_type}/{league}/teams?limit=100"
+            team_fetch_tasks.append(self.client.get_json(teams_url))
+            sports_list.append((sport_type, league, sport_name))
+        
+        # Fetch all team lists concurrently
+        team_responses = await asyncio.gather(*team_fetch_tasks, return_exceptions=True)
+        
+        for (sport_type, league, sport_name), teams_data in zip(sports_list, team_responses):
+            if isinstance(teams_data, Exception) or not teams_data:
+                print(f"{sport_name}: Error fetching teams")
+                continue
+            
             try:
-                print(f"\n{sport_name}:")
-                
-                # Get all teams for this sport
-                teams_url = f"https://site.api.espn.com/apis/site/v2/sports/{sport_type}/{league}/teams?limit=100"
-                teams_data = await self.client.get_json(teams_url)
-                
-                if not teams_data or "sports" not in teams_data:
-                    print(f"  No teams data found")
+                if "sports" not in teams_data:
+                    print(f"{sport_name}: No teams data found")
                     continue
                 
                 # Navigate the ESPN teams structure
@@ -54,63 +68,71 @@ class PlayerStatsScraper:
                     for league_data in sport.get("leagues", []):
                         teams.extend(league_data.get("teams", []))
                 
-                print(f"  Found {len(teams)} teams")
+                print(f"{sport_name}: Found {len(teams)} teams")
+                
+                # Fetch all rosters concurrently for this sport
+                roster_tasks = []
+                team_list = []
                 
                 for team_data in teams:
                     team_info = team_data.get("team", {})
                     team_espn_id = str(team_info.get("id"))
-                    team_name = team_info.get("displayName")
                     
-                    if not team_espn_id:
+                    if team_espn_id:
+                        roster_url = f"https://site.api.espn.com/apis/site/v2/sports/{sport_type}/{league}/teams/{team_espn_id}?enable=roster"
+                        roster_tasks.append(self.client.get_json(roster_url))
+                        team_list.append((team_data, sport_type, league, sport_name))
+                
+                # Fetch all rosters concurrently
+                roster_responses = await asyncio.gather(*roster_tasks, return_exceptions=True)
+                
+                for team_data, roster_response in zip(team_list, roster_responses):
+                    team_info_data, sport_type_i, league_i, sport_name_i = team_data
+                    
+                    if isinstance(roster_response, Exception) or not roster_response:
                         continue
                     
-                    # Create unique team_id by prefixing with sport (ESPN reuses IDs across sports)
-                    team_id = f"{sport_name}-{team_espn_id}"
-                    
-                    # Upsert team first
-                    await self._upsert_team(
-                        team_id=team_id,
-                        name=team_name,
-                        abbreviation=team_info.get("abbreviation"),
-                        sport_name=sport_name,
-                        league=league,
-                    )
-                    
-                    # Fetch team roster - using site.api.espn.com which supports enable=roster
-                    roster_url = f"https://site.api.espn.com/apis/site/v2/sports/{sport_type}/{league}/teams/{team_espn_id}?enable=roster"
-                    roster_data = await self.client.get_json(roster_url)
-                    
-                    if not roster_data:
-                        continue
-                    
-                    roster = roster_data.get("team", {}).get("athletes", [])
-                    print(f"    {team_name}: {len(roster)} players")
-                    
-                    for athlete in roster:
-                        player_id = str(athlete.get("id"))
-                        player_name = (
-                            athlete.get("displayName")
-                            or athlete.get("fullName")
-                            or athlete.get("shortName")
-                        )
+                    try:
+                        team_info = team_info_data.get("team", {})
+                        team_espn_id = str(team_info.get("id"))
+                        team_name = team_info.get("displayName")
+                        team_id = f"{sport_name_i}-{team_espn_id}"
                         
-                        if not player_id:
-                            continue
-                        
-                        # Upsert player
-                        await self._upsert_player(
-                            player_id=player_id,
-                            name=athlete.get("displayName"),
-                            position=athlete.get("position", {}).get("abbreviation") if isinstance(athlete.get("position"), dict) else athlete.get("position"),
+                        # Upsert team first
+                        await self._upsert_team(
                             team_id=team_id,
-                            sport=sport_name,
-                            league=league,
-                            headshot=athlete.get("headshot", {}).get("href") if isinstance(athlete.get("headshot"), dict) else None,
-                            jersey=athlete.get("jersey"),
+                            name=team_name,
+                            abbreviation=team_info.get("abbreviation"),
+                            sport_name=sport_name_i,
+                            league=league_i,
                         )
-                        total_players += 1
-                    
-                    total_teams += 1
+                        
+                        roster = roster_response.get("team", {}).get("athletes", [])
+                        print(f"  {team_name}: {len(roster)} players")
+                        
+                        for athlete in roster:
+                            player_id = str(athlete.get("id"))
+                            
+                            if not player_id:
+                                continue
+                            
+                            # Upsert player
+                            await self._upsert_player(
+                                player_id=player_id,
+                                name=athlete.get("displayName"),
+                                position=athlete.get("position", {}).get("abbreviation") if isinstance(athlete.get("position"), dict) else athlete.get("position"),
+                                team_id=team_id,
+                                sport=sport_name_i,
+                                league=league_i,
+                                headshot=athlete.get("headshot", {}).get("href") if isinstance(athlete.get("headshot"), dict) else None,
+                                jersey=athlete.get("jersey"),
+                            )
+                            total_players += 1
+                        
+                        total_teams += 1
+                    except Exception as e:
+                        print(f"    Error processing roster: {e}")
+                        continue
                 
             except Exception as e:
                 print(f"  Error scraping {sport_name}: {e}")
@@ -209,11 +231,16 @@ class PlayerStatsScraper:
                 game_ids = await self._get_recent_game_ids(sport_type, league, effective_days_back)
                 print(f"{sport_name}: Found {len(game_ids)} completed games")
                 
+                # Process boxscores sequentially to avoid session conflicts
                 for game_id in game_ids:
-                    stats_added = await self._scrape_game_boxscore(
-                        game_id, sport_type, league, sport_name
-                    )
-                    total_stats += stats_added
+                    try:
+                        stats_count = await self._scrape_game_boxscore(
+                            game_id, sport_type, league, sport_name
+                        )
+                        total_stats += stats_count
+                    except Exception as e:
+                        print(f"Error scraping boxscore for game {game_id}: {e}")
+                        continue
                 
             except Exception as e:
                 print(f"Error scraping {sport_name} game stats: {e}")
@@ -290,26 +317,34 @@ class PlayerStatsScraper:
         await self.session.commit()
     
     async def _get_recent_game_ids(self, sport_type: str, league: str, days_back: int) -> List[str]:
-        """Get game IDs from recent days"""
-        game_ids = []
+        """Get game IDs from recent days - fetches all days concurrently"""
+        # Build all API requests upfront
+        fetch_tasks = []
+        dates = []
         
         for days_ago in range(days_back):
             date = (datetime.now(timezone.utc) - timedelta(days=days_ago)).strftime("%Y%m%d")
             url = f"https://site.api.espn.com/apis/site/v2/sports/{sport_type}/{league}/scoreboard?dates={date}"
+            fetch_tasks.append(self.client.get_json(url))
+            dates.append(date)
+        
+        # Fetch all dates concurrently
+        results = await asyncio.gather(*fetch_tasks, return_exceptions=True)
+        
+        game_ids = []
+        
+        for date, data in zip(dates, results):
+            if isinstance(data, Exception) or not data:
+                continue
             
             try:
-                data = await self.client.get_json(url)
-                if not data:
-                    continue
-                
                 events = data.get("events", [])
-                
                 for event in events:
                     status = event.get("status", {}).get("type", {}).get("name", "")
                     # Only process completed games
                     if status in ("STATUS_FINAL", "STATUS_FULL_TIME"):
                         game_ids.append(event.get("id"))
-            except Exception as e:
+            except Exception:
                 continue
         
         return game_ids
@@ -336,43 +371,80 @@ class PlayerStatsScraper:
             boxscore = data["boxscore"]
             stats_added = 0
             
-            # ESPN player stats are at boxscore.players
-            players_by_team = boxscore.get("players", [])
+            # Check if this is soccer (uses rosters format) or other sports (uses players format)
+            is_soccer = sport_type == "soccer"
             
-            for team_players in players_by_team:
-                team_info = team_players.get("team", {})
-                team_id = team_info.get("id")
-                
-                statistics_groups = team_players.get("statistics", [])
-                
-                for stat_group in statistics_groups:
-                    stat_type = stat_group.get("name", "")  # 'passing', 'rushing', 'receiving', etc.
-                    stat_labels = stat_group.get("labels", [])
-                    athletes = stat_group.get("athletes", [])
+            if is_soccer:
+                # Soccer format: use rosters from top level
+                rosters = data.get("rosters", [])
+                for roster in rosters:
+                    team_info = roster.get("team", {})
+                    team_id = team_info.get("id")
                     
-                    for athlete_data in athletes:
-                        athlete = athlete_data.get("athlete", {})
-                        stats = athlete_data.get("stats", [])
+                    players = roster.get("roster", [])
+                    for player_entry in players:
+                        athlete = player_entry.get("athlete", {})
+                        stats = player_entry.get("stats", [])
                         
-                        if not athlete:
+                        if not athlete or not athlete.get("id"):
                             continue
                         
                         player_id = str(athlete.get("id"))
+                        player_name = athlete.get("displayName") or athlete.get("fullName") or "Unknown"
                         
                         # Save stats for this game
                         stat_added = await self._save_player_stats(
                             game_id=game_id,
                             player_id=player_id,
                             player_name=player_name,
-                            team_id=str(team_id) if team_id else None,
+                            team_id=f"{sport_name}-{team_id}" if team_id else None,
                             sport=sport_name,
                             league=league,
                             stats_list=stats,
-                            stat_type=stat_type,
-                            stat_labels=stat_labels,
+                            stat_type="",
+                            stat_labels=[],
                         )
                         if stat_added:
                             stats_added += 1
+            else:
+                # NBA/NFL/NHL format: use boxscore.players
+                players_by_team = boxscore.get("players", [])
+                
+                for team_players in players_by_team:
+                    team_info = team_players.get("team", {})
+                    team_id = team_info.get("id")
+                    
+                    statistics_groups = team_players.get("statistics", [])
+                    
+                    for stat_group in statistics_groups:
+                        stat_type = stat_group.get("name", "")  # 'passing', 'rushing', 'receiving', etc.
+                        stat_labels = stat_group.get("labels", [])
+                        athletes = stat_group.get("athletes", [])
+                        
+                        for athlete_data in athletes:
+                            athlete = athlete_data.get("athlete", {})
+                            stats = athlete_data.get("stats", [])
+                            
+                            if not athlete:
+                                continue
+                            
+                            player_id = str(athlete.get("id"))
+                            player_name = athlete.get("displayName") or athlete.get("fullName") or "Unknown"
+                            
+                            # Save stats for this game
+                            stat_added = await self._save_player_stats(
+                                game_id=game_id,
+                                player_id=player_id,
+                                player_name=player_name,
+                                team_id=f"{sport_name}-{team_id}" if team_id else None,
+                                sport=sport_name,
+                                league=league,
+                                stats_list=stats,
+                                stat_type=stat_type,
+                                stat_labels=stat_labels,
+                            )
+                            if stat_added:
+                                stats_added += 1
             
             return stats_added
             
@@ -638,11 +710,9 @@ class PlayerStatsScraper:
                     sport=sport,
                 )
                 self.session.add(placeholder_player)
-                await self.session.flush()
             elif player_name and existing_player.name and existing_player.name.startswith("Player "):
                 # Upgrade placeholder name to real name when available
                 existing_player.name = player_name
-                await self.session.flush()
             
             # Check if stats already exist for this game/player
             result = await self.session.execute(
@@ -661,7 +731,6 @@ class PlayerStatsScraper:
                 for key, value in parsed_stats.items():
                     if value is not None:
                         setattr(existing, key, value)
-                await self.session.flush()  # Flush to ensure subsequent queries see the updates
                 return True
             else:
                 # Create new stats record
@@ -675,7 +744,6 @@ class PlayerStatsScraper:
                 )
             
                 self.session.add(stats_record)
-                await self.session.flush()  # Flush to ensure subsequent queries can find this record
                 return True
         except Exception as e:
             print(f"Error saving stats for player {player_id}: {e}")
@@ -685,6 +753,41 @@ class PlayerStatsScraper:
         """Parse ESPN stats array into database columns"""
         parsed = {}
         stat_labels = stat_labels or []
+        
+        # Handle soccer stats which come as [{name: ..., value: ...}] format
+        if sport == "EPL" and isinstance(stats_list, list) and stats_list and isinstance(stats_list[0], dict):
+            # Convert soccer stats dict format to flat dict
+            for stat_entry in stats_list:
+                stat_name = stat_entry.get("name", "").lower()
+                stat_value = stat_entry.get("value")
+                
+                if stat_value is None or stat_value == "":
+                    continue
+                
+                # Map soccer stat names to database columns
+                if stat_name == "totalgoals":
+                    parsed["points"] = self._to_int(stat_value)  # Use 'points' for goals to match display format
+                elif stat_name == "goalassists":
+                    parsed["assists"] = self._to_int(stat_value)
+                elif stat_name == "shotsontarget":
+                    parsed["steals"] = self._to_int(stat_value)  # Reuse 'steals' field for shots on target
+                elif stat_name == "saves":
+                    parsed["blocks"] = self._to_int(stat_value)  # Reuse 'blocks' field for saves
+                elif stat_name == "tackles":
+                    parsed["turnovers"] = self._to_int(stat_value)  # Reuse 'turnovers' field for tackles
+                elif stat_name == "tackles" or stat_name == "tackles":
+                    parsed["rebounds"] = self._to_int(stat_value)  # Reuse 'rebounds' field for tackles
+                elif stat_name == "yellowcards":
+                    parsed["fouls"] = self._to_int(stat_value)
+                elif stat_name == "redcards":
+                    parsed["fouls"] = (parsed.get("fouls", 0) or 0) + (self._to_int(stat_value) or 0) * 2
+                elif stat_name == "appearances":
+                    parsed["minutes"] = "1" if stat_value else None  # Just mark as played
+                elif stat_name == "totalshots":
+                    parsed["fg"] = f"{stat_value}-{stat_value}"
+                elif stat_name == "goalsconceded":
+                    parsed["turnovers"] = self._to_int(stat_value)  # For goalkeepers, track goals conceded
+            return parsed
         
         if sport in ["NBA", "NCAAB"]:
             # Basketball stats format from ESPN: [MIN, PTS, FG, 3PT, FT, REB, AST, TO, STL, BLK, OREB, DREB, PF, +/-]

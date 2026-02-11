@@ -133,7 +133,17 @@ function AAIBetsPage() {
       </div>
     );
   };
-
+  const renderMomentumBadge = (momentum) => {
+    if (!momentum || !momentum.pick_team) return null;
+    
+    const status = momentum.pick_team;
+    if (status === "FIRE") {
+      return <span className="momentum-badge fire">🔥 FIRE</span>;
+    } else if (status === "FREEZING") {
+      return <span className="momentum-badge freezing">🧊 FREEZING</span>;
+    }
+    return null;
+  };
   const openBetPlacementModal = (bet) => {
     setSelectedBet(bet);
     setShowPlacementModal(true);
@@ -276,7 +286,10 @@ function AAIBetsPage() {
                   {data.singles.map((pick) => (
                     <div key={`${pick.game_id}-${pick.pick}`} className="aai-card">
                       <div className="aai-card-header">
-                        <div className="aai-pick">{pick.pick}</div>
+                        <div className="aai-pick">
+                          {pick.pick}
+                          {pick.momentum && renderMomentumBadge(pick.momentum)}
+                        </div>
                         <div className="aai-confidence-column">
                           <div className="aai-confidence-label">Form</div>
                           <div className="aai-confidence">{pick.confidence}%</div>

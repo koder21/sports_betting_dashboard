@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../services/api.js";
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  AreaChart, Area, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import "./AnalyticsPage.css";
@@ -88,8 +89,20 @@ function AnalyticsPage() {
   const totalProfit = roi?.profit || 0;
   const totalStaked = roi?.total_staked || 0;
   const roiPercent = roi?.roi || 0;
-  const winRate = trends?.wins && (trends.wins + trends.losses) > 0 
-    ? ((trends.wins / (trends.wins + trends.losses)) * 100).toFixed(1)
+  
+  // Calculate leg-based win rate (from backend leg counts)
+  const gradedSinglesCount = (parlay_performance?.singles?.won || 0) + (parlay_performance?.singles?.lost || 0);
+  const gradedParlayCount = (parlay_performance?.parlay_details || []).filter(p => p.status !== "pending").length;
+  const legWins = parlay_performance?.leg_wins || 0;
+  const legLosses = parlay_performance?.leg_losses || 0;
+  const totalGradedLegs = parlay_performance?.leg_total || (legWins + legLosses);
+
+  // Match /bets win rate math: (leg wins + bet wins) / (leg wins + leg losses + bet wins + bet losses)
+  const betWins = (parlay_performance?.singles?.won || 0) + (parlay_performance?.parlays?.won || 0);
+  const betLosses = (parlay_performance?.singles?.lost || 0) + (parlay_performance?.parlays?.lost || 0);
+  const winRateDenominator = legWins + legLosses + betWins + betLosses;
+  const winRate = winRateDenominator > 0
+    ? (((legWins + betWins) / winRateDenominator) * 100).toFixed(1)
     : 0;
 
   return (
@@ -117,14 +130,14 @@ function AnalyticsPage() {
         <div className="kpi-card winrate">
           <div className="kpi-label">Win Rate</div>
           <div className="kpi-value">{winRate}%</div>
-          <div className="kpi-sublabel">{trends?.wins || 0}W - {trends?.losses || 0}L</div>
+          <div className="kpi-sublabel">{legWins + betWins}W - {legLosses + betLosses}L</div>
         </div>
 
         <div className="kpi-card total">
           <div className="kpi-label">Total Bets</div>
-          <div className="kpi-value">{roi?.total_bets || 0}</div>
+          <div className="kpi-value">{gradedSinglesCount + gradedParlayCount}</div>
           <div className="kpi-sublabel">
-            {parlay_performance?.singles?.total || 0} singles, {parlay_performance?.total_parlays || 0} parlays ({parlay_performance?.parlays?.total || 0} legs)
+            {gradedSinglesCount} singles, {gradedParlayCount} parlays ({totalGradedLegs} legs)
           </div>
         </div>
 
@@ -154,7 +167,7 @@ function AnalyticsPage() {
         
         {/* Win/Loss Distribution */}
         <div className="chart-card">
-          <h2 className="chart-title">Win/Loss Distribution</h2>
+          <h2 className="chart-title">🎲 Win/Loss Distribution</h2>
           {winLossData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -169,10 +182,17 @@ function AnalyticsPage() {
                   dataKey="value"
                 >
                   {winLossData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Cell key={`cell-${index}`} fill={entry.color} stroke="rgba(26, 26, 46, 0.8)" strokeWidth={2} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(26, 26, 46, 0.95)', 
+                    border: '1px solid rgba(78, 205, 196, 0.3)',
+                    borderRadius: '8px'
+                  }}
+                  labelStyle={{ color: '#4ECDC4' }}
+                />
               </PieChart>
             </ResponsiveContainer>
           ) : (
@@ -182,21 +202,25 @@ function AnalyticsPage() {
 
         {/* Performance by Sport */}
         <div className="chart-card wide">
-          <h2 className="chart-title">Performance by Sport</h2>
+          <h2 className="chart-title">🏆 Performance by Sport (Multi-Dimensional)</h2>
           {sportData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={sportData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="name" stroke="#ccc" />
-                <YAxis stroke="#ccc" />
+              <RadarChart data={sportData}>
+                <PolarGrid stroke="rgba(78, 205, 196, 0.2)" />
+                <PolarAngleAxis dataKey="name" stroke="#4ECDC4" />
+                <PolarRadiusAxis stroke="#4ECDC4" />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #444' }}
-                  labelStyle={{ color: '#fff' }}
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(26, 26, 46, 0.95)', 
+                    border: '1px solid rgba(78, 205, 196, 0.3)',
+                    borderRadius: '8px'
+                  }}
+                  labelStyle={{ color: '#4ECDC4' }}
                 />
                 <Legend />
-                <Bar dataKey="winRate" fill="#4a90e2" name="Win Rate %" />
-                <Bar dataKey="roi" fill="#2ecc71" name="ROI %" />
-              </BarChart>
+                <Radar name="Win Rate %" dataKey="winRate" stroke="#4ECDC4" fill="#4ECDC4" fillOpacity={0.6} />
+                <Radar name="ROI %" dataKey="roi" stroke="#FFE66D" fill="#FFE66D" fillOpacity={0.6} />
+              </RadarChart>
             </ResponsiveContainer>
           ) : (
             <div className="no-chart-data">No sport data available</div>
@@ -205,20 +229,24 @@ function AnalyticsPage() {
 
         {/* Bet Type Performance */}
         <div className="chart-card">
-          <h2 className="chart-title">Performance by Bet Type</h2>
+          <h2 className="chart-title">🎯 Performance by Bet Type</h2>
           {betTypeData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={betTypeData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="name" stroke="#ccc" />
-                <YAxis stroke="#ccc" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(78, 205, 196, 0.1)" />
+                <XAxis dataKey="name" stroke="#4ECDC4" />
+                <YAxis stroke="#4ECDC4" />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #444' }}
-                  labelStyle={{ color: '#fff' }}
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(26, 26, 46, 0.95)', 
+                    border: '1px solid rgba(78, 205, 196, 0.3)',
+                    borderRadius: '8px'
+                  }}
+                  labelStyle={{ color: '#4ECDC4' }}
                 />
                 <Legend />
-                <Bar dataKey="won" fill="#2ecc71" name="Won" />
-                <Bar dataKey="lost" fill="#e74c3c" name="Lost" />
+                <Bar dataKey="won" fill="#4ECDC4" name="Won" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="lost" fill="#FF6B6B" name="Lost" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
@@ -228,20 +256,24 @@ function AnalyticsPage() {
 
         {/* Parlays vs Singles Comparison */}
         <div className="chart-card">
-          <h2 className="chart-title">Parlays vs Singles</h2>
+          <h2 className="chart-title">🔀 Parlays vs Singles</h2>
           {parlayComparison.some(p => p.roi !== 0 || p.winRate !== 0) ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={parlayComparison}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="name" stroke="#ccc" />
-                <YAxis stroke="#ccc" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(78, 205, 196, 0.1)" />
+                <XAxis dataKey="name" stroke="#4ECDC4" />
+                <YAxis stroke="#4ECDC4" />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #444' }}
-                  labelStyle={{ color: '#fff' }}
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(26, 26, 46, 0.95)', 
+                    border: '1px solid rgba(78, 205, 196, 0.3)',
+                    borderRadius: '8px'
+                  }}
+                  labelStyle={{ color: '#4ECDC4' }}
                 />
                 <Legend />
-                <Bar dataKey="winRate" fill="#9b59b6" name="Win Rate %" />
-                <Bar dataKey="roi" fill="#1abc9c" name="ROI %" />
+                <Bar dataKey="winRate" fill="#FFE66D" name="Win Rate %" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="roi" fill="#4ECDC4" name="ROI %" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
@@ -252,21 +284,28 @@ function AnalyticsPage() {
         {/* Bet Source Performance (AAI, Custom, Manual) */}
         {by_source && Object.keys(by_source).length > 0 && (
           <div className="chart-card">
-            <h2 className="chart-title">Performance by Source</h2>
+            <h2 className="chart-title">🤖 Performance by Source</h2>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={Object.entries(by_source).map(([source, stats]) => ({
-                name: source,
-                winRate: parseFloat(stats.win_rate?.toFixed(1) || 0),
-                roi: parseFloat(stats.roi?.toFixed(1) || 0),
-                profit: parseFloat(stats.total_profit?.toFixed(2) || 0),
-                total: stats.total || 0
-              }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="name" stroke="#ccc" />
-                <YAxis stroke="#ccc" />
+              <BarChart 
+                data={Object.entries(by_source).map(([source, stats]) => ({
+                  name: source,
+                  winRate: parseFloat(stats.win_rate?.toFixed(1) || 0),
+                  roi: parseFloat(stats.roi?.toFixed(1) || 0),
+                  profit: parseFloat(stats.total_profit?.toFixed(2) || 0),
+                  total: stats.total || 0
+                }))}
+                layout="vertical"
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(78, 205, 196, 0.1)" />
+                <XAxis type="number" stroke="#4ECDC4" />
+                <YAxis type="category" dataKey="name" stroke="#4ECDC4" />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #444' }}
-                  labelStyle={{ color: '#fff' }}
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(26, 26, 46, 0.95)', 
+                    border: '1px solid rgba(78, 205, 196, 0.3)',
+                    borderRadius: '8px'
+                  }}
+                  labelStyle={{ color: '#4ECDC4' }}
                   formatter={(value, name) => {
                     if (name === 'winRate' || name === 'roi') return `${value}%`;
                     if (name === 'profit') return `$${value}`;
@@ -274,8 +313,8 @@ function AnalyticsPage() {
                   }}
                 />
                 <Legend />
-                <Bar dataKey="winRate" fill="#4a90e2" name="Win Rate %" />
-                <Bar dataKey="roi" fill="#2ecc71" name="ROI %" />
+                <Bar dataKey="winRate" fill="#4ECDC4" name="Win Rate %" radius={[0, 8, 8, 0]} />
+                <Bar dataKey="roi" fill="#FFE66D" name="ROI %" radius={[0, 8, 8, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -284,20 +323,35 @@ function AnalyticsPage() {
         {/* Weekly Performance Trend */}
         {over_time?.weekly && over_time.weekly.length > 0 && (
           <div className="chart-card wide">
-            <h2 className="chart-title">Performance Over Time (Last 4 Weeks)</h2>
+            <h2 className="chart-title">📈 Performance Over Time (Last 4 Weeks)</h2>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={over_time.weekly}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="week" stroke="#ccc" />
-                <YAxis stroke="#ccc" />
+              <AreaChart data={over_time.weekly}>
+                <defs>
+                  <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#4ECDC4" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#4ECDC4" stopOpacity={0.1}/>
+                  </linearGradient>
+                  <linearGradient id="winRateGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#FFE66D" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#FFE66D" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(78, 205, 196, 0.1)" />
+                <XAxis dataKey="week" stroke="#4ECDC4" />
+                <YAxis stroke="#4ECDC4" />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #444' }}
-                  labelStyle={{ color: '#fff' }}
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(26, 26, 46, 0.95)', 
+                    border: '1px solid rgba(78, 205, 196, 0.3)',
+                    borderRadius: '8px',
+                    backdropFilter: 'blur(10px)'
+                  }}
+                  labelStyle={{ color: '#4ECDC4' }}
                 />
                 <Legend />
-                <Line type="monotone" dataKey="profit" stroke="#2ecc71" strokeWidth={3} name="Profit" />
-                <Line type="monotone" dataKey="winRate" stroke="#4a90e2" strokeWidth={3} name="Win Rate %" />
-              </LineChart>
+                <Area type="monotone" dataKey="profit" stroke="#4ECDC4" strokeWidth={3} fillOpacity={1} fill="url(#profitGradient)" name="Profit ($)" />
+                <Area type="monotone" dataKey="winRate" stroke="#FFE66D" strokeWidth={3} fillOpacity={1} fill="url(#winRateGradient)" name="Win Rate %" />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         )}
@@ -305,23 +359,37 @@ function AnalyticsPage() {
         {/* EV vs Non-EV Performance */}
         {ev_kelly && (
           <div className="chart-card">
-            <h2 className="chart-title">+EV vs -EV Performance</h2>
+            <h2 className="chart-title">💡 +EV vs -EV Performance</h2>
             {ev_kelly.ev_bets > 0 || ev_kelly.negative_ev_bets > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={[
-                  { name: '+EV Bets', roi: ev_kelly.roi_on_positive_ev, count: ev_kelly.ev_bets, color: '#2ecc71' },
-                  { name: '-EV Bets', roi: ev_kelly.roi_on_negative_ev, count: ev_kelly.negative_ev_bets, color: '#e74c3c' }
-                ]}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                  <XAxis dataKey="name" stroke="#ccc" />
-                  <YAxis stroke="#ccc" />
+                <BarChart 
+                  data={[
+                    { name: '+EV Bets', roi: ev_kelly.roi_on_positive_ev, count: ev_kelly.ev_bets, color: '#4ECDC4' },
+                    { name: '-EV Bets', roi: ev_kelly.roi_on_negative_ev, count: ev_kelly.negative_ev_bets, color: '#FF6B6B' }
+                  ]}
+                  layout="vertical"
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(78, 205, 196, 0.1)" />
+                  <XAxis type="number" stroke="#4ECDC4" />
+                  <YAxis type="category" dataKey="name" stroke="#4ECDC4" />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #444' }}
-                    labelStyle={{ color: '#fff' }}
+                    contentStyle={{ 
+                      backgroundColor: 'rgba(26, 26, 46, 0.95)', 
+                      border: '1px solid rgba(78, 205, 196, 0.3)',
+                      borderRadius: '8px'
+                    }}
+                    labelStyle={{ color: '#4ECDC4' }}
                     formatter={(value) => `${value.toFixed(2)}%`}
                   />
                   <Legend />
-                  <Bar dataKey="roi" fill="#4a90e2" name="ROI %" />
+                  <Bar dataKey="roi" fill="#4ECDC4" name="ROI %" radius={[0, 8, 8, 0]}>
+                    {[
+                      { name: '+EV Bets', roi: ev_kelly.roi_on_positive_ev, count: ev_kelly.ev_bets },
+                      { name: '-EV Bets', roi: ev_kelly.roi_on_negative_ev, count: ev_kelly.negative_ev_bets }
+                    ].map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.name === '+EV Bets' ? '#4ECDC4' : '#FF6B6B'} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             ) : (

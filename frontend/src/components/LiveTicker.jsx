@@ -99,7 +99,7 @@ function LiveTicker() {
             <span
               key={`game-${g.game_id}-${g.status}`}
               className={`ticker-item ${g.status}`}
-              onClick={() => navigate(`/games/${g.game_id}`)}
+              onClick={() => navigate(`/games/${g.game_id}/details`)}
             >
               <span className="sport-icon">{sportIcon(g.sport)}</span>
 
@@ -124,7 +124,7 @@ function LiveTicker() {
             <span
               key={`game-dup-${g.game_id}-${g.status}`}
               className={`ticker-item ${g.status}`}
-              onClick={() => navigate(`/games/${g.game_id}`)}
+              onClick={() => navigate(`/games/${g.game_id}/details`)}
             >
               <span className="sport-icon">{sportIcon(g.sport)}</span>
 

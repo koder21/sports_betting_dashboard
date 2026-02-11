@@ -27,10 +27,14 @@
   background: white;
   border-radius: 12px;
   width: 90%;
-  max-width: 450px;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   animation: slideUp 0.3s ease-out;
   color: #333;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Dark mode support */
@@ -58,6 +62,7 @@
   align-items: center;
   padding: 20px;
   border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
 }
 
 .bet-placement-header h2 {
@@ -103,6 +108,8 @@
 
 .bet-placement-content {
   padding: 20px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .bet-details {
@@ -110,6 +117,8 @@
   border-radius: 8px;
   padding: 15px;
   margin-bottom: 20px;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .detail-row {
@@ -117,6 +126,9 @@
   justify-content: space-between;
   margin-bottom: 10px;
   font-size: 0.95rem;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-start;
 }
 
 .detail-row:last-child {
@@ -134,6 +146,8 @@
   text-align: right;
   flex: 1;
   margin-left: 10px;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Dark mode support */
@@ -324,5 +338,74 @@
   
   .bet-submit-btn:hover {
     background: #0a58ca;
+  }
+}
+
+/* Success state */
+.bet-placement-success {
+  padding: 60px 40px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  animation: successFadeIn 0.4s ease-out;
+}
+
+@keyframes successFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.success-checkmark {
+  font-size: 4rem;
+  color: #4caf50;
+  margin-bottom: 20px;
+  animation: checkmarkBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes checkmarkBounce {
+  0% {
+    transform: scale(0) rotate(-45deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(10deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.bet-placement-success h2 {
+  margin: 0 0 10px 0;
+  font-size: 1.8rem;
+  color: #333;
+}
+
+.bet-placement-success p {
+  margin: 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .bet-placement-success {
+    color: #e0e0e0;
+  }
+
+  .bet-placement-success h2 {
+    color: #e0e0e0;
+  }
+
+  .bet-placement-success p {
+    color: #999;
   }
 }

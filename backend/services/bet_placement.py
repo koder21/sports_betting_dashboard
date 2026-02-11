@@ -50,13 +50,14 @@ class BetPlacementService:
         Returns: Bet details
         """
         try:
-            # Get sport ID
-            sport_stmt = select(Sport).where(Sport.name == sport)
+            # Get sport ID - case-insensitive lookup
+            sport_normalized = sport.upper() if sport else ""
+            sport_stmt = select(Sport).where(Sport.name.ilike(sport_normalized))
             sport_result = await self.session.execute(sport_stmt)
             sport_obj = sport_result.scalar_one_or_none()
             
             if not sport_obj:
-                raise ValueError(f"Sport '{sport}' not found")
+                raise ValueError(f"Sport '{sport}' not found in database")
             
             # Create bet using same structure as BettingEngine
             bet = Bet(
@@ -67,7 +68,7 @@ class BetPlacementService:
                 original_stake=stake,  # Track original stake
                 stake=stake,  # Actual stake (no division for singles)
                 odds=odds,
-                bet_type="single",  # Match engine field names
+                bet_type="moneyline",  # Use 'moneyline' like regular single bets, not 'single'
                 selection=pick,  # Match engine field names
                 reason=f"AAI | Confidence: {combined_confidence}% | {reason}",  # Store confidence in reason
                 status="pending",  # Always start as pending
@@ -149,7 +150,7 @@ class BetPlacementService:
                     stake=stake_per_leg,  # Divided stake per leg
                     odds=leg["odds"],  # Individual leg odds
                     parlay_id=parlay_id,  # Group all legs by parlay_id
-                    bet_type="parlay",  # Mark as parlay
+                    bet_type="moneyline",  # Use 'moneyline' so legs get graded (not 'parlay')
                     selection=leg["pick"],
                     reason=f"AAI Parlay | Confidence: {leg['confidence']}% | {leg.get('reason', '')}",
                     status="pending"
@@ -215,7 +216,7 @@ class BetPlacementService:
                 original_stake=stake,
                 stake=stake,
                 odds=odds,
-                bet_type="single",
+                bet_type="moneyline",  # Use 'moneyline' like regular single bets
                 selection=pick,
                 reason=f"Custom Single | {notes}",
                 status="pending",
@@ -311,7 +312,7 @@ class BetPlacementService:
                     stake=stake_per_leg,  # Divided stake per leg
                     odds=leg["odds"],  # Individual leg odds
                     parlay_id=parlay_id,  # Group all legs
-                    bet_type="parlay",
+                    bet_type="moneyline",  # Use 'moneyline' so legs get graded (not 'parlay')
                     selection=leg["pick"],
                     reason=f"Custom Parlay | {notes}",
                     status="pending"

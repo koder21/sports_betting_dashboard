@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
-from sqlalchemy.orm import joinedload
+from sqlalchemy import select, and_, or_
+from sqlalchemy.orm import selectinload
 
 from ..db import get_session
 from ..services.intelligence.prop_intel import PropIntelligenceService
@@ -14,41 +14,88 @@ router = APIRouter()
 
 @router.get("/players")
 async def get_all_players(session: AsyncSession = Depends(get_session)):
-    """Get all players with basic info - team matched by both team_id and sport"""
-    result = await session.execute(
-        select(Player).order_by(Player.full_name)
-    )
-    players = result.scalars().all()
+    """Get all players with basic info - team matched by both team_id and sport.
     
-    player_list = []
-    for p in players:
-        team_name = None
-        if p.team_id and p.sport:
-            # Get team matching both team_id AND sport (important because ESPN reuses IDs across sports)
-            team_result = await session.execute(
-                select(Team).where(
-                    and_(Team.team_id == p.team_id, Team.sport_name == p.sport)
-                )
-            )
-            team = team_result.scalar_one_or_none()
-            if team:
-                team_name = team.name
+    OPTIMIZED: Uses eager loading to avoid N+1 query problem.
+    """
+    # Check if Player model has team relationship
+    try:
+        # Try with eager loading first (if relationship exists)
+        from sqlalchemy.orm import selectinload
+        result = await session.execute(
+            select(Player).options(
+                selectinload(Player.team)
+            ).order_by(Player.full_name)
+        )
+        players = result.scalars().unique().all()
         
-        player_list.append({
-            "player_id": p.player_id,
-            "full_name": p.full_name,
-            "name": p.name,
-            "position": p.position,
-            "team_id": p.team_id,
-            "team_name": team_name,
-            "sport": p.sport,
-            "league": p.league,
-            "headshot": p.headshot,
-            "jersey": p.jersey,
-            "active": p.active,
-        })
+        player_list = []
+        for p in players:
+            team_name = None
+            if hasattr(p, 'team') and p.team:
+                team_name = p.team.name
+            
+            player_list.append({
+                "player_id": p.player_id,
+                "full_name": p.full_name,
+                "name": p.name,
+                "position": p.position,
+                "team_id": p.team_id,
+                "team_name": team_name,
+                "sport": p.sport,
+                "league": p.league,
+                "headshot": p.headshot,
+                "jersey": p.jersey,
+                "active": p.active,
+            })
+        
+        return player_list
     
-    return player_list
+    except Exception:
+        # Fallback: If relationship doesn't exist, use bulk lookup pattern
+        result = await session.execute(
+            select(Player).order_by(Player.full_name)
+        )
+        players = result.scalars().all()
+        
+        # Bulk fetch teams to avoid N+1
+        team_filters = [
+            and_(Team.team_id == p.team_id, Team.sport_name == p.sport)
+            for p in players
+            if p.team_id and p.sport
+        ]
+        
+        teams = {}
+        if team_filters:
+            team_result = await session.execute(
+                select(Team).where(or_(*team_filters))
+            )
+            teams = {
+                (t.team_id, t.sport_name): t.name 
+                for t in team_result.scalars()
+            }
+        
+        player_list = []
+        for p in players:
+            team_name = None
+            if p.team_id and p.sport:
+                team_name = teams.get((p.team_id, p.sport))
+            
+            player_list.append({
+                "player_id": p.player_id,
+                "full_name": p.full_name,
+                "name": p.name,
+                "position": p.position,
+                "team_id": p.team_id,
+                "team_name": team_name,
+                "sport": p.sport,
+                "league": p.league,
+                "headshot": p.headshot,
+                "jersey": p.jersey,
+                "active": p.active,
+            })
+        
+        return player_list
 
 
 @router.get("/players/{player_id}/stats")

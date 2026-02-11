@@ -13,6 +13,7 @@ from ...repositories.injuries import InjuryRepository
 from ...models.alert import Alert
 from ...models import Standing, Team
 from ...utils import safe_sleep, safe_get
+from ...utils.json import normalize_json_payload
 
 
 class TeamLeagueScraper:
@@ -155,14 +156,14 @@ class TeamLeagueScraper:
 
             if "odds" in comp:
                 odds = comp["odds"][0]
-                game_data["lines_json"] = odds
+                game_data["lines_json"] = normalize_json_payload(odds)
             else:
                 odds_url = f"{BASE_CORE}{full_path}/events/{espn_id}/competitions/{espn_id}/odds"
                 try:
                     odds_resp = await self.client.get_json(odds_url)
                     odds_items = (odds_resp or {}).get("items") or (odds_resp or {}).get("odds") or []
                     if odds_items:
-                        game_data["lines_json"] = odds_items[0]
+                        game_data["lines_json"] = normalize_json_payload(odds_items[0])
                 except Exception:
                     pass
 
@@ -175,7 +176,7 @@ class TeamLeagueScraper:
                 try:
                     history = await self.client.get_json(history_url)
                     if history:
-                        game.odds_history_json = history
+                        game.odds_history_json = normalize_json_payload(history)
                         await self.session.flush()
                 except Exception:
                     pass
@@ -185,8 +186,8 @@ class TeamLeagueScraper:
             try:
                 summary = await self.client.get_json(summary_url)
                 if summary:
-                    game.boxscore_json = (summary or {}).get("boxscore", {})
-                    game.play_by_play_json = (summary or {}).get("plays", [])
+                    game.boxscore_json = normalize_json_payload((summary or {}).get("boxscore", {}))
+                    game.play_by_play_json = normalize_json_payload((summary or {}).get("plays", []))
                     await self.session.flush()
             except Exception:
                 pass
@@ -196,7 +197,9 @@ class TeamLeagueScraper:
             try:
                 h2h = await self.client.get_json(h2h_url)
                 if h2h:
-                    game.head_to_head_json = ((h2h or {}).get("items") or [])[:10]
+                    game.head_to_head_json = normalize_json_payload(
+                        ((h2h or {}).get("items") or [])[:10]
+                    )
                     await self.session.flush()
             except Exception:
                 pass

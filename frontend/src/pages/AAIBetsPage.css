@@ -402,6 +402,52 @@
   font-weight: 700;
   font-size: 1rem;
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.momentum-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.momentum-badge.fire {
+  background: linear-gradient(135deg, rgba(255, 87, 34, 0.3), rgba(244, 67, 54, 0.3));
+  color: #ff9800;
+  border: 1px solid rgba(255, 87, 34, 0.6);
+  animation: pulse-fire 2s infinite;
+}
+
+.momentum-badge.freezing {
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.3), rgba(3, 169, 244, 0.3));
+  color: #4fc3f7;
+  border: 1px solid rgba(33, 150, 243, 0.6);
+  animation: pulse-freeze 2s infinite;
+}
+
+@keyframes pulse-fire {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(255, 87, 34, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(255, 87, 34, 0.8);
+  }
+}
+
+@keyframes pulse-freeze {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(33, 150, 243, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(33, 150, 243, 0.8);
+  }
 }
 
 .aai-confidence-column {

@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import api from "../services/api.js";
+import { CommunityInsights } from "../components/CommunityInsights.jsx";
 
 function PropExplorerPage() {
   const [players, setPlayers] = useState([]);
   const [filteredPlayers, setFilteredPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [activeTab, setActiveTab] = useState("explorer");
   
   // Filters
   const [sportFilter, setSportFilter] = useState("all");
@@ -163,6 +166,29 @@ function PropExplorerPage() {
     <div className="prop-explorer-page">
       <h1>Prop Explorer</h1>
 
+      <div className="prop-tabs">
+        <button
+          className={activeTab === "explorer" ? "prop-tab active" : "prop-tab"}
+          onClick={() => setActiveTab("explorer")}
+        >
+          Player Explorer
+        </button>
+        <button
+          className={activeTab === "community" ? "prop-tab active" : "prop-tab"}
+          onClick={() => setActiveTab("community")}
+        >
+          Community Insights
+        </button>
+      </div>
+
+      {activeTab === "community" && (
+        <div className="community-tab">
+          <CommunityInsights />
+        </div>
+      )}
+
+      {activeTab === "explorer" && (
+        <>
       <div className="filters-bar">
         <div className="filter-group">
           <label>Sport:</label>
@@ -308,6 +334,8 @@ function PropExplorerPage() {
           )}
         </div>
       </div>
+        </>
+      )}
 
       <style>{`
         .prop-explorer-page {
@@ -320,6 +348,37 @@ function PropExplorerPage() {
           font-size: 2.5rem;
           font-weight: 700;
           margin-bottom: 30px;
+        }
+
+        .prop-tabs {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 20px;
+          border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .prop-tab {
+          padding: 10px 16px;
+          border: none;
+          background: transparent;
+          color: rgba(255, 255, 255, 0.7);
+          font-weight: 600;
+          cursor: pointer;
+          border-bottom: 2px solid transparent;
+          transition: all 0.2s ease;
+        }
+
+        .prop-tab:hover {
+          color: white;
+        }
+
+        .prop-tab.active {
+          color: #4a90e2;
+          border-bottom-color: #4a90e2;
+        }
+
+        .community-tab {
+          margin-top: 10px;
         }
 
         .filters-bar {

@@ -21,6 +21,11 @@ class BetParser:
     async def parse_multiple(self, text: str) -> List[Dict[str, Any]]:
         """Parse multiple parlays and singles from text format"""
         bets = []
+        
+        # First, split by 'Type:' to handle cases where bets are concatenated without newlines
+        # This is a preprocessing step before splitting by newlines
+        text = re.sub(r'(\.)(?=Type:)', r'\1\n', text)  # Add newline before 'Type:' if missing
+        
         lines = text.strip().split('\n')
         
         current_parlay = []
@@ -58,16 +63,8 @@ class BetParser:
                 
                 leg = await self._parse_leg(line, current_parlay_name)
                 if leg:
-                    # If grouping was auto and sport changes, start a new group
-                    if current_parlay and not current_parlay_explicit:
-                        last_sport_id = current_parlay[-1].get("sport_id")
-                        if last_sport_id and leg.get("sport_id") and last_sport_id != leg.get("sport_id"):
-                            bets.extend(current_parlay)
-                            current_parlay = []
-                            current_parlay_name = f"Parlay #{parlay_counter}"
-                            current_parlay_explicit = False
-                            parlay_counter += 1
-                            leg["parlay_name"] = current_parlay_name
+                    # Only split parlay groups on explicit blank lines or explicit parlay headers
+                    # Don't auto-split on sport changes - let user control grouping
                     current_parlay.append(leg)
         
         # Don't forget the last parlay

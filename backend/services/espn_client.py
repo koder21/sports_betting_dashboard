@@ -33,13 +33,18 @@ class ESPNClient:
 
     # removed @lru_cache (not compatible with async functions)
     async def get_json(self, url: str) -> Optional[Dict[str, Any]]:
+        """Fetch JSON from ESPN API with graceful error handling"""
         session = await self._get_session()
         try:
             async with session.get(url, timeout=10) as resp:
                 if resp.status != 200:
                     return None
                 return await resp.json()
+        except asyncio.TimeoutError:
+            # Timeout is expected for some slow endpoints
+            return None
         except Exception:
+            # Other errors: return None gracefully for resilience
             return None
 
     async def close(self) -> None:
@@ -60,35 +65,29 @@ class ESPNClient:
         return await self.get_json(fallback_url)
 
     def date_range_params(self, days_back: int = 1, days_forward: int = 1) -> tuple[str, str]:
-        """Return start and end date strings suitable for ESPN scoreboard `dates` param.
-
-        Defaults to today-days_back through today+days_forward in YYYYMMDD format.
-        """
-        from datetime import datetime, timedelta
-
+        """Return date range for ESPN scoreboard API queries in YYYYMMDD format"""
         now = datetime.utcnow()
         start = (now - timedelta(days=days_back)).strftime("%Y%m%d")
         end = (now + timedelta(days=days_forward)).strftime("%Y%m%d")
         return start, end
 
     def parse_date(self, date_str: str) -> datetime:
-        """Parse an ESPN date string into a timezone-aware UTC datetime.
-
-        Falls back to python-dateutil for forgiving parsing.
+        """Parse ESPN date strings into UTC datetime objects.
+        
+        Supports ISO format (fastest), falls back to dateutil for other formats.
         """
-        from datetime import datetime, timezone
         try:
-            # ESPN often uses ISO format with trailing Z
+            # ESPN often uses ISO format with trailing Z (fastest path)
             dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
             return dt.astimezone(timezone.utc)
-        except Exception:
+        except ValueError:
             try:
+                # Fallback to dateutil for non-standard formats
                 from dateutil import parser as _parser
-
                 dt = _parser.parse(date_str)
                 if dt.tzinfo is None:
                     dt = dt.replace(tzinfo=timezone.utc)
                 return dt.astimezone(timezone.utc)
             except Exception:
-                # As a last resort, return current time
+                # Last resort: return current UTC time
                 return datetime.utcnow().replace(tzinfo=timezone.utc)

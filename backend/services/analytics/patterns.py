@@ -51,7 +51,7 @@ class BettingPatternsAnalytics:
         
         for bet in graded_bets:
             is_win = bet.status == "won"
-            sport = bet.sport.name if bet.sport else "Unknown"
+            sport = bet.sport.name.upper() if bet.sport else "UNKNOWN"
             bet_type = bet.bet_type or "Unknown"
             
             # Sport stats

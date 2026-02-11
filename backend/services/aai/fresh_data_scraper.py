@@ -14,6 +14,7 @@ from ...models.injury import Injury
 from ...models.team import Team
 from ..espn_client import ESPNClient
 from ..weather import WeatherService
+from ..metrics import metrics_collector
 
 
 def parse_iso_datetime(dt_string: str) -> Optional[datetime]:
@@ -69,19 +70,22 @@ class FreshDataScraper:
         errors = []
         
         try:
-            games_count = await self._scrape_todays_games()
+            async with metrics_collector.measure("fresh_scrape_games"):
+                games_count = await self._scrape_todays_games()
         except Exception as e:
             errors.append(f"Games: {str(e)[:100]}")
             print(f"  ❌ Games scrape failed: {e}")
         
         try:
-            injuries_count = await self._scrape_injuries()
+            async with metrics_collector.measure("fresh_scrape_injuries"):
+                injuries_count = await self._scrape_injuries()
         except Exception as e:
             errors.append(f"Injuries: {str(e)[:100]}")
             print(f"  ❌ Injuries scrape failed: {e}")
         
         try:
-            weather_count = await self._update_weather()
+            async with metrics_collector.measure("fresh_scrape_weather"):
+                weather_count = await self._update_weather()
         except Exception as e:
             errors.append(f"Weather: {str(e)[:100]}")
             print(f"  ❌ Weather scrape failed: {e}")
@@ -109,78 +113,92 @@ class FreshDataScraper:
         return summary
     
     async def _scrape_todays_games(self) -> int:
-        """Scrape today's games from ESPN for all sports."""
+        """Scrape today's games from ESPN for all sports - concurrent requests."""
         today = datetime.now(timezone.utc).strftime("%Y%m%d")
         
         total_games = 0
         # Store team ESPN IDs for injury scraping
         self.team_espn_ids = []
         
+        # Build all sport API calls concurrently
+        game_fetch_tasks = []
+        sports_list = []
+        
         for sport_type, league, sport_name in self.SPORTS:
             url = f"https://site.api.espn.com/apis/site/v2/sports/{sport_type}/{league}/scoreboard?dates={today}"
-            data = await self.espn_client.get_json(url)
-            
-            if not data:
+            game_fetch_tasks.append(self.espn_client.get_json(url))
+            sports_list.append((sport_type, league, sport_name))
+        
+        # Fetch all sports data concurrently
+        results = await asyncio.gather(*game_fetch_tasks, return_exceptions=True)
+        
+        # Process results
+        for (sport_type, league, sport_name), data in zip(sports_list, results):
+            if isinstance(data, Exception) or not data:
                 continue
             
-            events = data.get("events", [])
-            
-            for event in events:
-                game_id = event.get("id")
-                status = event.get("status", {})
-                status_type = status.get("type", {}).get("name", "")
+            try:
+                events = data.get("events", [])
                 
-                competitions = event.get("competitions", [])
-                if not competitions:
-                    continue
-                
-                comp = competitions[0]
-                competitors = comp.get("competitors", [])
-                
-                home_team = next((c for c in competitors if c.get("homeAway") == "home"), None)
-                away_team = next((c for c in competitors if c.get("homeAway") == "away"), None)
-                
-                if not home_team or not away_team:
-                    continue
-                
-                home_name = home_team.get("team", {}).get("displayName", "")
-                away_name = away_team.get("team", {}).get("displayName", "")
-                home_espn_id = home_team.get("team", {}).get("id")
-                away_espn_id = away_team.get("team", {}).get("id")
-                home_score = int(home_team.get("score", 0) or 0)
-                away_score = int(away_team.get("score", 0) or 0)
-                
-                start_time_str = event.get("date", "")
-                
-                # Store ESPN IDs for injury scraping later
-                if home_espn_id:
-                    self.team_espn_ids.append((home_espn_id, home_name, sport_name))
-                if away_espn_id:
-                    self.team_espn_ids.append((away_espn_id, away_name, sport_name))
-                
-                # Upsert to games_upcoming if scheduled
-                if status_type in ("STATUS_SCHEDULED", "STATUS_POSTPONED"):
-                    await self._upsert_upcoming_game(
-                        game_id=game_id,
-                        sport=sport_name,
-                        home_team=home_name,
-                        away_team=away_name,
-                        start_time=start_time_str,
-                        status=status_type
-                    )
-                    total_games += 1
-                
-                # Upsert to games_live if in progress
-                elif status_type == "STATUS_IN_PROGRESS":
-                    await self._upsert_live_game(
-                        game_id=game_id,
-                        sport=sport_name,
-                        home_team=home_name,
-                        away_team=away_name,
-                        home_score=home_score,
-                        away_score=away_score
-                    )
-                    total_games += 1
+                for event in events:
+                    game_id = event.get("id")
+                    status = event.get("status", {})
+                    status_type = status.get("type", {}).get("name", "")
+                    
+                    competitions = event.get("competitions", [])
+                    if not competitions:
+                        continue
+                    
+                    comp = competitions[0]
+                    competitors = comp.get("competitors", [])
+                    
+                    home_team = next((c for c in competitors if c.get("homeAway") == "home"), None)
+                    away_team = next((c for c in competitors if c.get("homeAway") == "away"), None)
+                    
+                    if not home_team or not away_team:
+                        continue
+                    
+                    home_name = home_team.get("team", {}).get("displayName", "")
+                    away_name = away_team.get("team", {}).get("displayName", "")
+                    home_espn_id = home_team.get("team", {}).get("id")
+                    away_espn_id = away_team.get("team", {}).get("id")
+                    home_score = int(home_team.get("score", 0) or 0)
+                    away_score = int(away_team.get("score", 0) or 0)
+                    
+                    start_time_str = event.get("date", "")
+                    
+                    # Store ESPN IDs for injury scraping later
+                    if home_espn_id:
+                        self.team_espn_ids.append((home_espn_id, home_name, sport_name))
+                    if away_espn_id:
+                        self.team_espn_ids.append((away_espn_id, away_name, sport_name))
+                    
+                    # Upsert to games_upcoming if scheduled
+                    if status_type in ("STATUS_SCHEDULED", "STATUS_POSTPONED"):
+                        await self._upsert_upcoming_game(
+                            game_id=game_id,
+                            sport=sport_name,
+                            home_team=home_name,
+                            away_team=away_name,
+                            start_time=start_time_str,
+                            status=status_type
+                        )
+                        total_games += 1
+                    
+                    # Upsert to games_live if in progress
+                    elif status_type == "STATUS_IN_PROGRESS":
+                        await self._upsert_live_game(
+                            game_id=game_id,
+                            sport=sport_name,
+                            home_team=home_name,
+                            away_team=away_name,
+                            home_score=home_score,
+                            away_score=away_score
+                        )
+                        total_games += 1
+            except Exception as e:
+                print(f"  ⚠️ Error processing {sport_name} games: {str(e)[:100]}")
+                continue
         
         await self.session.commit()
         return total_games
@@ -252,7 +270,7 @@ class FreshDataScraper:
             self.session.add(new_game)
     
     async def _scrape_injuries(self) -> int:
-        """Scrape injuries for all teams playing today."""
+        """Scrape injuries for all teams playing today - optimized with concurrent team fetches."""
         # Use the ESPN team IDs collected during game scraping
         if not self.team_espn_ids:
             print("  ⚠️ No team ESPN IDs found - skipping injuries")
@@ -262,8 +280,8 @@ class FreshDataScraper:
         unique_teams = list(set(self.team_espn_ids))
         print(f"  🔍 Checking injuries for {len(unique_teams)} teams...")
         
-        total_injuries = 0
-        
+        # Fetch injuries for all teams concurrently
+        injury_tasks = []
         for espn_id, team_name, sport in unique_teams:
             # Determine the league path based on sport
             if sport == "NBA":
@@ -277,8 +295,19 @@ class FreshDataScraper:
             else:
                 continue
             
-            # Fetch injuries using ESPN's v2 API
-            injuries = await self._fetch_team_injuries_v2(espn_id, team_name, league_path)
+            # Queue injury fetch for this team
+            injury_tasks.append(self._fetch_team_injuries_v2(espn_id, team_name, league_path))
+        
+        # Execute all team injury fetches concurrently
+        results = await asyncio.gather(*injury_tasks, return_exceptions=True)
+        
+        # Collect all injuries and upsert
+        total_injuries = 0
+        for result in results:
+            if isinstance(result, Exception):
+                continue
+            
+            injuries = result
             total_injuries += len(injuries)
             
             # Upsert each injury
@@ -290,84 +319,95 @@ class FreshDataScraper:
         return total_injuries
     
     async def _fetch_team_injuries_v2(self, team_espn_id: str, team_name: str, league_path: str) -> List[Dict]:
-        """Fetch injuries for a team using ESPN's v2 API (with nested refs)."""
+        """Fetch injuries for a team using ESPN's v2 API (with nested refs) - optimized with concurrent requests."""
         try:
-            # First, get the list of injury references (with generous timeout)
+            # First, get the list of injury references
             url = f"https://sports.core.api.espn.com/v2/sports/{league_path}/teams/{team_espn_id}/injuries"
-            data = await asyncio.wait_for(
-                self.espn_client.get_json(url),
-                timeout=15.0  # 15 second timeout
-            )
+            data = await self.espn_client.get_json(url)
             
             if not data or "items" not in data:
                 return []
             
-            injuries = []
-            
-            # Get ALL injuries - don't limit
             items = data.get("items", [])
+            if not items:
+                return []
             
-            # Fetch each injury detail from the nested reference
+            # Step 1: Fetch all injury details concurrently (much faster)
+            injury_detail_tasks = []
             for item in items:
-                try:
-                    ref_url = item.get("$ref")
-                    if not ref_url:
-                        continue
-                    
-                    injury_detail = await asyncio.wait_for(
-                        self.espn_client.get_json(ref_url),
-                        timeout=10.0  # 10 second timeout per injury
-                    )
-                    if not injury_detail:
-                        continue
-                    
-                    # Extract athlete info from the nested athlete reference
-                    athlete_ref = injury_detail.get("athlete", {}).get("$ref")
-                    player_id = None
-                    player_name = "Unknown"
-                    
-                    if athlete_ref:
-                        try:
-                            athlete_data = await asyncio.wait_for(
-                                self.espn_client.get_json(athlete_ref),
-                                timeout=10.0  # 10 second timeout per athlete
-                            )
-                            if athlete_data:
-                                player_id = str(athlete_data.get("id", ""))
-                                player_name = athlete_data.get("displayName", "Unknown")
-                        except asyncio.TimeoutError:
-                            pass  # Use default values
-                    
-                    # Build injury record
-                    status = injury_detail.get("status", "Unknown")
-                    details = injury_detail.get("details", {})
-                    injury_type = details.get("type", "Unknown")
-                    location = details.get("location", "")
-                    detail = details.get("detail", "")
-                    
-                    description = f"{injury_type}"
-                    if location:
-                        description += f" ({location})"
-                    if detail:
-                        description += f" - {detail}"
-                    
-                    # Use team_espn_id as team_id since we don't have internal team_ids
-                    injuries.append({
-                        "player_id": player_id or player_name,  # Fallback to name if no ID
-                        "team_id": team_espn_id,  # Use ESPN ID directly
-                        "status": status,
-                        "description": description,
-                        "last_updated": datetime.now(timezone.utc)
-                    })
-                    
-                    print(f"    🏥 {team_name}: {player_name} - {status} ({injury_type})")
-                except (asyncio.TimeoutError, Exception) as e:
-                    # Skip this injury if it fails but keep going
-                    print(f"    ⚠️ Skipped one injury for {team_name}: {str(e)[:50]}")
+                ref_url = item.get("$ref")
+                if ref_url:
+                    injury_detail_tasks.append(self.espn_client.get_json(ref_url))
+            
+            if not injury_detail_tasks:
+                return []
+            
+            injury_details = await asyncio.gather(*injury_detail_tasks, return_exceptions=True)
+            
+            # Step 2: Collect all athlete refs to fetch concurrently
+            athlete_tasks = {}
+            injury_records = []  # Keep track of injury data with athlete refs
+            
+            for injury_detail in injury_details:
+                if isinstance(injury_detail, Exception) or not injury_detail:
                     continue
+                
+                athlete_ref = injury_detail.get("athlete", {}).get("$ref")
+                if athlete_ref:
+                    # Store the injury detail and athlete ref for later processing
+                    if athlete_ref not in athlete_tasks:
+                        athlete_tasks[athlete_ref] = self.espn_client.get_json(athlete_ref)
+                    injury_records.append((injury_detail, athlete_ref))
+                else:
+                    # No athlete ref, process immediately
+                    injury_records.append((injury_detail, None))
+            
+            # Step 3: Fetch all athlete data concurrently
+            athlete_data_dict = {}
+            if athlete_tasks:
+                athlete_results = await asyncio.gather(*athlete_tasks.values(), return_exceptions=True)
+                athlete_refs = list(athlete_tasks.keys())
+                for ref, result in zip(athlete_refs, athlete_results):
+                    if not isinstance(result, Exception) and result:
+                        athlete_data_dict[ref] = result
+            
+            # Step 4: Build injury records with fetched athlete data
+            injuries = []
+            for injury_detail, athlete_ref in injury_records:
+                player_id = None
+                player_name = "Unknown"
+                
+                if athlete_ref and athlete_ref in athlete_data_dict:
+                    athlete_data = athlete_data_dict[athlete_ref]
+                    player_id = str(athlete_data.get("id", ""))
+                    player_name = athlete_data.get("displayName", "Unknown")
+                
+                # Build injury record
+                status = injury_detail.get("status", "Unknown")
+                details = injury_detail.get("details", {})
+                injury_type = details.get("type", "Unknown")
+                location = details.get("location", "")
+                detail = details.get("detail", "")
+                
+                description = f"{injury_type}"
+                if location:
+                    description += f" ({location})"
+                if detail:
+                    description += f" - {detail}"
+                
+                injuries.append({
+                    "player_id": player_id or player_name,
+                    "team_id": team_espn_id,
+                    "status": status,
+                    "description": description,
+                    "last_updated": datetime.now(timezone.utc)
+                })
+                
+                if player_name != "Unknown":
+                    print(f"    🏥 {team_name}: {player_name} - {status} ({injury_type})")
             
             return injuries
-        except (asyncio.TimeoutError, Exception) as e:
+        except Exception as e:
             print(f"    ⚠️ {team_name}: Failed to fetch injuries ({str(e)[:50]})")
             return []
     

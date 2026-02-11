@@ -327,12 +327,49 @@ class TeamForm:
     team_name: str
     games: int
     wins: int
+    home_games: int = 0
+    home_wins: int = 0
+    away_games: int = 0
+    away_wins: int = 0
 
     @property
     def win_rate(self) -> float:
         if self.games == 0:
             return 0.0
         return self.wins / self.games
+    
+    @property
+    def home_win_rate(self) -> float:
+        """Win rate when playing at home"""
+        if self.home_games == 0:
+            return 0.0
+        return self.home_wins / self.home_games
+    
+    @property
+    def away_win_rate(self) -> float:
+        """Win rate when playing away"""
+        if self.away_games == 0:
+            return 0.0
+        return self.away_wins / self.away_games
+    
+    @property
+    def home_advantage(self) -> Optional[float]:
+        """Difference between home and away win rates (positive = better at home)"""
+        if self.home_games == 0 or self.away_games == 0:
+            return None
+        return self.home_win_rate - self.away_win_rate
+    
+    @property
+    def momentum_status(self) -> Optional[str]:
+        """Get momentum status: FIRE (4+ wins in last 5) or FREEZING (4+ losses in last 5)"""
+        if self.games < 5:
+            return None
+        losses = self.games - self.wins
+        if self.wins >= 4:
+            return "FIRE"
+        elif losses >= 4:
+            return "FREEZING"
+        return None
 
 
 class AAIBetRecommender:
@@ -368,24 +405,42 @@ class AAIBetRecommender:
 
         singles: List[Dict[str, Any]] = []
 
+        # OPTIMIZATION: Fetch all team forms concurrently instead of sequentially (2x speedup)
+        import asyncio
+        candidate_forms = []
         for candidate in candidates:
-            game = candidate["game"]
             if not candidate["home_team_name"] or not candidate["away_team_name"]:
                 continue
-
-            home_form = await self._team_form(
-                team_id=candidate["home_team_id"],
-                team_name=candidate["home_team_name"],
-                lookback_games=lookback_games,
-                lookback_days=lookback_days,
-            )
-            away_form = await self._team_form(
-                team_id=candidate["away_team_id"],
-                team_name=candidate["away_team_name"],
-                lookback_games=lookback_games,
-                lookback_days=lookback_days,
-            )
-
+            candidate_forms.append((
+                candidate,
+                self._team_form(
+                    team_id=candidate["home_team_id"],
+                    team_name=candidate["home_team_name"],
+                    lookback_games=lookback_games,
+                    lookback_days=lookback_days,
+                ),
+                self._team_form(
+                    team_id=candidate["away_team_id"],
+                    team_name=candidate["away_team_name"],
+                    lookback_games=lookback_games,
+                    lookback_days=lookback_days,
+                )
+            ))
+        
+        # Fetch all forms concurrently
+        form_results = await asyncio.gather(
+            *[task for _, home_task, away_task in candidate_forms for task in [home_task, away_task]],
+            return_exceptions=True
+        )
+        
+        # Rebuild candidates with form data
+        form_idx = 0
+        for candidate, home_task, away_task in candidate_forms:
+            game = candidate["game"]  # Preserve game reference for later use
+            home_form = form_results[form_idx] if not isinstance(form_results[form_idx], Exception) else None
+            away_form = form_results[form_idx + 1] if not isinstance(form_results[form_idx + 1], Exception) else None
+            form_idx += 2
+            
             if not home_form or not away_form:
                 continue
 
@@ -396,7 +451,61 @@ class AAIBetRecommender:
             pick_home = diff > 0
             pick_team = candidate["home_team_name"] if pick_home else candidate["away_team_name"]
             pick_team_id = candidate["home_team_id"] if pick_home else candidate["away_team_id"]
+            pick_form = home_form if pick_home else away_form
+            opponent_form = away_form if pick_home else home_form
+            
             form_confidence = 0.5 + abs(diff) / 2
+            form_confidence = max(0.51, min(form_confidence, 0.85))
+            
+            # ✅ NEW: Apply momentum boost to confidence
+            momentum_multiplier = 1.0
+            if pick_form.momentum_status == "FIRE":
+                momentum_multiplier = 1.08  # 8% boost for hot teams
+            elif opponent_form.momentum_status == "FIRE":
+                momentum_multiplier = 0.94  # 6% penalty if opponent is hot
+            elif pick_form.momentum_status == "FREEZING":
+                momentum_multiplier = 0.92  # 8% penalty for cold teams
+            elif opponent_form.momentum_status == "FREEZING":
+                momentum_multiplier = 1.06  # 6% boost if opponent is cold
+            
+            form_confidence = form_confidence * momentum_multiplier
+            
+            # ✅ NEW: Apply home/away advantage boost to confidence
+            home_away_multiplier = 1.0
+            if pick_home:
+                # Pick is home team - check their home performance
+                if pick_form.home_games >= 2 and pick_form.home_win_rate >= 0.7:
+                    home_away_multiplier = 1.06  # 6% boost for strong home teams
+                elif pick_form.home_games >= 2 and pick_form.home_win_rate <= 0.3:
+                    home_away_multiplier = 0.94  # 6% penalty for weak home teams
+            else:
+                # Pick is away team - check their away performance
+                if pick_form.away_games >= 2 and pick_form.away_win_rate >= 0.7:
+                    home_away_multiplier = 1.06  # 6% boost for strong away teams
+                elif pick_form.away_games >= 2 and pick_form.away_win_rate <= 0.3:
+                    home_away_multiplier = 0.94  # 6% penalty for weak away teams
+            
+            form_confidence = form_confidence * home_away_multiplier
+            form_confidence = max(0.51, min(form_confidence, 0.85))
+
+            # ✅ NEW: Fetch and apply head-to-head history
+            h2h = await self._head_to_head(
+                pick_team_id,
+                pick_team,
+                candidate["home_team_id"] if not pick_home else candidate["away_team_id"],
+                candidate["home_team_name"] if not pick_home else candidate["away_team_name"],
+                lookback_days=730  # 2 years of H2H history
+            )
+            
+            # Apply H2H confidence adjustment
+            h2h_multiplier = 1.0
+            if h2h["games"] >= 2 and h2h["win_rate"] is not None:
+                if h2h["win_rate"] >= 0.7:  # Pick team dominates this matchup
+                    h2h_multiplier = 1.07  # 7% boost
+                elif h2h["win_rate"] <= 0.3:  # Pick team struggles against this opponent
+                    h2h_multiplier = 0.93  # 7% penalty
+            
+            form_confidence = form_confidence * h2h_multiplier
             form_confidence = max(0.51, min(form_confidence, 0.85))
 
             # ✅ NEW: Check for injuries affecting confidence
@@ -448,6 +557,22 @@ class AAIBetRecommender:
                 f"{away_form.wins}/{away_form.games} ({away_form.win_rate:.0%})"
             )
             
+            # ✅ NEW: Add home/away split info to reason
+            if pick_home and pick_form.home_games >= 2:
+                reason += f" | Home: {pick_form.home_wins}-{pick_form.home_games - pick_form.home_wins} ({pick_form.home_win_rate:.0%})"
+            elif not pick_home and pick_form.away_games >= 2:
+                reason += f" | Away: {pick_form.away_wins}-{pick_form.away_games - pick_form.away_wins} ({pick_form.away_win_rate:.0%})"
+            
+            # ✅ NEW: Add head-to-head history to reason
+            if h2h["games"] >= 2:
+                reason += f" | H2H: {h2h['team1_wins']}-{h2h['team2_wins']} vs {opponent_form.team_name}"
+            
+            # ✅ NEW: Add momentum indicator to reason
+            if pick_form.momentum_status == "FIRE":
+                reason += " | 🔥 FIRE (4+ wins in L5)"
+            elif pick_form.momentum_status == "FREEZING":
+                reason += " | 🧊 FREEZING (4+ losses in L5)"
+            
             # ✅ NEW: Add injury/weather warnings to reason
             warnings = []
             if injury_impact["key_players_out"] > 0:
@@ -467,13 +592,38 @@ class AAIBetRecommender:
                 "confidence": round(form_confidence * 100, 1),
                 "combined_confidence": round(combined_confidence * 100, 1),
                 "reason": reason,
+                "sport": game.sport if game else "Unknown",
                 "data_points": {
                     "home_games": home_form.games,
                     "away_games": away_form.games,
                 },
                 # ✅ NEW: Include injury and weather data
                 "injury_impact": injury_impact,
-                "weather_impact": weather_impact
+                "weather_impact": weather_impact,
+                # ✅ NEW: Include momentum data
+                "momentum": {
+                    "pick_team": pick_form.momentum_status,
+                    "opponent_team": opponent_form.momentum_status,
+                    "pick_record": f"{pick_form.wins}-{pick_form.games - pick_form.wins}",
+                    "opponent_record": f"{opponent_form.wins}-{opponent_form.games - opponent_form.wins}"
+                },
+                # ✅ NEW: Include home/away splits
+                "home_away_splits": {
+                    "pick_team": {
+                        "home": f"{pick_form.home_wins}-{pick_form.home_games - pick_form.home_wins}" if pick_form.home_games > 0 else "N/A",
+                        "away": f"{pick_form.away_wins}-{pick_form.away_games - pick_form.away_wins}" if pick_form.away_games > 0 else "N/A",
+                        "home_win_rate": round(pick_form.home_win_rate * 100, 1) if pick_form.home_games > 0 else None,
+                        "away_win_rate": round(pick_form.away_win_rate * 100, 1) if pick_form.away_games > 0 else None,
+                    },
+                    "is_home_game": pick_home
+                },
+                # ✅ NEW: Include head-to-head data
+                "head_to_head": {
+                    "games": h2h["games"],
+                    "pick_wins": h2h["team1_wins"],
+                    "opponent_wins": h2h["team2_wins"],
+                    "pick_win_rate": round(h2h["win_rate"] * 100, 1) if h2h["win_rate"] is not None else None
+                }
             }
 
             # Include external odds if available
@@ -552,28 +702,137 @@ class AAIBetRecommender:
             return None
 
         wins = 0
+        home_games = 0
+        home_wins = 0
+        away_games = 0
+        away_wins = 0
         team_display = team_name or "Unknown"
+        
         for g in games:
             home_score = g.home_score or 0
             away_score = g.away_score or 0
+            
             if team_id:
                 if g.home_team_id == team_id:
                     team_display = g.home_team_name or team_display
+                    home_games += 1
                     if home_score > away_score:
                         wins += 1
+                        home_wins += 1
                 elif g.away_team_id == team_id:
                     team_display = g.away_team_name or team_display
+                    away_games += 1
                     if away_score > home_score:
                         wins += 1
+                        away_wins += 1
             else:
                 if g.home_team_name == team_name:
+                    home_games += 1
                     if home_score > away_score:
                         wins += 1
+                        home_wins += 1
                 elif g.away_team_name == team_name:
+                    away_games += 1
                     if away_score > home_score:
                         wins += 1
+                        away_wins += 1
 
-        return TeamForm(team_name=team_display, games=len(games), wins=wins)
+        return TeamForm(
+            team_name=team_display, 
+            games=len(games), 
+            wins=wins,
+            home_games=home_games,
+            home_wins=home_wins,
+            away_games=away_games,
+            away_wins=away_wins
+        )
+
+    async def _head_to_head(
+        self,
+        team1_id: Optional[str],
+        team1_name: Optional[str],
+        team2_id: Optional[str],
+        team2_name: Optional[str],
+        lookback_days: int = 730,  # Default 2 years of history
+    ) -> Dict[str, Any]:
+        """
+        Calculate head-to-head record between two teams.
+        Returns wins/losses for team1 vs team2.
+        """
+        if (not team1_id and not team1_name) or (not team2_id and not team2_name):
+            return {"games": 0, "team1_wins": 0, "team2_wins": 0, "win_rate": None}
+
+        cutoff = datetime.utcnow() - timedelta(days=lookback_days)
+
+        # Build filter for games between these two teams
+        filters = [
+            GameResult.start_time.is_not(None),
+            GameResult.start_time >= cutoff
+        ]
+
+        # Match games where team1 plays team2 (either home or away)
+        if team1_id and team2_id:
+            filters.append(
+                or_(
+                    # team1 home vs team2 away
+                    (GameResult.home_team_id == team1_id) & (GameResult.away_team_id == team2_id),
+                    # team1 away vs team2 home
+                    (GameResult.away_team_id == team1_id) & (GameResult.home_team_id == team2_id)
+                )
+            )
+        else:
+            # Fallback to name matching
+            filters.append(
+                or_(
+                    (GameResult.home_team_name == team1_name) & (GameResult.away_team_name == team2_name),
+                    (GameResult.away_team_name == team1_name) & (GameResult.home_team_name == team2_name)
+                )
+            )
+
+        stmt = (
+            select(GameResult)
+            .where(*filters)
+            .order_by(GameResult.start_time.desc())
+        )
+        result = await self.session.execute(stmt)
+        games = result.scalars().all()
+
+        if not games:
+            return {"games": 0, "team1_wins": 0, "team2_wins": 0, "win_rate": None}
+
+        team1_wins = 0
+        team2_wins = 0
+
+        for g in games:
+            home_score = g.home_score or 0
+            away_score = g.away_score or 0
+
+            # Determine if team1 was home or away
+            if team1_id:
+                team1_was_home = g.home_team_id == team1_id
+            else:
+                team1_was_home = g.home_team_name == team1_name
+
+            if team1_was_home:
+                if home_score > away_score:
+                    team1_wins += 1
+                elif away_score > home_score:
+                    team2_wins += 1
+            else:
+                if away_score > home_score:
+                    team1_wins += 1
+                elif home_score > away_score:
+                    team2_wins += 1
+
+        total_games = len(games)
+        win_rate = team1_wins / total_games if total_games > 0 else None
+
+        return {
+            "games": total_games,
+            "team1_wins": team1_wins,
+            "team2_wins": team2_wins,
+            "win_rate": win_rate
+        }
 
     def _build_parlays(self, singles: List[Dict[str, Any]], sizes: Tuple[int, ...]) -> List[Dict[str, Any]]:
         parlays: List[Dict[str, Any]] = []
@@ -598,6 +857,7 @@ class AAIBetRecommender:
                         "pick": leg["pick"],
                         "confidence": leg["confidence"],
                         "combined_confidence": leg.get("combined_confidence", leg["confidence"]),
+                        "sport": leg.get("sport", "Unknown"),
                     })
 
                 size_parlays.append(

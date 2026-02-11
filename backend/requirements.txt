@@ -11,3 +11,6 @@ sqlalchemy
 aiohttp
 python-dotenv
 alembic
+praw
+praw-deprecated
+requests

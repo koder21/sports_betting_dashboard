@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Background -->
+  <rect width="64" height="64" fill="#1a1a2e" rx="8"/>
+  
+  <!-- Grid background -->
+  <g stroke="#4ECDC4" stroke-width="0.5" opacity="0.3">
+    <line x1="8" y1="0" x2="8" y2="64"/>
+    <line x1="16" y1="0" x2="16" y2="64"/>
+    <line x1="24" y1="0" x2="24" y2="64"/>
+    <line x1="32" y1="0" x2="32" y2="64"/>
+    <line x1="40" y1="0" x2="40" y2="64"/>
+    <line x1="48" y1="0" x2="48" y2="64"/>
+    <line x1="56" y1="0" x2="56" y2="64"/>
+    <line x1="0" y1="8" x2="64" y2="8"/>
+    <line x1="0" y1="16" x2="64" y2="16"/>
+    <line x1="0" y1="24" x2="64" y2="24"/>
+    <line x1="0" y1="32" x2="64" y2="32"/>
+    <line x1="0" y1="40" x2="64" y2="40"/>
+    <line x1="0" y1="48" x2="64" y2="48"/>
+    <line x1="0" y1="56" x2="64" y2="56"/>
+  </g>
+  
+  <!-- Chart bars -->
+  <g fill="url(#barGradient)">
+    <rect x="12" y="40" width="4" height="16" rx="1"/>
+    <rect x="20" y="32" width="4" height="24" rx="1"/>
+    <rect x="28" y="24" width="4" height="32" rx="1"/>
+    <rect x="36" y="28" width="4" height="28" rx="1"/>
+    <rect x="44" y="20" width="4" height="36" rx="1"/>
+  </g>
+  
+  <!-- Trend line -->
+  <polyline
+    points="14,42 22,34 30,26 38,30 46,22"
+    fill="none"
+    stroke="#FFE66D"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  
+  <!-- Up arrow indicator -->
+  <g fill="#86efac">
+    <polygon points="52,12 56,18 48,18"/>
+  </g>
+  
+  <!-- Gradients -->
+  <defs>
+    <linearGradient id="barGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4ECDC4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#45B7B0;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>

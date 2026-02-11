@@ -1,5 +1,5 @@
 import json
-from typing import Any
+from typing import Any, Optional
 from datetime import datetime
 
 
@@ -26,3 +26,27 @@ def to_primitive(data: Any) -> Any:
     Returns the transformed structure (not a JSON string).
     """
     return _serialize(data)
+
+
+def normalize_json_payload(data: Any) -> Optional[Any]:
+    """Normalize payloads destined for JSON columns.
+
+    - Accepts dict/list directly
+    - If a string is provided, attempts to parse JSON
+    - Returns None when invalid or non-serializable
+    """
+    if data is None:
+        return None
+
+    if isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except Exception:
+            return None
+
+    try:
+        primitive = _serialize(data)
+        json.dumps(primitive, ensure_ascii=False)
+        return primitive
+    except Exception:
+        return None

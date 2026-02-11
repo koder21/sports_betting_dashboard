@@ -6,6 +6,7 @@ from sqlalchemy import select
 
 from .base import BaseRepository
 from ..models import Game
+from ..utils.json import normalize_json_payload
 
 
 class GameRepository(BaseRepository[Game]):
@@ -76,6 +77,15 @@ class GameRepository(BaseRepository[Game]):
         game_id = data.get("game_id") or data.get("espn_id")
         if not game_id:
             raise ValueError("payload must have game_id or espn_id")
+        for json_key in (
+            "lines_json",
+            "odds_history_json",
+            "play_by_play_json",
+            "boxscore_json",
+            "head_to_head_json",
+        ):
+            if json_key in data:
+                data[json_key] = normalize_json_payload(data.get(json_key))
         sport_id = data.get("sport_id")
         game = await self.get_by_espn(str(game_id), sport_id)
 

@@ -50,9 +50,12 @@ async def scrape_sport(sport_name: str, session: AsyncSession = Depends(get_sess
 @router.post("/fix-orphaned-players")
 async def fix_orphaned_players(session: AsyncSession = Depends(get_session)):
     """
-    Create player records for all orphaned player_ids in player_stats
-    This fixes the issue where player_stats exist but the player doesn't
+    Create player records for all orphaned player_ids in player_stats.
+    This fixes the issue where player_stats exist but the player doesn't.
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
         # Get all unique player_ids from player_stats that don't have a player record
         result = await session.execute(
@@ -66,30 +69,43 @@ async def fix_orphaned_players(session: AsyncSession = Depends(get_session)):
         
         orphaned = result.fetchall()
         created_count = 0
+        failed_count = 0
+        errors = []
         
         for player_id, sport in orphaned:
-            # Insert minimal player record with player_id and sport
-            await session.execute(
-                text("""
-                    INSERT OR IGNORE INTO players (player_id, name, sport)
-                    VALUES (:player_id, :name, :sport)
-                """),
-                {"player_id": player_id, "name": f"Player {player_id}", "sport": sport}
-            )
-            created_count += 1
-        
-        await session.commit()
+            try:
+                # Insert minimal player record with player_id and sport
+                await session.execute(
+                    text("""
+                        INSERT OR IGNORE INTO players (player_id, name, sport)
+                        VALUES (:player_id, :name, :sport)
+                    """),
+                    {"player_id": player_id, "name": f"Player {player_id}", "sport": sport}
+                )
+                created_count += 1
+                await session.commit()  # Commit per record to isolate failures
+            except Exception as e:
+                failed_count += 1
+                await session.rollback()
+                error_msg = f"Failed to create player {player_id}: {str(e)}"
+                logger.error(error_msg, exc_info=True)
+                errors.append(error_msg)
         
         return {
-            "status": "ok",
-            "message": f"Created {created_count} missing player records",
-            "orphaned_fixed": created_count
+            "status": "ok" if failed_count == 0 else "partial",
+            "message": f"Created {created_count} players, failed {failed_count}",
+            "orphaned_fixed": created_count,
+            "orphaned_failed": failed_count,
+            "errors": errors[:10]  # Return first 10 errors for debugging
         }
     except Exception as e:
+        logger.error("[Scraping] fix-orphaned-players failed: %s", e, exc_info=True)
         await session.rollback()
         return {
             "status": "error",
-            "message": str(e)
+            "message": f"Batch operation failed: {str(e)}",
+            "orphaned_fixed": 0,
+            "orphaned_failed": 0
         }
 
 

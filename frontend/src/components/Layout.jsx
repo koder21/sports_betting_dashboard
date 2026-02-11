@@ -91,7 +91,11 @@ function Layout({ children }) {
         </nav>
       </aside>
       <main className="main-content">
-        <LiveTicker />   {/* ⭐ NEW — always visible */}
+        {/* Hide ticker on analytics pages and live page for better performance */}
+        {!location.pathname.startsWith('/analytics') && 
+         !location.pathname.startsWith('/sports-analytics') && 
+         !location.pathname.startsWith('/live') &&
+         <LiveTicker />}
         {children}
       </main>
       <AlertToasts />
