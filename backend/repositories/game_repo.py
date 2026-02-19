@@ -1,8 +1,8 @@
-from typing import Optional, Sequence
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from typing import Any, Optional, Sequence
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .base import BaseRepository
 from ..models import Game
@@ -10,14 +10,33 @@ from ..utils.json import normalize_json_payload
 
 
 class GameRepository(BaseRepository[Game]):
-    def __init__(self, session: AsyncSession) -> None:
-        super().__init__(session, Game)
+    """
+    Repository for Game entities with specialized upsert and JSON handling.
+    """
 
-    async def get_by_espn(self, espn_id: str, sport_id: Optional[int] = None) -> Optional[Game]:
-        """Get game by ESPN id (game_id). sport_id optional filter."""
-        stmt = select(Game).where(Game.game_id == espn_id)
+    JSON_FIELDS = {
+        "lines_json",
+        "odds_history_json",
+        "play_by_play_json",
+        "boxscore_json",
+        "head_to_head_json",
+    }
+
+    def __init__(self, session: AsyncSession) -> None:
+        super().__init__(Game, session)
+        # Cache column names for fast validation
+        self._valid_columns = set(Game.__table__.columns.keys())
+
+    async def get_by_espn(
+        self,
+        espn_id: str,
+        sport_id: Optional[int] = None,
+    ) -> 'Optional[Game]':
+        stmt = select(Game).where(Game.game_id == espn_id).limit(1)
+
         if sport_id is not None:
             stmt = stmt.where(Game.sport_id == sport_id)
+
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -28,9 +47,10 @@ class GameRepository(BaseRepository[Game]):
         away_team_id: str,
         target_date: datetime,
         tolerance_days: int = 1,
-    ) -> Optional[Game]:
+    ) -> 'Optional[Game]':
         start = target_date - timedelta(days=tolerance_days)
         end = target_date + timedelta(days=tolerance_days)
+
         stmt = (
             select(Game)
             .where(
@@ -41,96 +61,103 @@ class GameRepository(BaseRepository[Game]):
                 Game.start_time <= end,
             )
             .order_by(Game.start_time.asc())
+            .limit(1)
         )
+
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def list_by_date_range(
-        self,
-        sport_id: int,
-        start: datetime,
-        end: datetime,
-    ) -> Sequence[Game]:
-        stmt = select(Game).where(
-            Game.sport_id == sport_id,
-            Game.start_time >= start,
-            Game.start_time <= end,
-        )
-        result = await self.session.execute(stmt)
-        return result.scalars().all()
-
-    async def list_upcoming(self) -> Sequence[Game]:
-        now = datetime.utcnow()
+    async def list_upcoming(self, *, limit: int = 200) -> Sequence[Game]:
+        now = datetime.now(timezone.utc)
         stmt = (
             select(Game)
             .where(
                 Game.start_time > now,
                 Game.status == "upcoming",
             )
-            .order_by(Game.start_time)
+            .order_by(Game.start_time.asc())
+            .limit(limit)
         )
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
-    async def upsert_from_payload(self, data: dict) -> Game:
-        """Upsert using a payload with game_id (or espn_id) and optional sport_id."""
+    async def upsert(self, game_data: dict[str, Any]) -> Game:
+        """
+        High-level upsert that normalizes input data before persistence.
+        """
+        # Create a copy to avoid mutating the original input
+        data = game_data.copy()
+
+        # 1. Resolve Game ID
         game_id = data.get("game_id") or data.get("espn_id")
         if not game_id:
-            raise ValueError("payload must have game_id or espn_id")
-        for json_key in (
-            "lines_json",
-            "odds_history_json",
-            "play_by_play_json",
-            "boxscore_json",
-            "head_to_head_json",
-        ):
-            if json_key in data:
-                data[json_key] = normalize_json_payload(data.get(json_key))
-        sport_id = data.get("sport_id")
-        game = await self.get_by_espn(str(game_id), sport_id)
+            raise ValueError("Payload must contain 'game_id' or 'espn_id'")
+        
+        # Ensure ID is string and stored in the primary field
+        data["game_id"] = str(game_id)
+        # Remove alias to prevent keyword argument errors
+        data.pop("espn_id", None) 
 
-        if not game:
-            game = Game(**{k: v for k, v in data.items() if hasattr(Game, k)})
-            if not game.game_id:
-                game.game_id = str(game_id)
-            self.session.add(game)
-        else:
-            for k, v in data.items():
-                if hasattr(Game, k):
-                    setattr(game, k, v)
+        # 2. Normalize Dates
+        date_val = data.pop("date", None)
+        if date_val and not data.get("start_time"):
+            if isinstance(date_val, datetime):
+                data["start_time"] = date_val
+            else:
+                try:
+                    data["start_time"] = datetime.fromisoformat(str(date_val))
+                except (ValueError, TypeError):
+                    data["start_time"] = None
 
-        await self.session.flush()
-        return game
+        # 3. Normalize JSON Fields
+        for key in self.JSON_FIELDS:
+            if key in data:
+                data[key] = normalize_json_payload(data[key])
 
-    async def upsert(self, game_data: dict) -> Game:
-        """Normalize scraper payload (espn_id, date, int ids) and upsert."""
-        from datetime import datetime as dt
-
-        data = dict(game_data)
-        data["game_id"] = data.get("game_id") or data.get("espn_id")
-        if not data["game_id"]:
-            raise ValueError("game_data must have game_id or espn_id")
-
-        date_val = data.get("date")
-        if date_val is not None and isinstance(date_val, dt):
-            data["start_time"] = date_val
-        elif data.get("start_time") is None and "date" in data:
-            # attempt to parse if string
-            try:
-                data["start_time"] = dt.fromisoformat(str(data["date"]))
-            except Exception:
-                data["start_time"] = None
-        data.pop("date", None)
-        data.pop("espn_id", None)
-
-        for key in ("home_team_id", "away_team_id"):
-            if key in data and data[key] is not None:
-                data[key] = str(data[key])
-
-        status = data.get("status", "")
+        # 4. Normalize Status
+        status = data.get("status")
         if status in ("STATUS_FINAL", "STATUS_FULL_TIME"):
             data["status"] = "final"
-        elif status and not data.get("status"):
-            data["status"] = status
+        
+        # 5. Type Cast IDs
+        for key in ("home_team_id", "away_team_id", "sport_id"):
+             if key in data and data[key] is not None:
+                 # sport_id is int, others are str usually
+                 if key == "sport_id":
+                     data[key] = int(data[key])
+                 else:
+                     data[key] = str(data[key])
 
-        return await self.upsert_from_payload(data)
+        return await self._perform_upsert(data)
+
+    async def _perform_upsert(self, clean_data: dict[str, Any]) -> Game:
+        """
+        Internal method to execute the upsert on the database.
+        """
+        game_id = clean_data["game_id"]
+        sport_id = clean_data.get("sport_id")
+
+        # Check existence
+        existing_game = await self.get_by_espn(game_id, sport_id)
+
+        # Filter dictionary to only include keys that exist in the model
+        valid_payload = {
+            k: v for k, v in clean_data.items() 
+            if k in self._valid_columns
+        }
+
+        if not existing_game:
+            new_game = Game(**valid_payload)
+            self.session.add(new_game)
+            # Flush is used here to generate the primary key (id) if other
+            # operations immediately rely on it.
+            await self.session.flush()
+            return new_game
+        else:
+            # Update existing instance
+            for key, value in valid_payload.items():
+                if getattr(existing_game, key) != value:
+                    setattr(existing_game, key, value)
+            
+            # No flush needed unless requested by caller, but generally safe to wait for commit
+            return existing_game

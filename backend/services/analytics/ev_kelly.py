@@ -1,5 +1,7 @@
 from typing import Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
+from backend.db import get_session
 import math
 
 from ...repositories.bet_repo import BetRepository
@@ -83,13 +85,18 @@ def is_positive_ev(odds: float, win_probability: float) -> bool:
 
 
 class EVKellyAnalytics:
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: Optional[AsyncSession] = None):
         self.session = session
-        self.bets = BetRepository(session)
+        self.bets = BetRepository(session) if session else None
 
     async def compute(self) -> Dict[str, Any]:
         """Compute EV and Kelly metrics for all bets"""
-        all_bets = await self.bets.list_all_with_relations()
+        if self.session is None:
+            async with get_session() as session:
+                bets = BetRepository(session)
+                all_bets = await bets.list_all_with_relations()
+        else:
+            all_bets = await self.bets.list_all_with_relations()
         
         if not all_bets:
             return {
@@ -113,7 +120,7 @@ class EVKellyAnalytics:
                 if b.parlay_id not in parlays_by_id:
                     parlays_by_id[b.parlay_id] = []
                     parlay_odds[b.parlay_id] = []
-                    parlay_stakes[b.parlay_id] = b.stake or 0
+                    parlay_stakes[b.parlay_id] = b.original_stake
                 parlays_by_id[b.parlay_id].append(b)
                 if b.odds:
                     parlay_odds[b.parlay_id].append(float(b.odds))
@@ -130,6 +137,8 @@ class EVKellyAnalytics:
         
         for parlay_id, legs in parlays_by_id.items():
             stake = parlay_stakes[parlay_id]
+            if stake is None:
+                continue
             odds_list = parlay_odds[parlay_id]
             
             # Determine parlay outcome

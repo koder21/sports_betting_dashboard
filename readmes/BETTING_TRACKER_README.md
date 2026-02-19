@@ -50,7 +50,7 @@ Type: prop, Selection: Derrick White over 5.5 assists, Game: Celtics vs Heat, Da
 When you submit bets through the UI:
 
 1. The system parses your text input
-2. Automatically detects the sport (NBA, NCAAB, NFL, MLB, NHL, UFC, Soccer, etc.)
+2. Automatically detects the sport (NBA, NCAAB, NFL, MLB, NHL, Soccer, etc.)
 3. Matches games to existing games in the database
 4. Attempts to find player names for prop bets
 5. Groups bets into parlays based on their section headers
@@ -98,7 +98,7 @@ The system can automatically detect:
 - **NFL**: American Football
 - **MLB**: Baseball
 - **NHL**: Hockey
-- **UFC**: Mixed Martial Arts
+
 - **Soccer/Football**: International
 
 ## Bet Types

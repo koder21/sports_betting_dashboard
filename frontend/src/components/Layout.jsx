@@ -10,7 +10,7 @@ function Layout({ children }) {
 
   const loadAlertCount = async () => {
     try {
-      const res = await api.get("/alerts/");
+      const res = await api.get("/api/alerts/");
       setAlertCount(res.data?.length || 0);
     } catch (err) {
       console.error('Failed to fetch alert count:', err);

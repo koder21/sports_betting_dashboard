@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Optional
 from datetime import datetime
 from sqlalchemy import String, Integer, ForeignKey, DateTime
-from sqlalchemy.dialects.sqlite import JSON
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base
 
@@ -14,10 +14,10 @@ class Game(Base):
     game_id: Mapped[str] = mapped_column(String, primary_key=True)
     sport: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     league: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    sport_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("sports.id"), nullable=True)
+    sport_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("sports.id", ondelete="SET NULL"), nullable=True)
 
-    home_team_id: Mapped[Optional[str]] = mapped_column(String, ForeignKey("teams.team_id"), nullable=True)
-    away_team_id: Mapped[Optional[str]] = mapped_column(String, ForeignKey("teams.team_id"), nullable=True)
+    home_team_id: Mapped[Optional[str]] = mapped_column(String, ForeignKey("teams.team_id", ondelete="SET NULL"), nullable=True)
+    away_team_id: Mapped[Optional[str]] = mapped_column(String, ForeignKey("teams.team_id", ondelete="SET NULL"), nullable=True)
     home_team_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     away_team_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     home_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)

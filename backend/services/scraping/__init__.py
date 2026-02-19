@@ -1,10 +1,11 @@
+
 from .nfl import NFLScraper
 from .nba import NBAScraper
 from .ncaaf import NCAAFScraper
 from .ncaab import NCAABScraper
 from .nhl import NHLScraper
 from .soccer import SoccerScraper
-from .ufc import UFCScraper
+from .mlb import MLBScraper
 
 __all__ = [
     "NFLScraper",
@@ -13,5 +14,5 @@ __all__ = [
     "NCAABScraper",
     "NHLScraper",
     "SoccerScraper",
-    "UFCScraper",
+    "MLBScraper",
 ]

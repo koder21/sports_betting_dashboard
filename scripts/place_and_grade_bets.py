@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Place bets, link to ESPN, grade, and cleanup voided parlays"""
+
 import asyncio
 import re
 import sqlite3
 import sys
 import uuid
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -120,7 +121,7 @@ async def main():
     cursor.execute("SELECT id, espn_league_code FROM sports WHERE espn_league_code IN ('nba', 'ncaab')")
     sport_map = {row[1]: row[0] for row in cursor.fetchall()}
     
-    placed_at = datetime.now(UTC).isoformat()
+    placed_at = datetime.now(timezone.utc).isoformat()
     
     for bet in bets:
         sport_id = sport_map.get(bet['sport'])
@@ -194,7 +195,11 @@ async def main():
     game_ids = [row[0] for row in cursor.fetchall()]
     
     for game_id in game_ids:
-        await upsert_game_from_event(client, game_id, cursor, db)
+        # Fetch sport for this game_id
+        cursor.execute("SELECT s.espn_league_code FROM bets b JOIN sports s ON b.sport_id = s.id WHERE b.game_id = ? LIMIT 1", (game_id,))
+        sport_row = cursor.fetchone()
+        sport = sport_row[0] if sport_row else "nba"
+        await upsert_game_from_event(client, sport, game_id, league_code=sport)
         print(f"  Updated game {game_id}")
     
     # Grade bets
@@ -223,10 +228,10 @@ async def main():
             if won:
                 profit = stake * (odds / 100) if odds > 0 else stake / (abs(odds) / 100)
                 cursor.execute("UPDATE bets SET status = 'won', profit = ?, graded_at = ? WHERE id = ?",
-                             (profit, datetime.now(UTC).isoformat(), bet_id))
+                             (profit, datetime.now(timezone.utc).isoformat(), bet_id))
             else:
                 cursor.execute("UPDATE bets SET status = 'lost', profit = ?, graded_at = ? WHERE id = ?",
-                             (-stake, datetime.now(UTC).isoformat(), bet_id))
+                             (-stake, datetime.now(timezone.utc).isoformat(), bet_id))
             print(f"  Graded bet #{bet_id}: {'WON' if won else 'LOST'}")
         
         elif bet_type == 'prop' and player_name:
@@ -242,7 +247,7 @@ async def main():
             
             if result is None:
                 cursor.execute("UPDATE bets SET status = 'void', profit = 0, graded_at = ? WHERE id = ?",
-                             (datetime.now(UTC).isoformat(), bet_id))
+                             (datetime.now(timezone.utc).isoformat(), bet_id))
                 print(f"  Voided bet #{bet_id}: {player_name} (no stats found)")
                 continue
             
@@ -264,10 +269,10 @@ async def main():
             if won:
                 profit = stake * (odds / 100) if odds > 0 else stake / (abs(odds) / 100)
                 cursor.execute("UPDATE bets SET status = 'won', profit = ?, result_value = ?, graded_at = ? WHERE id = ?",
-                             (profit, stat_value, datetime.now(UTC).isoformat(), bet_id))
+                             (profit, stat_value, datetime.now(timezone.utc).isoformat(), bet_id))
             else:
                 cursor.execute("UPDATE bets SET status = 'lost', profit = ?, result_value = ?, graded_at = ? WHERE id = ?",
-                             (-stake, stat_value, datetime.now(UTC).isoformat(), bet_id))
+                             (-stake, stat_value, datetime.now(timezone.utc).isoformat(), bet_id))
             print(f"  Graded bet #{bet_id}: {'WON' if won else 'LOST'} ({athlete_name}: {stat_value} vs {line})")
     
     db.commit()
@@ -318,7 +323,7 @@ async def main():
     
     db.commit()
     db.close()
-    
+    await client.close()
     print("\n✅ Done! All bets placed, graded, and voided parlays removed.")
 
 

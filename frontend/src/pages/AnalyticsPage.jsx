@@ -12,7 +12,7 @@ function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/analytics/summary")
+    api.get("/api/analytics/summary")
       .then((res) => setSummary(res.data || null))
       .catch((err) => console.error('Failed to fetch analytics:', err))
       .finally(() => setLoading(false));
@@ -90,20 +90,12 @@ function AnalyticsPage() {
   const totalStaked = roi?.total_staked || 0;
   const roiPercent = roi?.roi || 0;
   
-  // Calculate leg-based win rate (from backend leg counts)
-  const gradedSinglesCount = (parlay_performance?.singles?.won || 0) + (parlay_performance?.singles?.lost || 0);
-  const gradedParlayCount = (parlay_performance?.parlay_details || []).filter(p => p.status !== "pending").length;
-  const legWins = parlay_performance?.leg_wins || 0;
-  const legLosses = parlay_performance?.leg_losses || 0;
-  const totalGradedLegs = parlay_performance?.leg_total || (legWins + legLosses);
-
-  // Match /bets win rate math: (leg wins + bet wins) / (leg wins + leg losses + bet wins + bet losses)
-  const betWins = (parlay_performance?.singles?.won || 0) + (parlay_performance?.parlays?.won || 0);
-  const betLosses = (parlay_performance?.singles?.lost || 0) + (parlay_performance?.parlays?.lost || 0);
-  const winRateDenominator = legWins + legLosses + betWins + betLosses;
-  const winRate = winRateDenominator > 0
-    ? (((legWins + betWins) / winRateDenominator) * 100).toFixed(1)
-    : 0;
+  // Use backend summary values for KPIs
+  const totalBets = roi?.total_bets || 0;
+  const winRate = roi?.win_rate?.toFixed(1) || 0;
+  const won = roi?.won || 0;
+  const lost = roi?.lost || 0;
+  const pending = roi?.pending || 0;
 
   return (
     <div className="analytics-container">
@@ -130,14 +122,14 @@ function AnalyticsPage() {
         <div className="kpi-card winrate">
           <div className="kpi-label">Win Rate</div>
           <div className="kpi-value">{winRate}%</div>
-          <div className="kpi-sublabel">{legWins + betWins}W - {legLosses + betLosses}L</div>
+          <div className="kpi-sublabel">{won}W - {lost}L</div>
         </div>
 
         <div className="kpi-card total">
           <div className="kpi-label">Total Bets</div>
-          <div className="kpi-value">{gradedSinglesCount + gradedParlayCount}</div>
+          <div className="kpi-value">{totalBets}</div>
           <div className="kpi-sublabel">
-            {gradedSinglesCount} singles, {gradedParlayCount} parlays ({totalGradedLegs} legs)
+            {won + lost} graded, {pending} pending
           </div>
         </div>
 

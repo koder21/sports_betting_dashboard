@@ -33,7 +33,6 @@ function BetPlacementModal({ bet, isOpen, onClose, onSuccess }) {
 
       if (response.data.success) {
         setSuccessState(true);
-        // Show success state for 1.5 seconds then close
         setTimeout(() => {
           onSuccess?.(response.data);
           onClose();
@@ -44,7 +43,6 @@ function BetPlacementModal({ bet, isOpen, onClose, onSuccess }) {
       }
     } catch (err) {
       setError(err.response?.data?.error || "Error placing bet");
-      console.error(err);
     } finally {
       setLoading(false);
     }

@@ -18,11 +18,19 @@ class BetGrader:
         self.session = session
         self.stats = PlayerStatRepository(session)
         self.games = GameRepository(session)
-        self.espn_client = ESPNClient()
+        self._espn_client = None  # ✅ FIXED: Lazy initialization
+
+    @property
+    def espn_client(self):
+        """Lazy-load ESPN client."""
+        if self._espn_client is None:
+            self._espn_client = ESPNClient()
+        return self._espn_client
 
     async def close(self):
-        """Clean up resources"""
-        await self.espn_client.close()
+        """✅ FIXED: Proper cleanup"""
+        if self._espn_client and not self._espn_client.closed:
+            await self._espn_client.close()
 
     async def grade(self, bet) -> Optional[Dict[str, Any]]:
         if bet.bet_type == "prop":
@@ -53,7 +61,6 @@ class BetGrader:
 
             stat = await self.stats.get_for_player_game(bet.player_id, bet.game_id)
             
-            # If stat not found in DB, try fetching from ESPN API
             if not stat:
                 logger.debug(
                     "Stats not found in DB for player %s game %s, fetching from ESPN...",
@@ -67,7 +74,6 @@ class BetGrader:
                 bet.graded_at = datetime.utcnow()
                 return {"bet_id": bet.id, "status": "void", "reason": "Player stats not available"}
 
-            # Use stat_type (e.g., "points", "rebounds") instead of market (e.g., "over", "under")
             stat_field = bet.stat_type or bet.market
             value = getattr(stat, stat_field, None)
             if value is None and getattr(stat, "stats_json", None):
@@ -88,18 +94,15 @@ class BetGrader:
 
             bet.result_value = value
 
-            # Extract the line value from selection (e.g., "Jalen Brunson over 27.5 pts" -> 27.5)
             line = 0.0
             if bet.selection:
                 import re
-                # Look for a number in the selection string
                 numbers = re.findall(r'[-+]?\d*\.?\d+', bet.selection)
                 if numbers:
-                    line = float(numbers[-1])  # Use the last number found
+                    line = float(numbers[-1])
             
             sel = (bet.selection or "").strip().lower()
 
-            # Check if "over" appears anywhere in the selection
             if "over" in sel:
                 bet.status = "won" if value > line else "lost"
             else:
@@ -136,14 +139,12 @@ class BetGrader:
                     )
                     return None
                 
-                # If using game_result, update the game object with final scores
                 if game and game_result:
                     game.home_score = game_result.home_score
                     game.away_score = game_result.away_score
                     game.status = game_result.status
                     await self.session.flush()
 
-            # Extract team name from selection (e.g., "Celtics ML" -> "Celtics")
             team_name = bet.selection.split()[0] if bet.selection else None
             if not team_name:
                 bet.status = "void"
@@ -166,7 +167,6 @@ class BetGrader:
                 bet.graded_at = datetime.utcnow()
                 return {"bet_id": bet.id, "status": "void"}
 
-            # Determine which team the bet was on
             bet_on_home = team_name_lower in home_team_lower or home_team_lower in team_name_lower
             bet_on_away = team_name_lower in away_team_lower or away_team_lower in team_name_lower
 
@@ -175,7 +175,6 @@ class BetGrader:
                 bet.graded_at = datetime.utcnow()
                 return {"bet_id": bet.id, "status": "void"}
 
-            # Check if the team won
             home_won = home_score > away_score
 
             if bet_on_home:
@@ -202,10 +201,8 @@ class BetGrader:
     async def _fetch_player_stat_from_espn(self, player_id: str, game_id: str, game) -> Optional[Any]:
         """Fetch player stats from ESPN API if not in database"""
         try:
-            # Determine sport type and league from game
             sport = game.sport if hasattr(game, 'sport') else 'basketball'
             
-            # Map sport names to ESPN API paths
             sport_map = {
                 'basketball': ('basketball', 'nba'),
                 'football': ('football', 'nfl'),
@@ -215,7 +212,6 @@ class BetGrader:
             
             sport_type, league = sport_map.get(sport.lower(), ('basketball', 'nba'))
             
-            # Fetch game summary from ESPN
             url = f"https://site.api.espn.com/apis/site/v2/sports/{sport_type}/{league}/summary?event={game_id}"
             data = await self.espn_client.get_json(url)
             
@@ -226,7 +222,6 @@ class BetGrader:
             boxscore = data["boxscore"]
             players_by_team = boxscore.get("players", [])
             
-            # Search for the player in the boxscore
             for team_players in players_by_team:
                 statistics_groups = team_players.get("statistics", [])
                 
@@ -239,7 +234,6 @@ class BetGrader:
                         if str(athlete.get("id")) == str(player_id):
                             stats = athlete_data.get("stats", [])
                             
-                            # Create a temporary stats object with the data
                             from ...models.player_stats import PlayerStat
                             
                             stat_obj = PlayerStat(
@@ -249,12 +243,10 @@ class BetGrader:
                                 stats_json={}
                             )
                             
-                            # Map stat labels to values
                             for i, label in enumerate(stat_labels):
                                 if i < len(stats):
                                     stat_obj.stats_json[label.lower()] = stats[i]
                             
-                            # Also set common attributes if they exist
                             if 'pts' in stat_obj.stats_json or 'points' in stat_obj.stats_json:
                                 stat_obj.points = float(stat_obj.stats_json.get('pts', stat_obj.stats_json.get('points', 0)))
                             if 'reb' in stat_obj.stats_json or 'rebounds' in stat_obj.stats_json:
@@ -262,7 +254,6 @@ class BetGrader:
                             if 'ast' in stat_obj.stats_json or 'assists' in stat_obj.stats_json:
                                 stat_obj.assists = float(stat_obj.stats_json.get('ast', stat_obj.stats_json.get('assists', 0)))
                             
-                            # Save to database for future use
                             self.session.add(stat_obj)
                             await self.session.flush()
                             
@@ -280,7 +271,6 @@ class BetGrader:
         if not status:
             return False
         status_lower = status.lower()
-        # Recognize various final status indicators
         return (
             status_lower == "final" 
             or "final" in status_lower 

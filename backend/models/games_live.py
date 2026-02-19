@@ -3,13 +3,15 @@ from typing import Optional
 from datetime import datetime
 from sqlalchemy import String, Integer, ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from backend.models.game import Game
 from .base import Base
 
 class GameLive(Base):
     __tablename__ = "games_live"
 
     game_id: Mapped[str] = mapped_column(
-        String, ForeignKey("games.game_id"), primary_key=True
+        String, ForeignKey("games.game_id", ondelete="CASCADE"), primary_key=True
     )
 
     sport: Mapped[Optional[str]] = mapped_column(String, nullable=True)

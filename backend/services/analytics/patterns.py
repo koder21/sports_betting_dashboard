@@ -1,5 +1,7 @@
 from typing import Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
+from backend.db import get_session
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -7,7 +9,8 @@ from ...repositories.bet_repo import BetRepository
 
 
 class BettingPatternsAnalytics:
-    """Analyze betting patterns to identify what works"""
+    async def analyze_patterns(self) -> Dict[str, Any]:
+        return await self.compute()
     
     def __init__(self, session: AsyncSession):
         self.session = session

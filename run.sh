@@ -4,7 +4,7 @@
 cd "$(dirname "$0")"
 
 # Start backend
-source venv/bin/activate
+source .venv/bin/activate
 uvicorn backend.main:app --reload --port 8000 --loop asyncio &
 BACKEND_PID=$!
 

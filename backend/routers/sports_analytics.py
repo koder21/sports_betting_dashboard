@@ -4,7 +4,7 @@ from sqlalchemy import select, func, distinct, and_, case, extract
 from typing import Dict, Any, List
 from datetime import datetime, timedelta
 
-from ..db import get_session
+from ..db import get_db
 from ..models.games_results import GameResult
 from ..models.player import Player
 from ..models.player_stats import PlayerStats
@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 @router.get("/stats/{sport}")
-async def get_sport_stats(sport: str, session: AsyncSession = Depends(get_session)):
+async def get_sport_stats(sport: str, session: AsyncSession = Depends(get_db)):
     """Get statistics for a specific sport"""
     sport_upper = sport.upper()
     
@@ -170,10 +170,10 @@ async def get_sport_stats(sport: str, session: AsyncSession = Depends(get_sessio
 
 
 @router.get("/overview")
-async def get_sports_overview(session: AsyncSession = Depends(get_session)):
+async def get_sports_overview(session: AsyncSession = Depends(get_db)):
     """Get comparative overview statistics for all sports"""
     
-    sports = ["NBA", "NFL", "NCAAB", "NHL", "EPL"]
+    sports = ["NBA", "NFL", "NCAAB", "NCAAF", "NHL", "MLB", "EPL"]
     
     # Collect data for each sport
     sport_comparisons = []

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 from sqlalchemy import String, Boolean, ForeignKey
-from sqlalchemy.dialects.sqlite import JSON
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base
 
@@ -18,7 +18,7 @@ class Player(Base):
     season_stats_json: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     espn_ref: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
-    team_id: Mapped[Optional[str]] = mapped_column(String, ForeignKey("teams.team_id"))
+    team_id: Mapped[Optional[str]] = mapped_column(String, ForeignKey("teams.team_id", ondelete="SET NULL"))
     team: Mapped["Team"] = relationship("Team", back_populates="players")
 
     sport: Mapped[Optional[str]] = mapped_column(String, nullable=True)

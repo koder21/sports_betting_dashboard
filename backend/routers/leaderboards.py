@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
-from ..db import get_session
+from ..db import get_db
 from ..repositories.forecaster_leaderboard import ForecasterLeaderboardRepo
 from ..services.weather import WeatherService
 
@@ -15,7 +15,7 @@ async def get_forecaster_leaderboard(
     sport: Optional[str] = Query(None, description="Filter by sport"),
     days: int = Query(90, description="Days of history to include"),
     limit: int = Query(50, description="Max results"),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_db),
 ):
     """Get forecaster/model performance leaderboard ranked by ROI."""
     repo = ForecasterLeaderboardRepo(session)
@@ -32,7 +32,7 @@ async def get_forecaster_leaderboard(
 async def get_forecaster_stats(
     forecaster: str,
     days: int = Query(90, description="Days of history"),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_db),
 ):
     """Get detailed stats for a specific forecaster."""
     repo = ForecasterLeaderboardRepo(session)
@@ -47,7 +47,7 @@ async def get_forecaster_stats(
 async def get_forecaster_accuracy_by_sport(
     forecaster: str,
     days: int = Query(90, description="Days of history"),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_db),
 ):
     """Get forecaster accuracy breakdown by sport."""
     repo = ForecasterLeaderboardRepo(session)
@@ -62,7 +62,7 @@ async def get_forecaster_accuracy_by_sport(
 @router.get("/forecasters/{forecaster}/streak")
 async def get_forecaster_streak(
     forecaster: str,
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_db),
 ):
     """Get current win/loss streak for a forecaster."""
     repo = ForecasterLeaderboardRepo(session)
@@ -79,7 +79,7 @@ async def get_forecaster_contrarian_picks(
     forecaster: str,
     days: int = Query(30, description="Days of history"),
     min_roi: float = Query(10.0, description="Minimum ROI threshold"),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_db),
 ):
     """Get forecaster's best contrarian/high-ROI picks."""
     repo = ForecasterLeaderboardRepo(session)

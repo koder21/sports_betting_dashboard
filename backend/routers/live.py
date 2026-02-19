@@ -3,18 +3,75 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text
 from datetime import datetime, timedelta
 
-from ..db import get_session
+from ..db import get_db
 from ..models import GameLive, Game, GameUpcoming, GameResult
 
 router = APIRouter()
 
+# Add upcoming endpoint after router is defined
+@router.get("/upcoming")
+async def get_upcoming_games(session: AsyncSession = Depends(get_db)):
+    """Always fetch all upcoming/scheduled games from the database."""
+    now = datetime.utcnow()
+    upcoming_result = await session.execute(select(GameUpcoming))
+    upcoming_games = upcoming_result.scalars().all()
+    games_list = []
+    for game in upcoming_games:
+        start_time = game.start_time if hasattr(game, 'start_time') else None
+        parsed_start = None
+        if start_time:
+            if isinstance(start_time, str):
+                try:
+                    parsed_start = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                except Exception:
+                    parsed_start = None
+            elif hasattr(start_time, 'isoformat'):
+                parsed_start = start_time
+        # Only include games that are scheduled or have a start_time in the future
+        if (parsed_start and parsed_start > now) or (getattr(game, 'status', None) == 'scheduled'):
+            game_dict = {
+                "game_id": game.game_id,
+                "home_score": getattr(game, 'home_score', 0) or 0,
+                "away_score": getattr(game, 'away_score', 0) or 0,
+                "home_team": getattr(game, 'home_team_name', None) or getattr(game, 'home_team', None) or "Home Team",
+                "away_team": getattr(game, 'away_team_name', None) or getattr(game, 'away_team', None) or "Away Team",
+                "status": getattr(game, 'status', 'scheduled'),
+                "sport": (getattr(game, 'sport', None) or "Unknown").upper(),
+            }
+            if start_time:
+                if isinstance(start_time, str):
+                    game_dict["start_time"] = start_time
+                elif hasattr(start_time, 'isoformat'):
+                    game_dict["start_time"] = start_time.isoformat()
+                else:
+                    game_dict["start_time"] = str(start_time)
+            if hasattr(game, 'period') and game.period is not None:
+                game_dict["period"] = game.period
+            if hasattr(game, 'clock') and game.clock is not None:
+                game_dict["clock"] = game.clock
+            if hasattr(game, 'possession') and game.possession is not None:
+                game_dict["possession"] = game.possession
+            if hasattr(game, 'home_logo') and game.home_logo:
+                game_dict["home_logo"] = game.home_logo
+            if hasattr(game, 'away_logo') and game.away_logo:
+                game_dict["away_logo"] = game.away_logo
+            games_list.append(game_dict)
+    return games_list
+
 SPORTS = {
+
     1: "NBA",
     2: "NFL",
     3: "NHL",
     4: "NCAAB",
-    5: "EPL",
+    5: "NCAAF",
+    6: "MLB",
+    7: "EPL",
 }
+
+from .games import classify_game_status
+
+
 
 async def _get_live_scores(session: AsyncSession):
     """Fetch live games from the database with start times from games table.
@@ -49,38 +106,21 @@ async def _get_live_scores(session: AsyncSession):
     game_records = {g.game_id: g for g in games_result.scalars()}
     
     games_list = []
+    now = datetime.utcnow()
     for game in live_games:
-        # Determine status based on the status field from ESPN
-        status_detail = game.status or ""
-        
-        # Check status_detail first (ESPN is the source of truth)
-        # Final statuses
-        if "Final" in status_detail or "FT" in status_detail or status_detail == "Full Time":
-            status = "final"
-        # Game is in progress - check for various live game indicators
-        elif any(indicator in status_detail for indicator in ["In Progress", "Halftime", "HT", "1st", "2nd", "3rd", "4th", "OT", "1H", "2H"]) or "'" in status_detail:
-            status = "in"
-        # Additional check: if has clock and any scores, it's likely live
-        elif game.clock and game.clock.strip() and (game.home_score or 0) + (game.away_score or 0) > 0:
-            status = "in"
-        # Default to scheduled for everything else
-        else:
-            status = "scheduled"
-        
-        # Get start time and logos from pre-fetched records (no queries in loop)
+        status = classify_game_status(game.status, game.clock, game.home_score, game.away_score)
+        # Only show games that are ongoing (live) or completed (final)
+        if status not in ("ongoing", "completed"):
+            continue
         start_time = None
         home_logo = None
         away_logo = None
-        
-        # Check GameUpcoming first since scheduler updates it with fresh times
         upcoming_record = upcoming_records.get(game.game_id)
         if upcoming_record:
             if upcoming_record.start_time:
                 start_time = upcoming_record.start_time
             home_logo = upcoming_record.home_logo
             away_logo = upcoming_record.away_logo
-        
-        # Fallback to GameResult for finished games
         if not home_logo or not away_logo:
             result_record = result_records.get(game.game_id)
             if result_record:
@@ -88,17 +128,24 @@ async def _get_live_scores(session: AsyncSession):
                     home_logo = result_record.home_logo
                 if not away_logo:
                     away_logo = result_record.away_logo
-        
-        # Fallback to games table if no start time yet
         if not start_time:
             game_record = game_records.get(game.game_id)
             if game_record and game_record.start_time:
                 start_time = game_record.start_time
-        
-        # Last resort: try GameLive itself if it has start_time
         if not start_time and hasattr(game, 'start_time') and game.start_time:
             start_time = game.start_time
-        
+        # Filter out games whose start_time is in the future (not yet started)
+        parsed_start = None
+        if start_time:
+            if isinstance(start_time, str):
+                try:
+                    parsed_start = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                except Exception:
+                    parsed_start = None
+            elif hasattr(start_time, 'isoformat'):
+                parsed_start = start_time
+        if parsed_start and parsed_start > now and status != "completed":
+            continue
         game_dict = {
             "game_id": game.game_id,
             "home_score": game.home_score or 0,
@@ -108,8 +155,6 @@ async def _get_live_scores(session: AsyncSession):
             "status": status,
             "sport": (game.sport or "Unknown").upper(),
         }
-        
-        # Return start time as ISO string for frontend timezone conversion
         if start_time:
             if isinstance(start_time, str):
                 game_dict["start_time"] = start_time
@@ -117,8 +162,6 @@ async def _get_live_scores(session: AsyncSession):
                 game_dict["start_time"] = start_time.isoformat()
             else:
                 game_dict["start_time"] = str(start_time)
-        
-        # Add optional fields if they exist
         if game.period is not None:
             game_dict["period"] = game.period
         if game.clock is not None:
@@ -129,13 +172,11 @@ async def _get_live_scores(session: AsyncSession):
             game_dict["home_logo"] = home_logo
         if away_logo:
             game_dict["away_logo"] = away_logo
-        
         games_list.append(game_dict)
-    
     return games_list
 
 @router.get("")
 @router.get("/")
-async def get_live_scores(session: AsyncSession = Depends(get_session)):
+async def get_live_scores(session: AsyncSession = Depends(get_db)):
     """Fetch live games from the database."""
     return await _get_live_scores(session)

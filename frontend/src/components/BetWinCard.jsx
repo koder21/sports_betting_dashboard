@@ -33,6 +33,7 @@ const BetWinCard = ({ betData }) => {
     return num >= 0 ? `$${num.toFixed(2)}` : `-$${Math.abs(num).toFixed(2)}`;
   };
 
+  const isFinished = ["won", "lost", "void", "finished"].includes(status);
   return (
     <div className={`bet-win-card ${isWon ? 'won' : 'lost'}`}>
       <div className="bet-header">
@@ -46,6 +47,13 @@ const BetWinCard = ({ betData }) => {
       </div>
       
       <div className="bet-content">
+        {/* Final Score for finished bets */}
+        {isFinished && betData.final_score && (
+          <div className="bet-final-score">
+            <span className="final-score-label">Final Score:</span>
+            <span className="final-score-value">{betData.final_score.replace('Final:', '').trim()}</span>
+          </div>
+        )}
         <div className="bet-selection">
           <div className="selection-label">Selection</div>
           <div className="selection-value">{selection || 'N/A'}</div>

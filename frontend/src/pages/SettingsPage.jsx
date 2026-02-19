@@ -1,50 +1,58 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   getUserTimezone,
   setUserTimezone,
   getAvailableTimezones,
-  getTzDisplayName,
   convertToUserTimezone,
 } from "../services/timezoneService";
 import {
   getOddsFormat,
   setOddsFormat,
-  getOddsFormatLabel,
 } from "../services/oddsService";
+import "./SettingsPage.css";
+
+// Constants
+const SAVE_SUCCESS_DURATION = 3000; // 3 seconds
 
 function SettingsPage() {
   const [currentTimezone, setCurrentTimezone] = useState(getUserTimezone());
   const [currentOddsFormat, setCurrentOddsFormat] = useState(getOddsFormat());
   const [saved, setSaved] = useState(false);
-  const [timezoneGroups, setTimezoneGroups] = useState({});
+  
+  // Memoize timezone groups (expensive operation, only calculate once)
+  const timezoneGroups = useMemo(() => getAvailableTimezones(), []);
 
+  // Memoize preview time
+  const [previewTime, setPreviewTime] = useState(() => 
+    convertToUserTimezone(new Date(), "time-with-tz")
+  );
+  
+  // Update preview time when timezone changes
   useEffect(() => {
-    setTimezoneGroups(getAvailableTimezones());
-  }, []);
+    setPreviewTime(convertToUserTimezone(new Date(), "time-with-tz"));
+  }, [currentTimezone]);
 
-  const handleTimezoneChange = (e) => {
+  const handleTimezoneChange = useCallback((e) => {
     const newTz = e.target.value;
     setCurrentTimezone(newTz);
     setSaved(false);
-  };
+  }, []);
 
-  const handleOddsFormatChange = (e) => {
+  const handleOddsFormatChange = useCallback((e) => {
     const newFormat = e.target.value;
     setCurrentOddsFormat(newFormat);
     setSaved(false);
-  };
+  }, []);
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     setUserTimezone(currentTimezone);
     setOddsFormat(currentOddsFormat);
     setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  };
-
-  const getPreviewTime = () => {
-    const now = new Date();
-    return convertToUserTimezone(now, "time-with-tz");
-  };
+    
+    // Reset saved state after delay
+    const timer = setTimeout(() => setSaved(false), SAVE_SUCCESS_DURATION);
+    return () => clearTimeout(timer);
+  }, [currentTimezone, currentOddsFormat]);
 
   return (
     <div className="settings-page">
@@ -54,6 +62,7 @@ function SettingsPage() {
         <div className="settings-section">
           <h2>Display Preferences</h2>
 
+          {/* Timezone Setting */}
           <div className="setting-item">
             <label htmlFor="timezone-select">
               <strong>Timezone</strong>
@@ -70,6 +79,7 @@ function SettingsPage() {
                 value={currentTimezone}
                 onChange={handleTimezoneChange}
                 className="timezone-dropdown"
+                aria-label="Select your timezone"
               >
                 {Object.entries(timezoneGroups).map(([region, tzs]) => (
                   <optgroup label={region} key={region}>
@@ -85,14 +95,19 @@ function SettingsPage() {
 
             <div className="preview-section">
               <div className="preview-label">Preview (Current time):</div>
-              <div className="preview-time">{getPreviewTime()}</div>
+              <div className="preview-time">{previewTime}</div>
             </div>
 
-            <button onClick={handleSave} className="save-button">
+            <button 
+              onClick={handleSave} 
+              className="save-button"
+              aria-label={saved ? "Settings saved" : "Save timezone settings"}
+            >
               {saved ? "✓ Saved" : "Save Timezone"}
             </button>
           </div>
 
+          {/* Odds Format Setting */}
           <div className="setting-item">
             <label htmlFor="odds-format-select">
               <strong>Odds Format</strong>
@@ -109,6 +124,7 @@ function SettingsPage() {
                 value={currentOddsFormat}
                 onChange={handleOddsFormatChange}
                 className="odds-dropdown"
+                aria-label="Select odds format"
               >
                 <option value="american">American (-110, +200)</option>
                 <option value="decimal">Decimal (1.91, 3.0)</option>
@@ -123,12 +139,17 @@ function SettingsPage() {
               </div>
             </div>
 
-            <button onClick={handleSave} className="save-button">
+            <button 
+              onClick={handleSave} 
+              className="save-button"
+              aria-label={saved ? "Settings saved" : "Save settings"}
+            >
               {saved ? "✓ Saved" : "Save Settings"}
             </button>
           </div>
         </div>
 
+        {/* Info Section */}
         <div className="settings-section info-section">
           <h2>About Display Settings</h2>
           <div className="info-content">
@@ -138,7 +159,6 @@ function SettingsPage() {
             </p>
             <p>
               <strong>Auto-Apply:</strong> Once set, your preferences are
-
               automatically applied to all times displayed across the site:
             </p>
             <ul>
@@ -154,278 +174,6 @@ function SettingsPage() {
           </div>
         </div>
       </div>
-
-      <style>{`
-        .settings-page {
-          padding: 30px;
-          max-width: 900px;
-          margin: 0 auto;
-        }
-
-        .settings-page h1 {
-          font-size: 2rem;
-          margin-bottom: 30px;
-          color: #1f2937;
-        }
-
-        .settings-container {
-          display: grid;
-          gap: 30px;
-        }
-
-        .settings-section {
-          background: #f9fafb;
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          padding: 25px;
-        }
-
-        .settings-section h2 {
-          font-size: 1.3rem;
-          margin-bottom: 20px;
-          color: #374151;
-          border-bottom: 2px solid #e5e7eb;
-          padding-bottom: 10px;
-        }
-
-        .setting-item {
-          margin-bottom: 20px;
-        }
-
-        .setting-item label {
-          display: block;
-          margin-bottom: 15px;
-        }
-
-        .setting-item strong {
-          font-size: 1.1rem;
-          color: #1f2937;
-          display: block;
-          margin-bottom: 8px;
-        }
-
-        .setting-description {
-          font-size: 0.95rem;
-          color: #6b7280;
-          margin: 0;
-          line-height: 1.5;
-        }
-
-        .timezone-selector {
-          margin: 20px 0;
-        }
-
-        .timezone-dropdown {
-          width: 100%;
-          max-width: 400px;
-          padding: 12px;
-          font-size: 1rem;
-          border: 2px solid #d1d5db;
-          border-radius: 6px;
-          background: white;
-          color: #1f2937;
-          cursor: pointer;
-          transition: border-color 0.2s ease;
-        }
-
-        .timezone-dropdown:hover {
-          border-color: #9ca3af;
-        }
-
-        .timezone-dropdown:focus {
-          outline: none;
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .preview-section {
-          background: white;
-          border: 1px solid #e5e7eb;
-          border-radius: 6px;
-          padding: 15px;
-          margin: 20px 0;
-        }
-
-        .preview-label {
-          font-size: 0.9rem;
-          color: #6b7280;
-          margin-bottom: 8px;
-          font-weight: 500;
-        }
-
-        .preview-time {
-          font-size: 1.3rem;
-          font-weight: 600;
-          color: #3b82f6;
-          font-family: "Monaco", "Courier New", monospace;
-        }
-
-        .save-button {
-          background: #3b82f6;
-          color: white;
-          border: none;
-          padding: 12px 24px;
-          border-radius: 6px;
-          font-size: 1rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: background 0.2s ease, transform 0.1s ease;
-          margin-top: 15px;
-        }
-
-        .save-button:hover {
-          background: #2563eb;
-          transform: translateY(-1px);
-        }
-
-        .save-button:active {
-          transform: translateY(0);
-        }
-
-        .info-section {
-          background: #eff6ff;
-          border-color: #bfdbfe;
-        }
-
-        .info-section h2 {
-          border-bottom-color: #bfdbfe;
-        }
-
-        .info-content {
-          color: #1e40af;
-          line-height: 1.7;
-        }
-
-        .info-content p {
-          margin: 12px 0;
-        }
-
-        .info-content strong {
-          color: #1e3a8a;
-        }
-
-        .info-content ul {
-          margin: 12px 0 12px 20px;
-          padding: 0;
-        }
-
-        .info-content li {
-          margin: 6px 0;
-        }
-
-        /* Dark mode support */
-        @media (prefers-color-scheme: dark) {
-          .settings-page {
-            background: #0a0a0a;
-            color: #e0e0e0;
-          }
-
-          .settings-page h1 {
-            color: #ffffff;
-          }
-
-          .settings-container {
-            background: #121212;
-          }
-
-          .settings-section {
-            background: #1e1e1e;
-            border-color: #333;
-          }
-
-          .settings-section h2 {
-            color: #ffffff;
-            border-bottom-color: #333;
-          }
-
-          .setting-item strong {
-            color: #ffffff;
-          }
-
-          .setting-description {
-            color: #9ca3af;
-          }
-
-          .timezone-dropdown,
-          .odds-dropdown {
-            background: #2a2a2a;
-            color: #e0e0e0;
-            border-color: #444;
-          }
-
-          .timezone-dropdown:hover,
-          .odds-dropdown:hover {
-            border-color: #555;
-          }
-
-          .timezone-dropdown:focus,
-          .odds-dropdown:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-          }
-
-          .preview-section {
-            background: #2a2a2a;
-            border-color: #444;
-          }
-
-          .preview-label {
-            color: #9ca3af;
-          }
-
-          .preview-time {
-            color: #60a5fa;
-          }
-
-          .preview-example {
-            color: #e0e0e0;
-          }
-
-          .save-button {
-            background: #3b82f6;
-          }
-
-          .save-button:hover {
-            background: #2563eb;
-          }
-
-          .info-section {
-            background: #1a2332;
-            border-color: #2a3f5f;
-          }
-
-          .info-section h2 {
-            border-bottom-color: #2a3f5f;
-          }
-
-          .info-content {
-            color: #93c5fd;
-          }
-
-          .info-content strong {
-            color: #bfdbfe;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .settings-page {
-            padding: 20px;
-          }
-
-          .settings-page h1 {
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-          }
-
-          .timezone-dropdown {
-            max-width: 100%;
-          }
-
-          .settings-section {
-            padding: 20px;
-          }
-        }
-      `}</style>
     </div>
   );
 }

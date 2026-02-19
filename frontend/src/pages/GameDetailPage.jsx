@@ -12,11 +12,14 @@ function GameDetailPage() {
   const [statsTab, setStatsTab] = useState('home');
   const [refreshing, setRefreshing] = useState(false);
   const [refreshMessage, setRefreshMessage] = useState(null);
+    const [aiContext, setAiContext] = useState(null);
+    const [aiContextLoading, setAiContextLoading] = useState(false);
+    const [aiContextError, setAiContextError] = useState(null);
 
   const fetchGameDetails = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/games/${gameId}/detailed`);
+      const response = await api.get(`/api/games/${gameId}/detailed`);
       setGameData(response.data);
       setError(null);
     } catch (err) {
@@ -37,14 +40,12 @@ function GameDetailPage() {
     try {
       setRefreshing(true);
       setRefreshMessage('Fetching player statistics...');
-      const response = await api.post(`/games/${gameId}/refresh-stats`);
-      
+      const response = await api.post(`/api/games/${gameId}/refresh-stats`);
       if (response.data.success) {
         setRefreshMessage('✓ Stats updated! Reloading...');
-        // Reload game details after a short delay
+        // Force a full reload to guarantee fresh data (bypass cache/state)
         setTimeout(() => {
-          fetchGameDetails();
-          setRefreshMessage(null);
+          window.location.reload();
         }, 1000);
       } else {
         setRefreshMessage(`Error: ${response.data.error}`);
@@ -56,6 +57,20 @@ function GameDetailPage() {
       setRefreshing(false);
     }
   };
+  
+    const handleCopyForAI = async () => {
+      setAiContextLoading(true);
+      setAiContextError(null);
+      setAiContext(null);
+      try {
+        const response = await api.get('/api/games/ai-context-fresh');
+        setAiContext(response.data);
+      } catch (err) {
+        setAiContextError(err.message || 'Failed to fetch AI context');
+      } finally {
+        setAiContextLoading(false);
+      }
+    };
 
   if (loading) {
     return (
@@ -227,6 +242,21 @@ function GameDetailPage() {
             {refreshMessage}
           </div>
         )}
+          {/* AI Context Debug Output */}
+          {aiContextError && (
+            <div className="ai-context-error" style={{ color: 'red', marginTop: '8px' }}>
+              <strong>Error:</strong> {aiContextError}
+              <br />
+              <strong>Debug:</strong> {JSON.stringify(aiContextError, null, 2)}
+            </div>
+          )}
+          {aiContext && (
+            <div className="ai-context-output" style={{ marginTop: '8px', background: '#f6f6f6', padding: '8px', borderRadius: '4px', maxHeight: '400px', overflow: 'auto' }}>
+              <pre>{typeof aiContext === 'string' ? aiContext : JSON.stringify(aiContext, null, 2)}</pre>
+              <hr />
+              <strong>Debug:</strong> {JSON.stringify(aiContext)}
+            </div>
+          )}
       </div>
 
       {/* Content Sections */}

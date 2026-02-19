@@ -15,7 +15,7 @@ from backend.services.scraping import (
     NCAABScraper,
     NCAAFScraper,
     SoccerScraper,
-    UFCScraper,
+    MLBScraper,
 )
 from sqlalchemy import text
 
@@ -26,7 +26,7 @@ SCRAPERS = [
     ("NCAAB", NCAABScraper),
     ("NCAAF", NCAAFScraper),
     ("SOCCER", SoccerScraper),
-    ("UFC", UFCScraper),
+    ("MLB", MLBScraper),
 ]
 
 async def run_all():

@@ -1,42 +1,104 @@
-from typing import Type, TypeVar, Generic, Optional, Sequence, Iterable, Any, Union
+from typing import Any, Generic, Sequence, Type, TypeVar, Union
 
-from sqlalchemy import inspect, select, delete
+from sqlalchemy import inspect, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import DeclarativeBase
 
-from ..models.base import Base
+# Bound T to DeclarativeBase ensures T is actually a Model
+T = TypeVar("T", bound=DeclarativeBase)
+ID = Union[int, str]
 
-ModelT = TypeVar("ModelT", bound=Base)
 
+class BaseRepository(Generic[T]):
+    """
+    Base async repository implementing the Repository Pattern.
+    
+    Features:
+    - Centralized session management.
+    - Type-safe CRUD operations.
+    - Batch fetching with order preservation.
+    """
 
-class BaseRepository(Generic[ModelT]):
-    def __init__(self, session: AsyncSession, model: Type[ModelT]) -> None:
-        self.session = session
+    DEFAULT_LIMIT = 100
+    DEFAULT_BATCH_SIZE = 1000
+
+    def __init__(self, model: Type[T], session: AsyncSession):
         self.model = model
+        self.session = session
 
-    def _pk_column(self):
-        return inspect(self.model).primary_key[0]
+        # Inspect model to ensure it has a valid PK
+        mapper = inspect(self.model)
+        if not mapper or not mapper.primary_key:
+             raise ValueError(f"Model {model.__name__} does not have a primary key mapped.")
+        
+        pk_columns = mapper.primary_key
+        if len(pk_columns) != 1:
+            raise ValueError(f"Model {model.__name__} must have a single-column primary key for BaseRepository support.")
 
-    async def get(self, id_: Union[int, str]) -> Optional[ModelT]:
+        self._pk_column = pk_columns[0]
+
+    async def get(self, id_: ID) -> 'Optional[T]':
+        """Fetch a single entity by ID."""
         return await self.session.get(self.model, id_)
 
-    async def list(self) -> Sequence[ModelT]:
-        result = await self.session.execute(select(self.model))
-        return result.scalars().all()
+    async def list(
+        self,
+        *,
+        limit: int = DEFAULT_LIMIT,
+        offset: int = 0,
+    ) -> Sequence[T]:
+        """List entities with pagination."""
+        if limit <= 0:
+            raise ValueError("Limit must be greater than 0")
 
-    async def list_by_ids(self, ids: Iterable[Any]) -> Sequence[ModelT]:
-        pk = self._pk_column()
-        stmt = select(self.model).where(pk.in_(list(ids)))
+        stmt = select(self.model).limit(limit).offset(offset)
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
-    async def add(self, obj: ModelT) -> ModelT:
+    async def list_by_ids(
+        self,
+        ids: Sequence[ID],
+        *,
+        preserve_order: bool = False,
+        batch_size: int = DEFAULT_BATCH_SIZE,
+    ) -> Sequence[T]:
+        """
+        Fetch entities by a list of IDs. Handles large lists by batching.
+        """
+        if not ids:
+            return []
+
+        # Remove duplicates to save DB work, unless order strictly matters implies duplicates matter
+        unique_ids = list(set(ids)) if not preserve_order else list(ids)
+        results: list[T] = []
+
+        for i in range(0, len(unique_ids), batch_size):
+            batch = unique_ids[i : i + batch_size]
+            stmt = select(self.model).where(self._pk_column.in_(batch))
+            batch_result = await self.session.execute(stmt)
+            results.extend(batch_result.scalars().all())
+
+        if preserve_order:
+            # Map by PK for O(1) lookup
+            by_id = {getattr(obj, self._pk_column.name): obj for obj in results}
+            # Return in the order of the original 'ids' list, skipping missing ones
+            return [by_id[i] for i in ids if i in by_id]
+
+        return results
+
+    def add(self, obj: T) -> T:
+        """Add an object to the session (pending flush)."""
         self.session.add(obj)
-        await self.session.flush()
         return obj
 
-    async def delete(self, obj: ModelT) -> None:
+    async def delete(self, obj: T) -> None:
+        """Delete an object from the session."""
         await self.session.delete(obj)
 
-    async def delete_by_id(self, id_: Union[int, str]) -> None:
-        pk = self._pk_column()
-        await self.session.execute(delete(self.model).where(pk == id_))
+    async def delete_by_id(self, id_: ID) -> bool:
+        """Fetch and delete by ID. Returns True if found and deleted."""
+        obj = await self.get(id_)
+        if not obj:
+            return False
+        await self.session.delete(obj)
+        return True

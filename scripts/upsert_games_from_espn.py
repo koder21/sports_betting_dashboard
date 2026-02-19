@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import asyncio
 import sys
-import sqlite3
+import argparse
+import psycopg2
 from typing import Optional
 
 sys.path.insert(0, "/Users/dakotanicol/sports_betting_dashboard")
@@ -13,7 +14,6 @@ SPORT_PATHS = {
     "nfl": "football/nfl",
     "nhl": "hockey/nhl",
     "mlb": "baseball/mlb",
-    "ufc": "mma/ufc",
     "ncaaf": "football/college-football",
     "ncaab": "basketball/mens-college-basketball",
     "soccer": "soccer",  # requires league code
@@ -71,27 +71,52 @@ async def upsert_game_from_event(client: ESPNClient, event_id: str, sport: str, 
 
 
 async def run() -> None:
-    conn = sqlite3.connect("/Users/dakotanicol/sports_betting_dashboard/sports_intel.db")
+    # Use PostgreSQL connection
+    conn = psycopg2.connect(
+        dbname="sports_intel",
+        user="sbd",
+        password="sbddb",
+        host="localhost",
+        port=5432
+    )
     cursor = conn.cursor()
 
-    cursor.execute(
-        """
-        SELECT DISTINCT b.game_id, s.name, s.espn_league_code
-        FROM bets b
-        LEFT JOIN sports s ON s.id = b.sport_id
-        WHERE b.game_id IS NOT NULL
-        """
-    )
+    # Parse CLI args
+    parser = argparse.ArgumentParser(description="Upsert games from ESPN API")
+    parser.add_argument('--game_id', type=str, help='Only update this game_id')
+    args, _ = parser.parse_known_args()
+
+    if args.game_id:
+        cursor.execute(
+            """
+            SELECT game_id, sport, league, home_team_name, away_team_name, home_score, away_score, status
+            FROM games
+            WHERE game_id = %s
+            """,
+            (args.game_id,)
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT game_id, sport, league, home_team_name, away_team_name, home_score, away_score, status
+            FROM games
+            WHERE 
+                (home_team_name IS NULL OR home_team_name = '' OR 
+                 away_team_name IS NULL OR away_team_name = '' OR 
+                 home_score IS NULL OR away_score IS NULL OR 
+                 status IS NULL OR status != 'final')
+            """
+        )
     rows = cursor.fetchall()
 
     if not rows:
-        print("No bets with game_id found.")
+        print("No games with missing team names, scores, or not marked as final.")
         conn.close()
         return
 
     client = ESPNClient()
     try:
-        for game_id, sport, league_code in rows:
+        for game_id, sport, league_code, home_team_name, away_team_name, home_score, away_score, status in rows:
             if not sport:
                 continue
             game = await upsert_game_from_event(client, game_id, sport, league_code)
@@ -102,8 +127,8 @@ async def run() -> None:
             cursor.execute(
                 """
                 INSERT INTO games (game_id, sport, league, start_time, status, home_team_name, away_team_name, home_score, away_score, period, clock)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(game_id) DO UPDATE SET
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (game_id) DO UPDATE SET
                     sport=excluded.sport,
                     league=excluded.league,
                     start_time=excluded.start_time,

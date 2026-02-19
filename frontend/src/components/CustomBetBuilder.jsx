@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import api from "../services/api.js";
-import { getOddsFormat } from "../services/oddsService.js";
+import { getOddsFormat, calculateParlayOdds } from "../services/oddsService.js";
 import "../styles/CustomBetBuilder.css";
 
 function CustomBetBuilder({ games, isOpen, onClose }) {
   const [betType, setBetType] = useState("single"); // "single" or "parlay"
   const [selectedGames, setSelectedGames] = useState([]);
   const [stake, setStake] = useState(50);
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState("AAI Custom Bet");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [gameLegs, setGameLegs] = useState([]); // For parlay
@@ -38,19 +38,25 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
       game_id: game.game_id,
       pick: game.selectedPick,
       odds: game.selectedOdds || 2.0,
+      confidence: typeof game.selectedConfidence === "number" ? game.selectedConfidence : 0,
     }));
     setGameLegs(legs);
   }, [selectedGames]);
 
   // Early return AFTER all hooks
   if (!isOpen) return null;
-
-  // Debug logging
-  console.log("CustomBetBuilder mounted - isOpen:", isOpen);
-  console.log("Games available:", games?.length || 0);
-  
   // Ensure games is an array
   const gamesList = Array.isArray(games) ? games : [];
+
+  const getHomeTeamName = (game) => {
+    const name = game.home_team_name || game.home || "Home";
+    return `${name} ML`;
+  };
+
+  const getAwayTeamName = (game) => {
+    const name = game.away_team_name || game.away || "Away";
+    return `${name} ML`;
+  };
 
   const toggleGameSelection = (game) => {
     setSelectedGames((prev) => {
@@ -58,7 +64,10 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
       if (exists) {
         return prev.filter((g) => g.game_id !== game.game_id);
       }
-      return [...prev, { ...game, selectedPick: game.home, selectedOdds: 2.0 }];
+      return [
+        ...prev,
+        { ...game, selectedPick: getHomeTeamName(game), selectedOdds: 2.0 },
+      ];
     });
   };
 
@@ -108,7 +117,12 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
         }
 
         const payload = {
-          legs: gameLegs,
+          legs: gameLegs.map(({ game_id, pick, odds, confidence }) => ({
+            game_id,
+            pick,
+            odds: typeof odds === "number" ? odds : parseFloat(odds),
+            confidence: typeof confidence === "number" ? confidence : 0,
+          })),
           stake: parseFloat(stake),
           notes: notes,
         };
@@ -128,9 +142,9 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
     }
   };
 
-  // Calculate parlay odds
-  const parlayOdds = gameLegs.reduce((acc, leg) => acc * leg.odds, 1);
-  const parlayWin = (stake * parlayOdds - stake).toFixed(2);
+  // Calculate parlay odds using utility (handles American/decimal)
+  const parlayOdds = calculateParlayOdds(gameLegs.map(leg => leg.odds), 'decimal');
+  const parlayProfit = (stake * (parlayOdds - 1)).toFixed(2);
 
   return (
     <div className="custom-bet-builder-overlay" onClick={onClose}>
@@ -173,6 +187,13 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
                     (g) => g.game_id === game.game_id
                   );
 
+                  // Use home_team_name/away_team_name for clarity
+                  const homeName = game.home_team_name || game.home || "Home";
+                  const awayName = game.away_team_name || game.away || "Away";
+                  // Try to use logo fields if present
+                  const homeLogo = game.home_team_logo || game.home_logo || null;
+                  const awayLogo = game.away_team_logo || game.away_logo || null;
+
                   return (
                     <div
                       key={game.game_id}
@@ -180,9 +201,17 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
                       onClick={() => toggleGameSelection(game)}
                     >
                       <div className="game-matchup">
-                        <div className="team">{game.away}</div>
+                        <div className="team away">
+                          {awayLogo && <img src={awayLogo} alt={awayName} className="team-logo" />}
+                          <span>{awayName}</span>
+                          <span className="team-label">(Away)</span>
+                        </div>
                         <div className="at">@</div>
-                        <div className="team">{game.home}</div>
+                        <div className="team home">
+                          {homeLogo && <img src={homeLogo} alt={homeName} className="team-logo" />}
+                          <span>{homeName}</span>
+                          <span className="team-label">(Home)</span>
+                        </div>
                       </div>
                       <div className="game-time">{game.start_time}</div>
 
@@ -194,7 +223,7 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
                           <div className="leg-input">
                             <label>Pick</label>
                             <select
-                              value={selectedGame?.selectedPick || game.home}
+                              value={selectedGame?.selectedPick || homeName + ' ML'}
                               onChange={(e) =>
                                 updateGamePick(
                                   game.game_id,
@@ -203,8 +232,8 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
                                 )
                               }
                             >
-                              <option value={game.home}>{game.home}</option>
-                              <option value={game.away}>{game.away}</option>
+                              <option value={homeName + ' ML'}>{homeName} (Home)</option>
+                              <option value={awayName + ' ML'}>{awayName} (Away)</option>
                               <option value="Over">Over Total</option>
                               <option value="Under">Under Total</option>
                             </select>
@@ -218,7 +247,7 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
                               onChange={(e) =>
                                 updateGamePick(
                                   game.game_id,
-                                  selectedGame?.selectedPick || game.home,
+                                  selectedGame?.selectedPick || getHomeTeamName(game),
                                   e.target.value
                                 )
                               }
@@ -272,8 +301,8 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
                 <span>{parlayOdds.toFixed(3)}x</span>
               </div>
               <div className="summary-row highlight">
-                <span>Potential Win:</span>
-                <span>${parlayWin}</span>
+                <span>Potential Profit:</span>
+                <span>${parlayProfit}</span>
               </div>
             </div>
           )}

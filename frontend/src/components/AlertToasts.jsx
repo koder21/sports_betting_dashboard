@@ -10,7 +10,15 @@ function AlertToasts() {
   const initialized = useRef(false);
 
   const dismissToast = async (id) => {
+    // Optimistic update - remove from UI immediately
     setToasts((prev) => prev.filter((t) => t.id !== id));
+    
+    // Make API call in background to acknowledge the alert (non-blocking)
+    api.post(`/api/alerts/${id}/ack`)
+      .catch((err) => {
+        console.error(`Failed to acknowledge alert ${id} (background):`, err);
+        // Note: Not reverting UI since alerts are time-sensitive
+      });
   };
 
   const dismissAllToasts = () => {
@@ -28,7 +36,7 @@ function AlertToasts() {
 
   const fetchAlerts = async () => {
     try {
-      const res = await api.get("/alerts/");
+      const res = await api.get("/api/alerts/");
       const alerts = res.data || [];
 
       if (!initialized.current) {

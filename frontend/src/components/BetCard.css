@@ -1,0 +1,329 @@
+/* BetCard Component Styles */
+
+.bet-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.bet-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.bet-card.won {
+  border-left: 4px solid #4CAF50;
+}
+
+.bet-card.lost {
+  border-left: 4px solid #f44336;
+}
+
+.bet-card.pending {
+  border-left: 4px solid #FF9800;
+}
+
+.bet-card.void {
+  border-left: 4px solid #9e9e9e;
+  opacity: 0.7;
+}
+
+/* Header */
+.bet-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.bet-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.bet-selection {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.status-won {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge.status-lost {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.status-badge.status-pending {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.status-badge.status-void {
+  background: #f5f5f5;
+  color: #616161;
+}
+
+.bet-card-delete {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #9e9e9e;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.bet-card-delete:hover {
+  color: #f44336;
+}
+
+/* Body */
+.bet-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bet-game-info {
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.game-matchup {
+  font-size: 0.95rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.game-score {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.bet-player-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #f9fafb;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.player-icon {
+  font-size: 0.875rem;
+}
+
+.player-name {
+  font-weight: 500;
+  color: #374151;
+}
+
+/* Stats Grid */
+.bet-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 12px;
+}
+
+.bet-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.stat-value.result-won {
+  color: #4CAF50;
+}
+
+.stat-value.result-lost {
+  color: #f44336;
+}
+
+.stat-value.profit-positive {
+  color: #4CAF50;
+}
+
+.stat-value.profit-negative {
+  color: #f44336;
+}
+
+/* Reason */
+.bet-reason {
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-left: 3px solid #3b82f6;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+/* Date */
+.bet-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+.date-icon {
+  font-size: 0.75rem;
+}
+
+/* Expand Toggle */
+.bet-expand-toggle {
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bet-expand-toggle:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* Expanded Details */
+.bet-details-expanded {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.detail-label {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.detail-value {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.detail-value.monospace {
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.8rem;
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  .bet-card {
+    background: #1e1e1e;
+    border-color: #333;
+  }
+
+  .bet-selection {
+    color: #e0e0e0;
+  }
+
+  .game-matchup {
+    color: #d0d0d0;
+  }
+
+  .game-score {
+    color: #9ca3af;
+  }
+
+  .bet-player-info {
+    background: #2a2a2a;
+  }
+
+  .player-name {
+    color: #d0d0d0;
+  }
+
+  .stat-value {
+    color: #e0e0e0;
+  }
+
+  .bet-reason {
+    background: #2a2a2a;
+  }
+
+  .bet-expand-toggle {
+    background: #2a2a2a;
+    border-color: #444;
+    color: #9ca3af;
+  }
+
+  .bet-expand-toggle:hover {
+    background: #333;
+    color: #e0e0e0;
+  }
+
+  .bet-details-expanded {
+    border-top-color: #444;
+  }
+
+  .detail-label {
+    color: #9ca3af;
+  }
+
+  .detail-value {
+    color: #e0e0e0;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .bet-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .bet-selection {
+    font-size: 1rem;
+  }
+}

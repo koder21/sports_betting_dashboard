@@ -1,5 +1,7 @@
 from typing import Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
+from backend.db import get_session
 from sqlalchemy import text
 from collections import defaultdict
 
@@ -14,6 +16,9 @@ class PlayerTrendAnalytics:
         self.bets = BetRepository(session)
 
     async def hot_cold_players(self, games_window: int = 5) -> Dict[str, Any]:
+        return await self._hot_cold_players(self.session, games_window)
+
+    async def _hot_cold_players(self, session: AsyncSession, games_window: int) -> Dict[str, Any]:
         """
         Analyze hot/cold players based on actual game performance
         Uses all games scraped, not just games bet on
@@ -23,7 +28,7 @@ class PlayerTrendAnalytics:
         from ...models.player_stats import PlayerStats
         from ...models.player import Player
         
-        result = await self.session.execute(
+        result = await session.execute(
             text("""
                 SELECT ps.player_id, p.name, ps.sport, ps.points, ps.game_id, g.start_time
                 FROM player_stats ps
@@ -63,9 +68,18 @@ class PlayerTrendAnalytics:
         if not player_stats:
             return {"hot_players": [], "cold_players": [], "trending": []}
         
-        # Sort by date for each player
+        # Sort by date for each player, normalizing to datetime
+        from dateutil import parser as dt_parser
+        import datetime
         for player_id in player_stats:
-            player_stats[player_id].sort(key=lambda x: x["date"] or "", reverse=True)
+            for stat in player_stats[player_id]:
+                date_val = stat["date"]
+                if date_val is not None and not isinstance(date_val, datetime.datetime):
+                    try:
+                        stat["date"] = dt_parser.parse(str(date_val))
+                    except Exception:
+                        stat["date"] = None
+            player_stats[player_id].sort(key=lambda x: x["date"] or datetime.datetime.min, reverse=True)
         
         hot_players = []
         cold_players = []
@@ -138,7 +152,9 @@ class TeamTrendAnalytics:
         self.session = session
 
     async def team_momentum(self, games_window: int = 5) -> Dict[str, Any]:
-        """Calculate team momentum (last N games record)"""
+        return await self._team_momentum(self.session, games_window)
+
+    async def _team_momentum(self, session: AsyncSession, games_window: int) -> Dict[str, Any]:
         # Query games_results to get team performance
         query = text("""
             SELECT 
@@ -159,13 +175,13 @@ class TeamTrendAnalytics:
         
         # Get all unique teams
         teams_query = text("SELECT DISTINCT home_team_id, home_team FROM games_results")
-        teams_result = await self.session.execute(teams_query)
+        teams_result = await session.execute(teams_query)
         teams = [{"id": row[0], "name": row[1]} for row in teams_result.fetchall()]
         
         momentum_data = []
         
         for team in teams:
-            result = await self.session.execute(
+            result = await session.execute(
                 query,
                 {"team_id": team["id"], "limit": games_window}
             )
@@ -200,7 +216,9 @@ class TeamTrendAnalytics:
         return {"momentum": momentum_data}
 
     async def home_away_splits(self) -> Dict[str, Any]:
-        """Calculate home vs away performance for teams"""
+        return await self._home_away_splits(self.session)
+
+    async def _home_away_splits(self, session: AsyncSession) -> Dict[str, Any]:
         query = text("""
             SELECT 
                 home_team_id,
@@ -229,7 +247,7 @@ class TeamTrendAnalytics:
             GROUP BY away_team_id, away_team, sport
         """)
         
-        result = await self.session.execute(query)
+        result = await session.execute(query)
         splits_data = []
         
         for row in result.fetchall():

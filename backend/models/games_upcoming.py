@@ -9,7 +9,7 @@ class GameUpcoming(Base):
     __tablename__ = "games_upcoming"
 
     game_id: Mapped[str] = mapped_column(
-        String, ForeignKey("games.game_id"), primary_key=True
+        String, ForeignKey("games.game_id", ondelete="CASCADE"), primary_key=True, index=True
     )
 
     sport: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -27,22 +27,22 @@ class GameUpcoming(Base):
     status: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
     # Team IDs (string)
-    home_team_id: Mapped[Optional[str]] = mapped_column(String, ForeignKey("teams.team_id"), nullable=True)
-    away_team_id: Mapped[Optional[str]] = mapped_column(String, ForeignKey("teams.team_id"), nullable=True)
+    home_team_id: Mapped[Optional[str]] = mapped_column(String, ForeignKey("teams.team_id", ondelete="SET NULL"), nullable=True, index=True)
+    away_team_id: Mapped[Optional[str]] = mapped_column(String, ForeignKey("teams.team_id", ondelete="SET NULL"), nullable=True, index=True)
 
     # Relationships to Team
-    home_team: Mapped["Team"] = relationship(
+    home_team_obj: Mapped["Team"] = relationship(
         back_populates="upcoming_home_games",
         foreign_keys=[home_team_id]
     )
-    away_team: Mapped["Team"] = relationship(
+    away_team_obj: Mapped["Team"] = relationship(
         back_populates="upcoming_away_games",
         foreign_keys=[away_team_id]
     )
 
     # Display metadata
-    home_team_name: Mapped[Optional[str]] = mapped_column("home_team", String, nullable=True)
-    away_team_name: Mapped[Optional[str]] = mapped_column("away_team", String, nullable=True)
+    home_team_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    away_team_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     home_logo: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     away_logo: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
@@ -53,7 +53,12 @@ class GameUpcoming(Base):
     spread_away: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     total: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
-    scraped_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    scraped_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime,
+        nullable=True,
+        default=datetime.utcnow,
+        index=True
+    )
 
     # Link to core Game
     game: Mapped["Game"] = relationship(

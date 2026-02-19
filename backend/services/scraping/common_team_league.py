@@ -4,7 +4,8 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from ..espn_client import ESPNClient, SPORT_CONFIG, BASE_SITE, BASE_CORE, BASE_CDN
+from ..espn_client import ESPNClient, SPORT_CONFIG
+BASE = ESPNClient.BASE
 from ..alerts import send_email_alert
 from ...repositories.teams import TeamRepository
 from ...repositories.games import GameRepository
@@ -123,8 +124,14 @@ class TeamLeagueScraper:
             # Extract team names and scores from ESPN data
             home_team_name = home.get("team", {}).get("displayName", "Home Team")
             away_team_name = away.get("team", {}).get("displayName", "Away Team")
-            home_score = home.get("score")
-            away_score = away.get("score")
+            # Ensure scores are int or None for DB compatibility
+            def parse_score(val):
+                try:
+                    return int(val)
+                except (TypeError, ValueError):
+                    return None
+            home_score = parse_score(home.get("score"))
+            away_score = parse_score(away.get("score"))
             
             # Extract period and clock from competition status
             status_obj = comp.get("status", {})

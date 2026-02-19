@@ -3,7 +3,7 @@ import asyncio
 import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from ..db import get_session, AsyncSessionLocal
+from ..db import get_db, AsyncSessionLocal
 from ..services.espn_client import ESPNClient
 from ..services.scraping import (
     NFLScraper,
@@ -12,17 +12,17 @@ from ..services.scraping import (
     NCAABScraper,
     NHLScraper,
     SoccerScraper,
-    UFCScraper,
+    MLBScraper,
 )
 
-router = APIRouter(prefix="/scrape", tags=["scrape"])
+router = APIRouter(tags=["scrape"])
 
 # In-memory job tracking for long-running tasks
 FILL_NAME_JOBS = {}
 
 
 @router.post("/sport/{sport_name}")
-async def scrape_sport(sport_name: str, session: AsyncSession = Depends(get_session)):
+async def scrape_sport(sport_name: str, session: AsyncSession = Depends(get_db)):
     client = ESPNClient()
     try:
         if sport_name == "nfl":
@@ -37,8 +37,8 @@ async def scrape_sport(sport_name: str, session: AsyncSession = Depends(get_sess
             scraper = NHLScraper(session, client)
         elif sport_name == "soccer":
             scraper = SoccerScraper(session, client)
-        elif sport_name == "ufc":
-            scraper = UFCScraper(session, client)
+        elif sport_name == "mlb":
+            scraper = MLBScraper(session, client)
         else:
             return {"error": "unknown sport"}
         await scraper.scrape()
@@ -48,7 +48,7 @@ async def scrape_sport(sport_name: str, session: AsyncSession = Depends(get_sess
 
 
 @router.post("/fix-orphaned-players")
-async def fix_orphaned_players(session: AsyncSession = Depends(get_session)):
+async def fix_orphaned_players(session: AsyncSession = Depends(get_db)):
     """
     Create player records for all orphaned player_ids in player_stats.
     This fixes the issue where player_stats exist but the player doesn't.
@@ -110,7 +110,7 @@ async def fix_orphaned_players(session: AsyncSession = Depends(get_session)):
 
 
 @router.post("/fill-player-names")
-async def fill_player_names(limit: int = 100, session: AsyncSession = Depends(get_session)):
+async def fill_player_names(limit: int = 100, session: AsyncSession = Depends(get_db)):
     """
     Fill placeholder player names ("Player ####") using ESPN athlete data.
     """
@@ -146,8 +146,6 @@ async def fill_player_names(limit: int = 100, session: AsyncSession = Depends(ge
             "NCAAF": ("football", "college-football"),
             "NHL": ("hockey", "nhl"),
             "MLB": ("baseball", "mlb"),
-            "WNBA": ("basketball", "wnba"),
-            "UFC": ("mma", "ufc"),
             "SOCCER": ("soccer", "eng.1"),
             "EPL": ("soccer", "eng.1"),
         }
@@ -234,8 +232,6 @@ async def _run_fill_player_names_job(job_id: str, limit: int = 200) -> None:
                 "NCAAF": ("football", "college-football"),
                 "NHL": ("hockey", "nhl"),
                 "MLB": ("baseball", "mlb"),
-                "WNBA": ("basketball", "wnba"),
-                "UFC": ("mma", "ufc"),
                 "SOCCER": ("soccer", "eng.1"),
                 "EPL": ("soccer", "eng.1"),
             }

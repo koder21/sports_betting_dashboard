@@ -6,8 +6,10 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone, timedelta, date
 import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
+from backend.db import get_session
 from sqlalchemy import select, text
-from sqlalchemy.dialects.sqlite import insert
+from sqlalchemy.dialects.postgresql import insert
 
 from .espn_client import ESPNClient
 from ..models.player import Player
@@ -16,24 +18,44 @@ from ..models.team import Team
 from ..models.games_results import GameResult
 
 
+
+from contextlib import asynccontextmanager
+
 class PlayerStatsScraper:
     """Scrapes player rosters and statistics from ESPN using dedicated endpoints"""
-    
+
+    async def close(self):
+        if hasattr(self.client, 'close') and callable(self.client.close):
+            await self.client.close()
+
+    @classmethod
+    @asynccontextmanager
+    async def context(cls, *args, **kwargs):
+        """Context manager to ensure ESPNClient session is closed after use."""
+        scraper = cls(*args, **kwargs)
+        try:
+            yield scraper
+        finally:
+            await scraper.close()
+
     SPORTS_CONFIG = [
         ("basketball", "nba", "NBA"),
         ("basketball", "mens-college-basketball", "NCAAB"),
         ("football", "nfl", "NFL"),
         ("football", "college-football", "NCAAF"),
         ("hockey", "nhl", "NHL"),
-        ("mma", "ufc", "UFC"),
+        ("baseball", "mlb", "MLB"),
         ("soccer", "eng.1", "EPL"),
     ]
     
-    def __init__(self, client: ESPNClient, session: AsyncSession):
+    def __init__(self, client: ESPNClient):
         self.client = client
-        self.session = session
     
     async def scrape_teams_and_rosters(self):
+        async with get_session() as session:
+            return await self._scrape_teams_and_rosters(session)
+
+    async def _scrape_teams_and_rosters(self, session: AsyncSession):
         """Scrape team rosters and player info for all sports"""
         print("Scraping team rosters and players...")
         
@@ -58,16 +80,14 @@ class PlayerStatsScraper:
                 continue
             
             try:
-                if "sports" not in teams_data:
+                if not isinstance(teams_data, dict) or "sports" not in teams_data:
                     print(f"{sport_name}: No teams data found")
                     continue
-                
                 # Navigate the ESPN teams structure
                 teams = []
                 for sport in teams_data.get("sports", []):
                     for league_data in sport.get("leagues", []):
                         teams.extend(league_data.get("teams", []))
-                
                 print(f"{sport_name}: Found {len(teams)} teams")
                 
                 # Fetch all rosters concurrently for this sport
@@ -100,6 +120,7 @@ class PlayerStatsScraper:
                         
                         # Upsert team first
                         await self._upsert_team(
+                            session=session,
                             team_id=team_id,
                             name=team_name,
                             abbreviation=team_info.get("abbreviation"),
@@ -107,19 +128,25 @@ class PlayerStatsScraper:
                             league=league_i,
                         )
                         
-                        roster = roster_response.get("team", {}).get("athletes", [])
+                        roster = roster_response.get("team", {}).get("athletes", []) if isinstance(roster_response, dict) else []
                         print(f"  {team_name}: {len(roster)} players")
                         
+                        import logging
+                        logger = logging.getLogger(__name__)
                         for athlete in roster:
                             player_id = str(athlete.get("id"))
-                            
+                            player_name = athlete.get("displayName")
                             if not player_id:
+                                logger.warning(f"[Roster Scrape] Missing player_id for athlete in team {team_name} ({team_id}), sport {sport_name_i}, league {league_i}")
                                 continue
-                            
+                            if not team_id:
+                                logger.warning(f"[Roster Scrape] Missing team_id for player {player_id} ({player_name}), team context: {team_name}, sport {sport_name_i}, league {league_i}")
+                                continue
                             # Upsert player
                             await self._upsert_player(
+                                session=session,
                                 player_id=player_id,
-                                name=athlete.get("displayName"),
+                                name=player_name,
                                 position=athlete.get("position", {}).get("abbreviation") if isinstance(athlete.get("position"), dict) else athlete.get("position"),
                                 team_id=team_id,
                                 sport=sport_name_i,
@@ -138,17 +165,21 @@ class PlayerStatsScraper:
                 print(f"  Error scraping {sport_name}: {e}")
                 continue
         
-        await self.session.commit()
+        await session.commit()
         print(f"\nRoster scraping complete: {total_teams} teams, {total_players} players")
     
     async def scrape_player_stats(self, season_year: int = 2026):
+        async with get_session() as session:
+            return await self._scrape_player_stats(session, season_year)
+
+    async def _scrape_player_stats(self, session: AsyncSession, season_year: int):
         """Scrape season stats for all players using the stats API endpoint"""
         print(f"\nScraping player season stats for {season_year}...")
         
         total_stats = 0
         
         # Get all players from database
-        result = await self.session.execute(
+        result = await session.execute(
             select(Player).where(Player.active == True)
         )
         players = result.scalars().all()
@@ -184,13 +215,13 @@ class PlayerStatsScraper:
                 
                 if total_stats % 50 == 0:
                     print(f"  Processed {total_stats} players...")
-                    await self.session.commit()
+                    await session.commit()
                 
             except Exception as e:
                 # Don't log every error, too verbose
                 pass
         
-        await self.session.commit()
+        await session.commit()
         print(f"Stats scraping complete: {total_stats} players with stats")
     
     async def _parse_and_save_season_stats(self, player: Player, stats_data: Dict, season_year: int):
@@ -200,9 +231,65 @@ class PlayerStatsScraper:
         pass
     
     async def scrape_recent_games(self, days_back: int = 7):
-        """Main entry point - scrape rosters first, then recent game stats"""
+        """
+        Scrape rosters (if needed) and all recent games' player stats using a single session per scrape.
+        This ensures all DB writes for a game are committed in the same session, avoiding async/session bugs.
+        """
+        from backend.db import get_session
+        import logging
+        logger = logging.getLogger(__name__)
+        async with get_session() as session:
+            try:
+                effective_days_back = days_back
+                last_scrape_date = await self._get_last_stats_scrape_date(session)
+                if last_scrape_date:
+                    today = datetime.now(timezone.utc).date()
+                    delta_days = (today - last_scrape_date).days
+                    effective_days_back = max(1, delta_days + 1)  # 1 day padding
+
+                should_scrape_rosters = True
+                last_roster_date = await self._get_last_roster_scrape_date(session)
+                if last_roster_date:
+                    today = datetime.now(timezone.utc).date()
+                    should_scrape_rosters = (today - last_roster_date).days >= 7
+
+                if should_scrape_rosters:
+                    await self._scrape_teams_and_rosters(session)
+                    await self._set_last_roster_scrape_date(session, datetime.now(timezone.utc).date())
+                else:
+                    print("Skipping roster scrape (last run within 7 days)")
+
+                print(f"\nScraping game stats from last {effective_days_back} days...")
+                total_stats = 0
+                for sport_type, league, sport_name in self.SPORTS_CONFIG:
+                    try:
+                        game_ids = await self._get_recent_game_ids(session, sport_type, league, effective_days_back)
+                        print(f"{sport_name}: Found {len(game_ids)} completed games")
+                        for game_id in game_ids:
+                            try:
+                                stats_count = await self._scrape_game_boxscore(
+                                    session, game_id, sport_type, league, sport_name
+                                )
+                                total_stats += stats_count
+                                await session.commit()
+                            except Exception as e:
+                                logger.error(f"Error scraping boxscore for game {game_id}: {e}", exc_info=True)
+                                await session.rollback()
+                                continue
+                    except Exception as e:
+                        logger.error(f"Error scraping {sport_name} game stats: {e}", exc_info=True)
+                        continue
+                print(f"Stats scraping complete: {total_stats} players with stats")
+                return total_stats
+            except Exception as e:
+                logger.error(f"Fatal error in scrape_recent_games: {e}", exc_info=True)
+                await session.rollback()
+                raise
+
+    async def _scrape_recent_games(self, session: AsyncSession, days_back: int = 7):
+        """Main entry point - scrape rosters first, then recent game stats, and backfill all missing player stats for completed games."""
         effective_days_back = days_back
-        last_scrape_date = await self._get_last_stats_scrape_date()
+        last_scrape_date = await self._get_last_stats_scrape_date(session)
         if last_scrape_date:
             today = datetime.now(timezone.utc).date()
             delta_days = (today - last_scrape_date).days
@@ -210,54 +297,140 @@ class PlayerStatsScraper:
 
         # First, get all team rosters and players (weekly)
         should_scrape_rosters = True
-        last_roster_date = await self._get_last_roster_scrape_date()
+        last_roster_date = await self._get_last_roster_scrape_date(session)
         if last_roster_date:
             today = datetime.now(timezone.utc).date()
             should_scrape_rosters = (today - last_roster_date).days >= 7
 
         if should_scrape_rosters:
-            await self.scrape_teams_and_rosters()
-            await self._set_last_roster_scrape_date(datetime.now(timezone.utc).date())
+            await self._scrape_teams_and_rosters(session)
+            await self._set_last_roster_scrape_date(session, datetime.now(timezone.utc).date())
         else:
             print("Skipping roster scrape (last run within 7 days)")
-        
+
         # Then scrape recent game stats from boxscores
         print(f"\nScraping game stats from last {effective_days_back} days...")
-        
+
         total_stats = 0
-        
+
         for sport_type, league, sport_name in self.SPORTS_CONFIG:
             try:
-                game_ids = await self._get_recent_game_ids(sport_type, league, effective_days_back)
+                game_ids = await self._get_recent_game_ids(session, sport_type, league, effective_days_back)
                 print(f"{sport_name}: Found {len(game_ids)} completed games")
-                
+
                 # Process boxscores sequentially to avoid session conflicts
                 for game_id in game_ids:
                     try:
                         stats_count = await self._scrape_game_boxscore(
-                            game_id, sport_type, league, sport_name
+                            session, game_id, sport_type, league, sport_name
                         )
                         total_stats += stats_count
                     except Exception as e:
                         print(f"Error scraping boxscore for game {game_id}: {e}")
                         continue
-                
+
             except Exception as e:
                 print(f"Error scraping {sport_name} game stats: {e}")
                 continue
-        
-        await self.session.commit()
-        await self._set_last_stats_scrape_date(datetime.now(timezone.utc).date())
-        print(f"Game stats scraping complete: {total_stats} stat records")
 
-    async def _get_last_stats_scrape_date(self) -> Optional[date]:
+        # --- Backfill: Find all non-upcoming games missing player stats or team stats and fill them ---
+        print("\nBackfilling missing player or team stats for all non-upcoming games (any date)...")
+        from sqlalchemy import select, or_, and_, not_, exists
+        from backend.models.games_results import GameResult
+        from backend.models.player_stats import PlayerStats
+
+        # Find all games in games_results with status not 'upcoming' (i.e., include live, final, etc.)
+        # and either (no player_stats) OR (home or away team stats_json is null or empty)
+        from sqlalchemy import cast, String as SAString
+        result = await session.execute(
+            select(GameResult).where(
+                GameResult.status.isnot(None),
+                GameResult.status.notin_("upcoming", "scheduled", "pre-game", "preseason", "tba", "preview"),
+                or_(
+                    not_(exists().where(PlayerStats.game_id == GameResult.game_id)),
+                    (GameResult.home_team_obj.has(or_(Team.stats_json.is_(None), cast(Team.stats_json, SAString) == '{}'))),
+                    (GameResult.away_team_obj.has(or_(Team.stats_json.is_(None), cast(Team.stats_json, SAString) == '{}')))
+                )
+            )
+        )
+        missing_games = result.scalars().all()
+        print(f"Found {len(missing_games)} non-upcoming games missing player or team stats.")
+        # Convert all ORM objects to dicts inside session context
+        missing_game_dicts = []
+        for game in missing_games:
+            game_dict = {
+                "game_id": getattr(game, "game_id", None),
+                "sport": getattr(game, "sport", None),
+                "home_team_id": getattr(game, "home_team_id", None),
+                "away_team_id": getattr(game, "away_team_id", None),
+                "home_team_name": getattr(game, "home_team_name", None),
+                "away_team_name": getattr(game, "away_team_name", None),
+                "start_time": getattr(game, "start_time", None),
+                "end_time": getattr(game, "end_time", None),
+                "venue": getattr(game, "venue", None),
+                "home_score": getattr(game, "home_score", None),
+                "away_score": getattr(game, "away_score", None),
+                "status": getattr(game, "status", None),
+                "attendance": getattr(game, "attendance", None),
+                "referees": getattr(game, "referees", None),
+                "weather": getattr(game, "weather", None),
+                "moved_at": getattr(game, "moved_at", None),
+            }
+            missing_game_dicts.append(game_dict)
+        # Now only use dicts outside session context
+        # Parallelize with concurrency limit, but each task must use its own session
+        import asyncio
+        from backend.db import get_session
+        semaphore = asyncio.Semaphore(6)  # Limit concurrency to 6 to avoid overloading ESPN/DB
+
+        async def scrape_one(game_dict):
+            game_id = game_dict["game_id"]
+            game_sport = game_dict["sport"]
+            sport_upper = (game_sport or "").upper()
+            sport_league_map = {
+                "NBA": ("basketball", "nba"),
+                "NCAAB": ("basketball", "mens-college-basketball"),
+                "NFL": ("football", "nfl"),
+                "NCAAF": ("football", "college-football"),
+                "NHL": ("hockey", "nhl"),
+                "MLB": ("baseball", "mlb"),
+                "EPL": ("soccer", "eng.1"),
+                "SOCCER": ("soccer", "eng.1"),
+            }
+            if sport_upper not in sport_league_map:
+                print(f"[Backfill] Unknown sport: {game_sport} for game {game_id}, skipping.")
+                return 0
+            sport_type, league = sport_league_map[sport_upper]
+            try:
+                async with semaphore:
+                    async with get_session() as task_session:
+                        stats_count = await self._scrape_game_boxscore(
+                            task_session, game_id, sport_type, league, sport_upper
+                        )
+                        await task_session.commit()
+                print(f"[Backfill] Added stats for game {game_id} ({game_sport})")
+                return stats_count
+            except Exception as e:
+                print(f"[Backfill] Error scraping boxscore for game {game_id}: {e}")
+                return 0
+
+        # Run all missing games in parallel batches
+        results = await asyncio.gather(*(scrape_one(gd) for gd in missing_game_dicts))
+        total_stats += sum(results)
+
+        # Only commit and update scrape date for the main session (not per-task sessions)
+        await session.commit()
+        await self._set_last_stats_scrape_date(session, datetime.now(timezone.utc).date())
+        print(f"Game stats scraping complete: {total_stats} stat records (including backfill)")
+
+    async def _get_last_stats_scrape_date(self, session: AsyncSession) -> Optional[date]:
         """Get last successful stats scrape date from scraper_state table"""
-        await self.session.execute(
+        await session.execute(
             text(
                 "CREATE TABLE IF NOT EXISTS scraper_state (key TEXT PRIMARY KEY, value TEXT)"
             )
         )
-        result = await self.session.execute(
+        result = await session.execute(
             text("SELECT value FROM scraper_state WHERE key = :key"),
             {"key": "player_stats_last_scrape"},
         )
@@ -269,14 +442,14 @@ class PlayerStatsScraper:
                 return None
         return None
 
-    async def _get_last_roster_scrape_date(self) -> Optional[date]:
+    async def _get_last_roster_scrape_date(self, session: AsyncSession) -> Optional[date]:
         """Get last successful roster scrape date from scraper_state table"""
-        await self.session.execute(
+        await session.execute(
             text(
                 "CREATE TABLE IF NOT EXISTS scraper_state (key TEXT PRIMARY KEY, value TEXT)"
             )
         )
-        result = await self.session.execute(
+        result = await session.execute(
             text("SELECT value FROM scraper_state WHERE key = :key"),
             {"key": "player_rosters_last_scrape"},
         )
@@ -288,9 +461,9 @@ class PlayerStatsScraper:
                 return None
         return None
 
-    async def _set_last_stats_scrape_date(self, date_value) -> None:
+    async def _set_last_stats_scrape_date(self, session: AsyncSession, date_value) -> None:
         """Persist last successful stats scrape date"""
-        await self.session.execute(
+        await session.execute(
             text(
                 """
                 INSERT INTO scraper_state (key, value)
@@ -300,11 +473,11 @@ class PlayerStatsScraper:
             ),
             {"key": "player_stats_last_scrape", "value": date_value.isoformat()},
         )
-        await self.session.commit()
+        await session.commit()
 
-    async def _set_last_roster_scrape_date(self, date_value) -> None:
+    async def _set_last_roster_scrape_date(self, session: AsyncSession, date_value) -> None:
         """Persist last successful roster scrape date"""
-        await self.session.execute(
+        await session.execute(
             text(
                 """
                 INSERT INTO scraper_state (key, value)
@@ -314,9 +487,9 @@ class PlayerStatsScraper:
             ),
             {"key": "player_rosters_last_scrape", "value": date_value.isoformat()},
         )
-        await self.session.commit()
+        await session.commit()
     
-    async def _get_recent_game_ids(self, sport_type: str, league: str, days_back: int) -> List[str]:
+    async def _get_recent_game_ids(self, session: AsyncSession, sport_type: str, league: str, days_back: int) -> List[str]:
         """Get game IDs from recent days - fetches all days concurrently"""
         # Build all API requests upfront
         fetch_tasks = []
@@ -338,7 +511,7 @@ class PlayerStatsScraper:
                 continue
             
             try:
-                events = data.get("events", [])
+                events = data.get("events", []) if isinstance(data, dict) else []
                 for event in events:
                     status = event.get("status", {}).get("type", {}).get("name", "")
                     # Only process completed games
@@ -350,109 +523,157 @@ class PlayerStatsScraper:
         return game_ids
     
     async def _scrape_game_boxscore(
-        self, game_id: str, sport_type: str, league: str, sport_name: str
+        self, session: AsyncSession, game_id: str, sport_type: str, league: str, sport_name: str
     ) -> int:
         """Scrape boxscore for a single game and save player stats"""
         url = f"https://site.api.espn.com/apis/site/v2/sports/{sport_type}/{league}/summary?event={game_id}"
-        
+        import logging
+        logger = logging.getLogger(__name__)
         try:
             data = await self.client.get_json(url)
-            if not data or "boxscore" not in data:
+            if not data:
+                #logger.error(f"[Boxscore] No data returned for game {game_id}")
+                return 0
+            if "boxscore" not in data:
+                #logger.error(f"[Boxscore] No boxscore found for game {game_id}")
                 return 0
 
-            # Upsert final game result (history scraper)
+            # Upsert final game result (history scraper) and commit to guarantee FK for player_stats
             await self._upsert_game_result(
+                session=session,
                 data=data,
                 game_id=game_id,
                 sport_name=sport_name,
                 league=league,
             )
-            
+            try:
+                await session.commit()
+            except Exception as commit_e:
+                logger.error(f"[Boxscore] Commit failed after upsert_game_result for game {game_id}: {commit_e}", exc_info=True)
+                try:
+                    await session.rollback()
+                except Exception as rollback_e:
+                    logger.error(f"[Boxscore] Rollback failed after failed commit for game {game_id}: {rollback_e}", exc_info=True)
+                return 0
+
             boxscore = data["boxscore"]
             stats_added = 0
-            
-            # Check if this is soccer (uses rosters format) or other sports (uses players format)
+
             is_soccer = sport_type == "soccer"
-            
-            if is_soccer:
-                # Soccer format: use rosters from top level
-                rosters = data.get("rosters", [])
-                for roster in rosters:
-                    team_info = roster.get("team", {})
-                    team_id = team_info.get("id")
-                    
-                    players = roster.get("roster", [])
-                    for player_entry in players:
-                        athlete = player_entry.get("athlete", {})
-                        stats = player_entry.get("stats", [])
-                        
-                        if not athlete or not athlete.get("id"):
-                            continue
-                        
-                        player_id = str(athlete.get("id"))
-                        player_name = athlete.get("displayName") or athlete.get("fullName") or "Unknown"
-                        
-                        # Save stats for this game
-                        stat_added = await self._save_player_stats(
-                            game_id=game_id,
-                            player_id=player_id,
-                            player_name=player_name,
-                            team_id=f"{sport_name}-{team_id}" if team_id else None,
-                            sport=sport_name,
-                            league=league,
-                            stats_list=stats,
-                            stat_type="",
-                            stat_labels=[],
-                        )
-                        if stat_added:
-                            stats_added += 1
-            else:
-                # NBA/NFL/NHL format: use boxscore.players
-                players_by_team = boxscore.get("players", [])
-                
-                for team_players in players_by_team:
-                    team_info = team_players.get("team", {})
-                    team_id = team_info.get("id")
-                    
-                    statistics_groups = team_players.get("statistics", [])
-                    
-                    for stat_group in statistics_groups:
-                        stat_type = stat_group.get("name", "")  # 'passing', 'rushing', 'receiving', etc.
-                        stat_labels = stat_group.get("labels", [])
-                        athletes = stat_group.get("athletes", [])
-                        
-                        for athlete_data in athletes:
-                            athlete = athlete_data.get("athlete", {})
-                            stats = athlete_data.get("stats", [])
-                            
-                            if not athlete:
+            try:
+                if is_soccer:
+                    # ...existing code for soccer...
+                    rosters = data.get("rosters", [])
+                    for roster in rosters:
+                        team_info = roster.get("team", {})
+                        team_id = team_info.get("id")
+                        players = roster.get("roster", [])
+                        for player_entry in players:
+                            athlete = player_entry.get("athlete", {})
+                            stats = player_entry.get("stats", [])
+                            if not athlete or not athlete.get("id"):
                                 continue
-                            
                             player_id = str(athlete.get("id"))
                             player_name = athlete.get("displayName") or athlete.get("fullName") or "Unknown"
-                            
-                            # Save stats for this game
+                            try:
+                                stat_added = await self._save_player_stats(
+                                    session,
+                                    game_id=game_id,
+                                    player_id=player_id,
+                                    player_name=player_name,
+                                    team_id=f"{sport_name}-{team_id}" if team_id else None,
+                                    sport=sport_name,
+                                    league=league,
+                                    stats_list=stats,
+                                    stat_type="",
+                                    stat_labels=[],
+                                )
+                                if stat_added:
+                                    stats_added += 1
+                                await session.commit()
+                            except Exception as player_e:
+                                logger.error(f"[Soccer Boxscore] Error saving stats for player {player_id} ({player_name}) in game {game_id}: {player_e}", exc_info=True)
+                                try:
+                                    await session.rollback()
+                                except Exception as rollback_e:
+                                    logger.error(f"[Soccer Boxscore] Rollback failed after error for player {player_id} in game {game_id}: {rollback_e}", exc_info=True)
+                                continue
+                else:
+                    players_by_team = boxscore.get("players", [])
+                    if not players_by_team:
+                        logger.warning(f"[Boxscore] No players found in boxscore for game {game_id}")
+                    # --- Patch: Aggregate all stat groups per player for all sports ---
+                    from collections import defaultdict
+                    player_stats_agg = {}
+                    player_names = {}
+                    player_team_ids = {}
+                    for team_players in players_by_team:
+                        team_info = team_players.get("team", {})
+                        team_id = team_info.get("id")
+                        statistics_groups = team_players.get("statistics", [])
+                        for stat_group in statistics_groups:
+                            stat_type = stat_group.get("name", "")
+                            stat_labels = stat_group.get("labels", [])
+                            athletes = stat_group.get("athletes", [])
+                            if not isinstance(stat_labels, list) or not stat_labels:
+                                logger.error(f"[Boxscore] Skipping stat group with missing/malformed stat_labels for team {team_id} in game {game_id}, stat_type={stat_type}: {stat_labels}")
+                                continue
+                            for athlete_data in athletes:
+                                athlete = athlete_data.get("athlete", {})
+                                stats = athlete_data.get("stats", [])
+                                if not athlete or not athlete.get("id"):
+                                    logger.error(f"[Boxscore] Skipping athlete with missing id in game {game_id}, team {team_id}, stat_type {stat_type}")
+                                    continue
+                                player_id = str(athlete.get("id"))
+                                player_name = athlete.get("displayName") or athlete.get("fullName") or "Unknown"
+                                if not isinstance(stats, list) or len(stats) == 0:
+                                    continue
+                                # Aggregate all stat groups for this player
+                                if player_id not in player_stats_agg:
+                                    player_stats_agg[player_id] = []
+                                player_stats_agg[player_id].append((stat_type, stat_labels, stats))
+                                player_names[player_id] = player_name
+                                player_team_ids[player_id] = f"{sport_name}-{team_id}" if team_id else None
+                    # Now, for each player, merge all stat groups and save once
+                    for player_id, stat_groups in player_stats_agg.items():
+                        merged_stats = {}
+                        for stat_type, stat_labels, stats in stat_groups:
+                            parsed = self._parse_stats(sport_name, stats, stat_type, stat_labels)
+                            merged_stats.update(parsed)
+                        try:
                             stat_added = await self._save_player_stats(
+                                session,
                                 game_id=game_id,
                                 player_id=player_id,
-                                player_name=player_name,
-                                team_id=f"{sport_name}-{team_id}" if team_id else None,
+                                player_name=player_names[player_id],
+                                team_id=player_team_ids[player_id],
                                 sport=sport_name,
                                 league=league,
-                                stats_list=stats,
-                                stat_type=stat_type,
-                                stat_labels=stat_labels,
+                                stats_list=[],
+                                stat_type="",
+                                stat_labels=[],
+                                **merged_stats
                             )
                             if stat_added:
                                 stats_added += 1
-            
+                            await session.commit()
+                        except Exception as player_e:
+                            logger.error(f"[Boxscore] Error saving merged stats for player {player_id} ({player_names[player_id]}) in game {game_id}: {player_e}", exc_info=True)
+                            try:
+                                await session.rollback()
+                            except Exception as rollback_e:
+                                logger.error(f"[Boxscore] Rollback failed after error for player {player_id} in game {game_id}: {rollback_e}", exc_info=True)
+                            continue
+            except Exception as inner_e:
+                logger.error(f"[Boxscore] Error processing player stats for game {game_id}: {inner_e}", exc_info=True)
             return stats_added
-            
         except Exception as e:
+            #logger.error(f"[Boxscore] Exception for game {game_id}: {e}", exc_info=True)
             return 0
 
     async def _upsert_game_result(
         self,
+        session: AsyncSession,
         data: Dict[str, Any],
         game_id: str,
         sport_name: str,
@@ -476,7 +697,8 @@ class PlayerStatsScraper:
                 if not value:
                     return None
                 try:
-                    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+                    dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+                    return dt.replace(tzinfo=None) if dt.tzinfo else dt
                 except Exception:
                     return None
 
@@ -542,8 +764,8 @@ class PlayerStatsScraper:
                 venue=venue,
                 home_team_id=team_id_for(home),
                 away_team_id=team_id_for(away),
-                home_team_name=team_name_for(home),
-                away_team_name=team_name_for(away),
+                home_team=team_name_for(home),
+                away_team=team_name_for(away),
                 home_logo=team_logo_for(home),
                 away_logo=team_logo_for(away),
                 home_score=score_for(home),
@@ -579,45 +801,58 @@ class PlayerStatsScraper:
                 },
             )
 
-            await self.session.execute(stmt)
+            await session.execute(stmt)
         except Exception:
             return
     
     async def _upsert_team(
         self,
+        session: AsyncSession,
         team_id: str,
         name: Optional[str],
         abbreviation: Optional[str],
         sport_name: str,
         league: str,
     ) -> bool:
-        """Upsert team to database"""
+        """Upsert team to database, patching all referencing FKs before changing team_id if needed."""
+        from sqlalchemy import update
+        import logging
+        logger = logging.getLogger(__name__)
         try:
+            # If team_id is being normalized (e.g., from '228' to 'NCAAB-228'), update referencing FKs first
+            if '-' in team_id:
+                numeric_id = team_id.split('-', 1)[1]
+                # Patch all referencing FKs for both home_team_id and away_team_id
+                for col in ["home_team_id", "away_team_id"]:
+                    await session.execute(
+                        update(GameResult).where(getattr(GameResult, col) == numeric_id).values({col: team_id})
+                    )
+                    from ..models.games_upcoming import GameUpcoming
+                    await session.execute(
+                        update(GameUpcoming).where(getattr(GameUpcoming, col) == numeric_id).values({col: team_id})
+                    )
+                    from ..models.games_live import GameLive
+                    await session.execute(
+                        update(GameLive).where(getattr(GameLive, col) == numeric_id).values({col: team_id})
+                    )
+                # logger.warning(f"[PlayerStats] Patched all referencing FKs from {numeric_id} to {team_id} for sport {sport_name}")
+                await session.flush()
             stmt = insert(Team).values(
                 team_id=team_id,
                 name=name,
                 abbreviation=abbreviation,
                 sport_name=sport_name,
                 league=league,
-            )
-            
-            stmt = stmt.on_conflict_do_update(
-                index_elements=["team_id"],
-                set_=dict(
-                    name=name,
-                    abbreviation=abbreviation,
-                    sport_name=sport_name,
-                    league=league,
-                )
-            )
-            
-            await self.session.execute(stmt)
+            ).on_conflict_do_nothing(index_elements=["team_id"])
+            await session.execute(stmt)
             return True
         except Exception as e:
+            logger.error(f"[PlayerStats] Error upserting team {team_id}: {e}")
             return False
     
     async def _upsert_player(
         self,
+        session: AsyncSession,
         player_id: str,
         name: Optional[str],
         position: Optional[str],
@@ -627,62 +862,42 @@ class PlayerStatsScraper:
         headshot: Optional[str],
         jersey: Optional[str],
     ) -> bool:
-        """Upsert player to database with retry logic for database locks"""
-        import asyncio
-        from sqlalchemy.exc import OperationalError
-        
-        max_retries = 3
-        retry_delay = 0.1  # Start with 100ms delay
-        
-        for attempt in range(max_retries):
-            try:
-                stmt = insert(Player).values(
-                    player_id=player_id,
-                    espn_id=player_id,
+        """Upsert player to database (PostgreSQL-optimized)"""
+        try:
+            stmt = insert(Player).values(
+                player_id=player_id,
+                espn_id=player_id,
+                full_name=name,
+                name=name,
+                position=position,
+                team_id=team_id,
+                sport=sport,
+                league=league,
+                headshot=headshot,
+                jersey=jersey,
+                active=True,
+            )
+            stmt = stmt.on_conflict_do_update(
+                index_elements=["player_id"],
+                set_=dict(
                     full_name=name,
                     name=name,
                     position=position,
                     team_id=team_id,
-                    sport=sport,
-                    league=league,
                     headshot=headshot,
                     jersey=jersey,
                     active=True,
                 )
-                
-                stmt = stmt.on_conflict_do_update(
-                    index_elements=["player_id"],
-                    set_=dict(
-                        full_name=name,
-                        name=name,
-                        position=position,
-                        team_id=team_id,
-                        headshot=headshot,
-                        jersey=jersey,
-                        active=True,
-                    )
-                )
-                
-                await self.session.execute(stmt)
-                return True
-                
-            except OperationalError as e:
-                if "database is locked" in str(e) and attempt < max_retries - 1:
-                    # Exponential backoff: wait before retrying
-                    await asyncio.sleep(retry_delay)
-                    retry_delay *= 2  # Double the delay each retry
-                    continue
-                else:
-                    print(f"Error upserting player {player_id}: {e}")
-                    return False
-            except Exception as e:
-                print(f"Error upserting player {player_id}: {e}")
-                return False
-        
-        return False
+            )
+            await session.execute(stmt)
+            return True
+        except Exception as e:
+            print(f"Error upserting player {player_id}: {e}")
+            return False
     
     async def _save_player_stats(
         self,
+        session: AsyncSession,
         game_id: str,
         player_id: str,
         player_name: Optional[str],
@@ -692,61 +907,135 @@ class PlayerStatsScraper:
         stats_list: List[str],
         stat_type: str = "",
         stat_labels: Optional[List[str]] = None,
+        **extra_stats
     ) -> bool:
         """Parse stats array and save to database"""
+        import logging
+        logger = logging.getLogger(__name__)
+        from sqlalchemy.exc import DBAPIError
+        from ..models.player import Player
+        from ..models.team import Team
+        # Always try to recover from failed transaction blocks before any DB op
         try:
-            # LONG-TERM FIX: Ensure player exists before saving stats
-            from ..models.player import Player
-            player_check = await self.session.execute(
+            await session.rollback()
+        except Exception:
+            pass
+        try:
+            logger.debug(f"[PlayerStats] Attempting to save stats for player_id={player_id}, game_id={game_id}, team_id={team_id}, sport={sport}, league={league}, stats_list={stats_list}, stat_labels={stat_labels}, stat_type={stat_type}")
+            from sqlalchemy import update
+            # Check player exists
+            player_check = await session.execute(
                 select(Player).where(Player.player_id == player_id)
             )
             existing_player = player_check.scalar_one_or_none()
             if not existing_player:
-                # Create player using real name if available
-                resolved_name = player_name or f"Player {player_id}"
-                placeholder_player = Player(
+                logger.warning(f"[PlayerStats] Player {player_id} ({player_name}) does not exist in DB before saving stats. Attempting to create.")
+                # Ensure team exists before upserting player
+                if team_id:
+                    from ..models.team import Team
+                    team_check = await session.execute(
+                        select(Team).where(Team.team_id == team_id)
+                    )
+                    existing_team = team_check.scalar_one_or_none()
+                    if not existing_team:
+                        # Create missing team with fallback name
+                        fallback_name = f"{sport} Team {team_id.split('-')[-1]}" if '-' in team_id else f"{sport} Team {team_id}"
+                        new_team = Team(
+                            team_id=team_id,
+                            name=fallback_name,
+                            abbreviation=None,
+                            sport_name=sport,
+                            league=league
+                        )
+                        session.add(new_team)
+                        await session.flush()
+                # Attempt to create missing player
+                upsert_result = await self._upsert_player(
+                    session=session,
                     player_id=player_id,
-                    name=resolved_name,
+                    name=player_name,
+                    position=None,
+                    team_id=team_id,
                     sport=sport,
+                    league=league,
+                    headshot=None,
+                    jersey=None,
                 )
-                self.session.add(placeholder_player)
-            elif player_name and existing_player.name and existing_player.name.startswith("Player "):
-                # Upgrade placeholder name to real name when available
-                existing_player.name = player_name
-            
+                if not upsert_result:
+                    logger.error(f"[PlayerStats] Failed to auto-create missing player {player_id} ({player_name}) before saving stats. team_id={team_id}, sport={sport}, league={league}")
+                    return False
+                # Re-check player
+                player_check = await session.execute(
+                    select(Player).where(Player.player_id == player_id)
+                )
+                existing_player = player_check.scalar_one_or_none()
+                if not existing_player:
+                    logger.error(f"[PlayerStats] Player {player_id} ({player_name}) still missing after upsert. team_id={team_id}, sport={sport}, league={league}")
+                    return False
+            # Robust team normalization for NBA
+            if sport.upper() == "NBA" and team_id and '-' not in str(team_id):
+                team_id = f"NBA-{team_id}"
+            # Always upsert team before saving stats
+            from ..models.team import Team
+            team_check = await session.execute(select(Team).where(Team.team_id == team_id))
+            existing_team = team_check.scalar_one_or_none()
+            if not existing_team:
+                new_team = Team(team_id=team_id, name=f"NBA Team {team_id.split('-')[-1]}", abbreviation=None, sport_name=sport, league=league)
+                session.add(new_team)
+                await session.flush()
             # Check if stats already exist for this game/player
-            result = await self.session.execute(
+            from ..models.player_stats import PlayerStats
+            result = await session.execute(
                 select(PlayerStats).where(
                     PlayerStats.game_id == game_id,
                     PlayerStats.player_id == player_id
                 )
             )
             existing = result.scalar_one_or_none()
-            
             # Parse stats based on sport and stat type
-            parsed_stats = self._parse_stats(sport, stats_list, stat_type, stat_labels or [])
-            
+            # Use parsed_stats unless extra_stats is provided (for NBA aggregation)
+            stats_to_save = extra_stats if extra_stats else self._parse_stats(sport, stats_list, stat_type, stat_labels or [])
+            logger.debug(f"[PlayerStats] Stats to save for player_id={player_id}: {stats_to_save}")
             if existing:
                 # Update existing record with new stats (merge with existing)
-                for key, value in parsed_stats.items():
+                for key, value in stats_to_save.items():
                     if value is not None:
                         setattr(existing, key, value)
+                logger.debug(f"[PlayerStats] Updated existing stats record for player_id={player_id}, game_id={game_id}")
                 return True
             else:
-                # Create new stats record
+                # Always use full normalized team_id (SPORT-##)
+                normalized_team_id = team_id
+                # If only numeric, patch to SPORT-##
+                if team_id and '-' not in str(team_id):
+                    sport_map = {'NBA': 'NBA', 'NFL': 'NFL', 'NCAAB': 'NCAAB', 'NCAAF': 'NCAAF', 'NHL': 'NHL', 'EPL': 'EPL', 'SOCCER': 'EPL'}
+                    sport_prefix = sport_map.get((sport or '').upper(), (league or '').upper())
+                    normalized_team_id = f"{sport_prefix}-{team_id}" if sport_prefix else str(team_id)
                 stats_record = PlayerStats(
                     game_id=game_id,
                     player_id=player_id,
-                    team_id=team_id,
+                    team_id=normalized_team_id,
                     sport=sport,
                     league=league,
-                    **parsed_stats
+                    **stats_to_save
                 )
-            
-                self.session.add(stats_record)
+                session.add(stats_record)
+                logger.debug(f"[PlayerStats] Inserted new stats record for player_id={player_id}, game_id={game_id}, team_id={normalized_team_id}, stats={stats_to_save}")
+                # Do not commit here; commit should be handled in the parent function for batch efficiency
                 return True
+        except DBAPIError as e:
+            logger.error(f"[PlayerStats] DBAPIError saving stats for player_id={player_id}, game_id={game_id}: {e}", exc_info=True)
+            try:
+                await session.rollback()
+            except Exception as rollback_exc:
+                logger.error(f"[PlayerStats] Rollback failed for player_id={player_id}, game_id={game_id}: {rollback_exc}", exc_info=True)
+            return False
         except Exception as e:
-            print(f"Error saving stats for player {player_id}: {e}")
+            logger.error(f"[PlayerStats] Exception saving stats for player_id={player_id}, game_id={game_id}: {e}", exc_info=True)
+            try:
+                await session.rollback()
+            except Exception as rollback_exc:
+                logger.error(f"[PlayerStats] Rollback failed for player_id={player_id}, game_id={game_id}: {rollback_exc}", exc_info=True)
             return False
     
     def _parse_stats(self, sport: str, stats_list: List[str], stat_type: str = "", stat_labels: Optional[List[str]] = None) -> Dict[str, Any]:
@@ -758,12 +1047,12 @@ class PlayerStatsScraper:
         if sport == "EPL" and isinstance(stats_list, list) and stats_list and isinstance(stats_list[0], dict):
             # Convert soccer stats dict format to flat dict
             for stat_entry in stats_list:
+                if not isinstance(stat_entry, dict):
+                    continue
                 stat_name = stat_entry.get("name", "").lower()
                 stat_value = stat_entry.get("value")
-                
                 if stat_value is None or stat_value == "":
                     continue
-                
                 # Map soccer stat names to database columns
                 if stat_name == "totalgoals":
                     parsed["points"] = self._to_int(stat_value)  # Use 'points' for goals to match display format

@@ -1,23 +1,50 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+"""FastAPI application entry point with background scheduler."""
 import asyncio
 import logging
 from datetime import datetime, timedelta
 
-from .config import settings
-from .db import init_db, AsyncSessionLocal
-from .routers import health, games, props, bets, alerts, analytics, live, scraping, sports_analytics, aai_bets, leaderboards, bet_placement
-from .scheduler.tasks import Scheduler
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-# Configure logging with detailed format
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+from backend.config import settings
+from backend.db import init_db, AsyncSessionLocal
+from backend.routers import (
+    health, games, props, bets, alerts, analytics, live, scraping,
+    sports_analytics, aai_bets, leaderboards, bet_placement, bets_pending
 )
+from backend.scheduler.tasks import Scheduler
+
+
+# Enhanced logging: log to both console and debug.log file
+log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.DEBUG)
+
+# Console handler (stdout)
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+console_handler.setFormatter(log_formatter)
+root_logger.addHandler(console_handler)
+
+# File handler (debug.log)
+file_handler = logging.FileHandler('debug.log', mode='a')
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(log_formatter)
+root_logger.addHandler(file_handler)
+
 logger = logging.getLogger(__name__)
+
+# Scheduler configuration constants
+STARTUP_DELAY_SECONDS = 30  # Wait before first scrape (reduced from 120s)
+LIVE_UPDATE_INTERVAL_SECONDS = 60
+MAIN_UPDATE_INTERVAL_SECONDS = 1800  # 30 minutes
+SCRAPE_INTERVAL_MINUTES = 30
+BACKFILL_INTERVAL_MINUTES = 30
+
 
 app = FastAPI(title="Sports Intelligence Platform", version="1.0.0")
 
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[str(origin) for origin in settings.CORS_ORIGINS],
@@ -26,130 +53,145 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-scheduler_task = None
-scheduler_instance = None  # Track the scheduler instance for cleanup
+# Global scheduler state
+_scheduler_task = None
+_scheduler_instance = None
 
 
-async def scheduler_worker():
-    """Worker task that manages background scheduling"""
-    global scheduler_instance
-    last_full_scrape = None
-    last_backfill = None
-    scrape_interval = timedelta(hours=2)
-    backfill_interval = timedelta(hours=1)
-    update_cycle = 60  # seconds
-    startup_delay = 120  # seconds before first scrape
+class SchedulerManager:
+    """Manages scheduler instance lifecycle and error recovery."""
     
-    # Create scheduler instance early so queue worker can be started
-    scheduler_instance = Scheduler(AsyncSessionLocal)
-    await scheduler_instance.start()  # Start alert queue worker
+    def __init__(self, session_factory):
+        self.session_factory = session_factory
+        self.scheduler = None
+        self.last_full_scrape = None
+        self.last_backfill = None
     
-    # Wait before starting scrapes to avoid startup congestion
-    logger.info("Scheduler: Waiting %d seconds before starting scrapes...", startup_delay)
-    await asyncio.sleep(startup_delay)
+    async def ensure_scheduler(self) -> Scheduler:
+        """Ensure scheduler instance exists, recreate if needed."""
+        if self.scheduler is None:
+            logger.warning("Scheduler instance lost, recreating...")
+            self.scheduler = Scheduler(self.session_factory)
+            await self.scheduler.start()
+        return self.scheduler
     
-    # Run full scrape after delay
-    try:
-        logger.info("Running initial full scrape after startup...")
-        await scheduler_instance.run_scrapers()
-        last_full_scrape = datetime.now()
-        logger.info("Full scrape completed successfully")
-    except Exception as e:
-        logger.error("Initial full scrape error: %s", e, exc_info=True)
+    async def update_live_games_loop(self):
+        """Continuously update live game data."""
+        while True:
+            try:
+                scheduler = await self.ensure_scheduler()
+                await scheduler.update_live_games()
+            except asyncio.CancelledError:
+                logger.info("Live games loop cancelled")
+                break
+            except Exception as e:
+                logger.error("Live games update error: %s", e, exc_info=True)
+            await asyncio.sleep(LIVE_UPDATE_INTERVAL_SECONDS)
     
-    # Run backfill after startup
-    try:
-        logger.info("Running initial player stats backfill after startup...")
-        await scheduler_instance.backfill_player_stats()
-        last_backfill = datetime.now()
-        logger.info("Backfill initiated successfully")
-    except Exception as e:
-        logger.error("Initial backfill error: %s", e, exc_info=True)
-    
-    while True:
-        try:
-            # Safety check: ensure scheduler still exists
-            if scheduler_instance is None:
-                logger.warning("Scheduler instance lost, recreating...")
-                scheduler_instance = Scheduler(AsyncSessionLocal)
-                await scheduler_instance.start()
-                continue
+    async def main_update_loop(self):
+        """Continuously run main updates (scraping, grading, etc)."""
+        scrape_interval = timedelta(minutes=SCRAPE_INTERVAL_MINUTES)
+        backfill_interval = timedelta(minutes=BACKFILL_INTERVAL_MINUTES)
+        
+        while True:
+            try:
+                scheduler = await self.ensure_scheduler()
+                now = datetime.now()
+                
+                # Full scrape every N minutes
+                if self.last_full_scrape is None or (now - self.last_full_scrape) >= scrape_interval:
+                    logger.info("Running scheduled full scrape (%d min interval)...", SCRAPE_INTERVAL_MINUTES)
+                    await scheduler.run_scrapers()
+                    self.last_full_scrape = now
+                
+                # Player stats backfill every N minutes
+                if self.last_backfill is None or (now - self.last_backfill) >= backfill_interval:
+                    logger.info("Running scheduled player stats backfill (%d min interval)...", BACKFILL_INTERVAL_MINUTES)
+                    await scheduler.backfill_player_stats()
+                    self.last_backfill = now
+                
+                # Always update game statuses and grade bets
+                await scheduler.update_game_statuses()
+                await scheduler.grade_bets()
+                
+            except asyncio.CancelledError:
+                logger.info("Main update loop cancelled")
+                break
+            except Exception as e:
+                logger.error("Main update loop error: %s", e, exc_info=True)
             
-            # Update live games every cycle (60s) - run concurrently for efficiency
-            await asyncio.gather(
-                scheduler_instance.update_live_games(),
-                scheduler_instance.update_game_statuses(),
-                scheduler_instance.grade_bets(),
-                return_exceptions=True
-            )
-            
-            # Full scrape every 2 hours
-            now = datetime.now()
-            if last_full_scrape is None or (now - last_full_scrape) >= scrape_interval:
-                logger.info("Running scheduled full scrape (2 hour interval)...")
-                await scheduler_instance.run_scrapers()
-                last_full_scrape = now
-            
-            # Player stats backfill every 1 hour
-            if last_backfill is None or (now - last_backfill) >= backfill_interval:
-                logger.info("Running scheduled player stats backfill (hourly)...")
-                await scheduler_instance.backfill_player_stats()
-                last_backfill = now
-            
-            await asyncio.sleep(update_cycle)
-        except asyncio.CancelledError:
-            logger.info("Scheduler worker cancelled, shutting down...")
-            break
-        except Exception as e:
-            logger.error("Scheduler error: %s", e, exc_info=True)
-            await asyncio.sleep(update_cycle)
+            await asyncio.sleep(MAIN_UPDATE_INTERVAL_SECONDS)
+    
+    async def run(self):
+        """Start both update loops concurrently."""
+        # Wait before starting to avoid startup congestion
+        logger.info("Scheduler: Waiting %d seconds before starting...", STARTUP_DELAY_SECONDS)
+        await asyncio.sleep(STARTUP_DELAY_SECONDS)
+        
+        # Start both loops
+        await asyncio.gather(
+            self.update_live_games_loop(),
+            self.main_update_loop(),
+            return_exceptions=False
+        )
+    
+    async def stop(self):
+        """Stop the scheduler and cleanup resources."""
+        if self.scheduler:
+            try:
+                await self.scheduler.stop()
+                await self.scheduler.cleanup()
+            except Exception as e:
+                logger.error("Error during scheduler cleanup: %s", e)
+            finally:
+                self.scheduler = None
 
 
 @app.on_event("startup")
 async def on_startup() -> None:
-    global scheduler_task
-    await init_db()
+    """Initialize database and start background scheduler."""
+    global _scheduler_task, _scheduler_instance
     
-    # Start the scheduler in the background
-    scheduler_task = asyncio.create_task(scheduler_worker())
+    await init_db()
+    logger.info("Database initialized: %s", settings.DATABASE_URL)
+    
+    # Create and start scheduler manager
+    _scheduler_instance = SchedulerManager(AsyncSessionLocal)
+    _scheduler_task = asyncio.create_task(_scheduler_instance.run())
+    logger.info("Background scheduler started")
 
 
 @app.on_event("shutdown")
 async def on_shutdown() -> None:
-    global scheduler_task, scheduler_instance
+    """Shutdown background scheduler and cleanup resources."""
+    global _scheduler_task, _scheduler_instance
     
-    # Stop alert queue worker first
-    if scheduler_instance:
-        try:
-            await scheduler_instance.stop()
-        except Exception as e:
-            print(f"Error stopping alert queue: {e}")
+    # Stop scheduler
+    if _scheduler_instance:
+        await _scheduler_instance.stop()
     
-    # Cancel the scheduler task
-    if scheduler_task:
-        scheduler_task.cancel()
+    # Cancel background task
+    if _scheduler_task:
+        _scheduler_task.cancel()
         try:
-            await scheduler_task
+            await _scheduler_task
         except asyncio.CancelledError:
             pass
     
-    # Close the ESPNClient session
-    if scheduler_instance:
-        try:
-            await scheduler_instance.cleanup()
-        except Exception as e:
-            print(f"Error during scheduler cleanup: {e}")
+    logger.info("Application shutdown complete")
 
 
-app.include_router(health.router, prefix="/health", tags=["health"])
-app.include_router(games.router, prefix="/games", tags=["games"])
-app.include_router(props.router, prefix="/props", tags=["props"])
-app.include_router(bets.router, prefix="/bets", tags=["bets"])
-app.include_router(alerts.router, prefix="/alerts", tags=["alerts"])
-app.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
-app.include_router(sports_analytics.router, prefix="/sports-analytics", tags=["sports-analytics"])
-app.include_router(aai_bets.router, prefix="/aai-bets", tags=["aai-bets"])
-app.include_router(bet_placement.router, tags=["bet-placement"])
-app.include_router(live.router, prefix="/live", tags=["live"])
-app.include_router(leaderboards.router, prefix="/leaderboards", tags=["leaderboards"])
-app.include_router(scraping.router, tags=["scrape"])
+# Register routers
+app.include_router(health.router, prefix="/api/health", tags=["health"])
+app.include_router(games.router, prefix="/api/games", tags=["games"])
+app.include_router(props.router, prefix="/api/props", tags=["props"])
+app.include_router(bets.router, prefix="/api/bets", tags=["bets"])
+app.include_router(bets_pending.router, prefix="/api/bets", tags=["bets"])
+app.include_router(alerts.router, prefix="/api/alerts", tags=["alerts"])
+app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])
+app.include_router(sports_analytics.router, prefix="/api/sports-analytics", tags=["sports-analytics"])
+app.include_router(aai_bets.router, prefix="/api/aai-bets", tags=["aai-bets"])
+app.include_router(bet_placement.router, prefix="/bets")
+app.include_router(live.router, prefix="/api/live", tags=["live"])
+app.include_router(leaderboards.router, prefix="/api/leaderboards", tags=["leaderboards"])
+app.include_router(scraping.router, prefix="/api/scrape", tags=["scrape"])

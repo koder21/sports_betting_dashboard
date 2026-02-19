@@ -1,0 +1,196 @@
+/* BetInputSection Component Styles */
+
+.bet-input-section {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.bet-input-section h2 {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  color: #1f2937;
+}
+
+.bet-textarea {
+  width: 100%;
+  min-height: 200px;
+  padding: 12px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+}
+
+.bet-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.bet-textarea::placeholder {
+  color: #9ca3af;
+  font-size: 0.8rem;
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+}
+
+.btn-secondary {
+  background: #6b7280;
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #4b5563;
+}
+
+.copy-ai-btn {
+  margin-left: auto;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.input-helper-text {
+  margin-top: 12px;
+  padding: 12px;
+  background: #eff6ff;
+  border-left: 3px solid #3b82f6;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #1e40af;
+  line-height: 1.6;
+}
+
+.input-helper-text strong {
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  .bet-input-section {
+    background: #1e1e1e;
+    border-color: #333;
+  }
+
+  .bet-input-section h2 {
+    color: #e0e0e0;
+  }
+
+  .bet-textarea {
+    background: #2a2a2a;
+    border-color: #444;
+    color: #e0e0e0;
+  }
+
+  .bet-textarea:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+
+  .bet-textarea::placeholder {
+    color: #6b7280;
+  }
+
+  .btn-primary {
+    background: #3b82f6;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: #2563eb;
+  }
+
+  .btn-secondary {
+    background: #4b5563;
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background: #374151;
+  }
+
+  .btn-danger {
+    background: #dc2626;
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    background: #b91c1c;
+  }
+
+  .input-helper-text {
+    background: #1e3a8a;
+    border-left-color: #60a5fa;
+    color: #bfdbfe;
+  }
+
+  .input-helper-text strong {
+    color: #dbeafe;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .bet-input-section {
+    padding: 16px;
+  }
+
+  .button-group {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  .copy-ai-btn {
+    margin-left: 0;
+  }
+
+  .bet-textarea {
+    min-height: 150px;
+    font-size: 0.8rem;
+  }
+}

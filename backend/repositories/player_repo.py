@@ -1,45 +1,73 @@
 from typing import Optional, Sequence
 
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
 from .base import BaseRepository
 from ..models import Player
 
 
 class PlayerRepository(BaseRepository[Player]):
+    """
+    Repository for Player entities.
+    """
+
     def __init__(self, session: AsyncSession) -> None:
-        super().__init__(session, Player)
+        super().__init__(Player, session)
 
     async def get_by_espn(
         self,
         espn_id: str,
         team_id: Optional[str],
-    ) -> Optional[Player]:
-        stmt = select(Player).where(Player.espn_id == espn_id)
+    ) -> 'Optional[Player]':
+        stmt = select(Player).where(Player.espn_id == espn_id).limit(1)
+
         if team_id is not None:
             stmt = stmt.where(Player.team_id == team_id)
+
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def get_by_espn_and_team(self, espn_id: str, team_id: Optional[str]) -> Optional[Player]:
-        """Alias for get_by_espn(espn_id, team_id)."""
-        return await self.get_by_espn(espn_id, team_id)
-
-    async def list_by_team(self, team_id: str) -> Sequence[Player]:
-        stmt = select(Player).where(Player.team_id == team_id)
+    async def list_by_team(
+        self,
+        team_id: str,
+        *,
+        limit: int = 200,
+    ) -> Sequence[Player]:
+        stmt = (
+            select(Player)
+            .where(Player.team_id == team_id)
+            .limit(limit)
+        )
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
-    async def search_by_name(self, name: str) -> Optional[Player]:
-        """Search for a player by name (full_name or name)"""
-        name_lower = name.lower().strip()
-        stmt = select(Player).where(
-            (func.lower(Player.full_name).ilike(f"%{name_lower}%")) |
-            (func.lower(Player.name).ilike(f"%{name_lower}%"))
+    async def search_by_name(
+        self,
+        name: str,
+        *,
+        limit: int = 5,
+    ) -> Sequence[Player]:
+        """
+        Case-insensitive partial match search.
+        """
+        if not name:
+            return []
+
+        term = f"%{name.strip()}%"
+        stmt = (
+            select(Player)
+            .where(
+                or_(
+                    Player.full_name.ilike(term),
+                    Player.name.ilike(term),
+                )
+            )
+            .limit(limit)
         )
+
         result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        return result.scalars().all()
 
     async def upsert(
         self,
@@ -50,27 +78,35 @@ class PlayerRepository(BaseRepository[Player]):
         season_stats_json: Optional[dict] = None,
         espn_ref: Optional[str] = None,
     ) -> Player:
+        """
+        Creates or updates a player based on ESPN ID.
+        """
         player = await self.get_by_espn(espn_id, team_id)
+
+        updates = {
+            "full_name": name,
+            "name": name,
+            "position": position,
+            "season_stats_json": season_stats_json,
+            "espn_ref": espn_ref,
+        }
+        # Only include team_id if it's explicitly provided, otherwise keep existing
+        if team_id is not None:
+            updates["team_id"] = team_id
+
         if not player:
+            # Create new
             player = Player(
                 player_id=espn_id,
                 espn_id=espn_id,
-                full_name=name,
-                name=name,
-                position=position,
-                team_id=team_id,
-                season_stats_json=season_stats_json,
-                espn_ref=espn_ref,
+                **updates
             )
             self.session.add(player)
         else:
-            player.full_name = name
-            player.name = name
-            player.position = position
-            if season_stats_json is not None:
-                player.season_stats_json = season_stats_json
-            if espn_ref is not None:
-                player.espn_ref = espn_ref
+            # Update existing only if changed
+            for key, val in updates.items():
+                if val is not None and getattr(player, key) != val:
+                    setattr(player, key, val)
 
         await self.session.flush()
         return player

@@ -75,14 +75,24 @@ export const convertToUserTimezone = (datetimeInput, format = "short") => {
   try {
     let date;
 
-    // Handle different input types
     if (!datetimeInput) {
       return "";
     }
 
     if (typeof datetimeInput === "string") {
-      // Handle ISO strings with Z suffix
-      date = new Date(datetimeInput);
+      let iso = datetimeInput;
+      // Always treat as UTC if no timezone present
+      if (!iso.endsWith('Z') && !/[+-]\d{2}:?\d{2}$/.test(iso)) {
+        if (iso.length === 10) {
+          // Date only (YYYY-MM-DD), treat as midnight UTC
+          iso += 'T00:00:00Z';
+        } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(iso)) {
+          iso += 'Z';
+        } else {
+          iso += 'Z';
+        }
+      }
+      date = new Date(iso);
     } else if (datetimeInput instanceof Date) {
       date = datetimeInput;
     } else {
@@ -95,7 +105,6 @@ export const convertToUserTimezone = (datetimeInput, format = "short") => {
 
     const userTz = getUserTimezone();
 
-    // Use Intl API for timezone conversion
     const formatter = new Intl.DateTimeFormat("en-US", {
       year: "numeric",
       month: "2-digit",
@@ -122,18 +131,18 @@ export const convertToUserTimezone = (datetimeInput, format = "short") => {
     const period = partMap.dayPeriod;
 
     if (format === "short") {
-      // Return just time: "2:00 AM"
       return `${hour}:${minute} ${period}`;
     } else if (format === "date") {
-      // Return date: "02/10/2026"
       return `${month}/${day}/${year}`;
     } else if (format === "full") {
-      // Return full datetime: "02/10/2026 2:00:00 AM"
       return `${month}/${day}/${year} ${hour}:${minute}:${second} ${period}`;
     } else if (format === "time-with-tz") {
-      // Return time with timezone abbreviation: "2:00 AM ET"
       const tzAbbrev = getTzAbbreviation(userTz, date);
       return `${hour}:${minute} ${period} ${tzAbbrev}`;
+    } else if (format === "iso") {
+      // Return ISO string in user's timezone (YYYY-MM-DDTHH:mm:ss)
+      const local = new Date(date.toLocaleString('en-US', { timeZone: userTz }));
+      return local.toISOString().slice(0, 19);
     }
 
     return `${month}/${day}/${year} ${hour}:${minute}`;

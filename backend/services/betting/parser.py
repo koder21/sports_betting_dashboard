@@ -43,7 +43,7 @@ class BetParser:
                     current_parlay_name = None
                     current_parlay_explicit = False
                 continue
-            
+
             # Check for explicit parlay header
             if line.lower().startswith('parlay #') or line.lower().startswith('singles'):
                 if current_parlay:
@@ -52,19 +52,16 @@ class BetParser:
                 current_parlay_name = line
                 current_parlay_explicit = True
                 continue
-            
+
             # Check for leg line
             if 'type:' in line.lower():
-                # If we don't have a parlay name yet, generate one
+                # Always use the most recent explicit parlay/singles header as the group name
                 if current_parlay_name is None:
                     current_parlay_name = f"Parlay #{parlay_counter}"
                     current_parlay_explicit = False
                     parlay_counter += 1
-                
                 leg = await self._parse_leg(line, current_parlay_name)
                 if leg:
-                    # Only split parlay groups on explicit blank lines or explicit parlay headers
-                    # Don't auto-split on sport changes - let user control grouping
                     current_parlay.append(leg)
         
         # Don't forget the last parlay
@@ -176,8 +173,11 @@ class BetParser:
                      '76ers', 'knicks', 'lions']
         
         # NCAAB teams  
-        ncaab_teams = ['uconn', "st. john's", 'duke', 'north carolina', 'kansas',
-                       'purdue', 'oregon', 'utah']
+        ncaab_teams = [
+            'uconn', "st. john's", 'duke', 'north carolina', 'kansas',
+            'purdue', 'oregon', 'utah',
+            'wisconsin', 'loyola chicago', 'saint louis', 'miami (oh)', 'ohio'
+        ]
         
         # NFL teams
         nfl_teams = ['chiefs', 'bills', 'ravens', 'bengals', 'steelers', 'browns',
@@ -356,9 +356,7 @@ class BetParser:
             sport = await self.sports.get_by_league_code("nhl")
         elif "mlb" in t:
             sport = await self.sports.get_by_league_code("mlb")
-        elif "ufc" in t:
-            sport = await self.sports.get_by_league_code("ufc")
-
+    
         if not sport:
             return None
 

@@ -1,18 +1,14 @@
-"""
-API endpoints for bet placement and custom bet building.
-"""
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel
 from typing import List, Optional
 
-from ..db import get_session
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from ..db import get_db
 from ..services.bet_placement import BetPlacementService
 
-router = APIRouter(prefix="/bets", tags=["bets"])
+router = APIRouter(tags=["bets"])
 
-
-# Request schemas
 class PlaceAAISingleRequest(BaseModel):
     game_id: str
     pick: str
@@ -23,19 +19,16 @@ class PlaceAAISingleRequest(BaseModel):
     reason: str
     sport: str
 
-
-class ParalayLeg(BaseModel):
+class ParlayLeg(BaseModel):
     game_id: str
     pick: str
     odds: float
     confidence: Optional[float] = None
 
-
 class PlaceAAIParlayRequest(BaseModel):
-    legs: List[ParalayLeg]
+    legs: List[ParlayLeg]
     stake: float
     sport: str
-
 
 class BuildCustomSingleRequest(BaseModel):
     game_id: str
@@ -44,22 +37,16 @@ class BuildCustomSingleRequest(BaseModel):
     odds: float
     notes: Optional[str] = ""
 
-
 class BuildCustomParlayRequest(BaseModel):
-    legs: List[ParalayLeg]
+    legs: List[ParlayLeg]
     stake: float
     notes: Optional[str] = ""
 
-
-# Endpoints
 @router.post("/place-aai-single")
 async def place_aai_single(
     request: PlaceAAISingleRequest,
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_db),
 ):
-    """
-    Place an AAI recommendation as a pending bet.
-    """
     service = BetPlacementService(session)
     result = await service.place_aai_single(
         game_id=request.game_id,
@@ -69,94 +56,71 @@ async def place_aai_single(
         stake=request.stake,
         odds=request.odds,
         reason=request.reason,
-        sport=request.sport
+        sport=request.sport,
     )
-    
+
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error", "Failed to place bet"))
-    
     return result
-
 
 @router.post("/place-aai-parlay")
 async def place_aai_parlay(
     request: PlaceAAIParlayRequest,
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_db),
 ):
-    """
-    Place multiple AAI picks as a parlay bet.
-    """
     service = BetPlacementService(session)
     legs = [
         {
             "game_id": leg.game_id,
             "pick": leg.pick,
             "odds": leg.odds,
-            "confidence": leg.confidence or 0
+            "confidence": leg.confidence or 0.0,
         }
         for leg in request.legs
     ]
-    
-    result = await service.place_aai_parlay(
-        legs=legs,
-        stake=request.stake,
-        sport=request.sport
-    )
-    
+
+    result = await service.place_aai_parlay(legs=legs, stake=request.stake, sport=request.sport)
+
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error", "Failed to place parlay"))
-    
     return result
-
 
 @router.post("/build-custom-single")
 async def build_custom_single(
     request: BuildCustomSingleRequest,
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_db),
 ):
-    """
-    Build a custom single bet from available games.
-    """
     service = BetPlacementService(session)
     result = await service.build_custom_single(
         game_id=request.game_id,
         pick=request.pick,
         stake=request.stake,
         odds=request.odds,
-        notes=request.notes
+        notes=request.notes,
     )
-    
+
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error", "Failed to build bet"))
-    
     return result
-
 
 @router.post("/build-custom-parlay")
 async def build_custom_parlay(
     request: BuildCustomParlayRequest,
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_db),
 ):
-    """
-    Build a custom parlay from available games.
-    """
     service = BetPlacementService(session)
     legs = [
         {
             "game_id": leg.game_id,
             "pick": leg.pick,
-            "odds": leg.odds
+            "odds": leg.odds,
+            "confidence": leg.confidence if leg.confidence is not None else 0.0,
         }
         for leg in request.legs
     ]
-    
-    result = await service.build_custom_parlay(
-        legs=legs,
-        stake=request.stake,
-        notes=request.notes
-    )
-    
+
+    result = await service.build_custom_parlay(legs=legs, stake=request.stake, notes=request.notes)
+
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error", "Failed to build parlay"))
-    
     return result

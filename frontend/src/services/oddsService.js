@@ -1,4 +1,23 @@
 /**
+ * Calculate combined parlay odds from an array of odds (mixed American/decimal)
+ * @param {Array<number|string>} legs - Array of odds (can be American or decimal)
+ * @param {'american'|'decimal'} outputFormat - Desired output odds format
+ * @returns {number} Combined odds in requested format
+ */
+export function calculateParlayOdds(legs, outputFormat = 'american') {
+  if (!Array.isArray(legs) || legs.length === 0) return outputFormat === 'decimal' ? 2.0 : -110;
+  // Convert all legs to decimal odds
+  const decimalLegs = legs.map((odds) => {
+    const n = Number(odds);
+    if (n >= 1.01 && n < 20) return n; // Already decimal odds
+    return Number(americanToDecimal(n));
+  });
+  // Multiply all decimal odds
+  const product = decimalLegs.reduce((acc, d) => acc * d, 1);
+  if (outputFormat === 'decimal') return Number(product.toFixed(3));
+  return decimalToAmerican(product);
+}
+/**
  * Odds conversion utility
  * Database stores American odds
  * Frontend can display either American or Decimal
@@ -65,7 +84,11 @@ export function decimalToAmerican(decimalOdds) {
  */
 export function formatOdds(americanOdds, format = null) {
   const displayFormat = format || getOddsFormat();
-  
+  const n = Number(americanOdds);
+  // If odds are already decimal (1.01-20), display as-is
+  if (n >= 1.01 && n < 20) {
+    return n.toFixed(2);
+  }
   if (displayFormat === 'decimal') {
     const decimal = americanToDecimal(americanOdds);
     return `${decimal}`;

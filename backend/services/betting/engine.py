@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Sequence
 import json
 import re
 import uuid
@@ -15,6 +15,7 @@ from ...repositories.player_repo import PlayerRepository
 from ...services.alerts.manager import AlertManager
 from ...models.games_results import GameResult
 from ...models.games_live import GameLive
+from ...models.bet import Bet
 
 
 class BettingEngine:
@@ -96,23 +97,24 @@ class BettingEngine:
         for parlay_name, group_bets in parlay_groups.items():
             parlay_id = str(uuid.uuid4())
             parlay_ids[parlay_name] = parlay_id
-            
-            # For parlays with multiple legs, divide stake equally
             is_parlay = len(group_bets) > 1
-            
+            # ENFORCE: All parlay legs must have original_stake set
+            if is_parlay:
+                for bet_data in group_bets:
+                    original_stake = bet_data.get("stake")
+                    if original_stake is None:
+                        return {
+                            "status": "error",
+                            "message": f"Parlay '{parlay_name}' cannot be placed: original_stake missing for at least one leg. All parlay legs must have original_stake set."
+                        }
             for bet_data in group_bets:
-                # Get the original stake value
                 original_stake = bet_data.get("stake", 100)
-                
-                # Divide stake by number of legs if it's a parlay
                 if is_parlay:
                     stake = original_stake / len(group_bets)
                 else:
                     stake = original_stake
-                
                 odds = bet_data.get("odds", -110)
                 parlay_legs.setdefault(parlay_name, []).append(odds)
-                
                 bet = Bet(
                     placed_at=datetime.utcnow(),
                     sport_id=bet_data["sport_id"],
@@ -131,7 +133,6 @@ class BettingEngine:
                     reason=bet_data.get("reason"),
                     status="pending",
                 )
-
                 await self.bets.add(bet)
                 created_bets.append({
                     "id": bet.id,
@@ -189,11 +190,22 @@ class BettingEngine:
         return {"status": "ok", "bet_id": bet.id}
 
     async def get_bets_with_details(self) -> List[Dict[str, Any]]:
-        """Get all bets with game and player details"""
+        """Get all bets with game and player details, including final score for finished bets"""
+        from .verifier import BetVerifier
         all_bets = await self.bets.list_all_with_relations()
-        
+        session = self.bets.session
+        verifier = BetVerifier(session)
         result = []
         for bet in all_bets:
+            # Get final score for finished bets
+            final_score = None
+            if bet.status in ("won", "lost", "void", "finished"):
+                try:
+                    reason = await verifier._get_verification_reason(bet, bet.status)
+                    if reason and reason.startswith("Final:"):
+                        final_score = reason
+                except Exception:
+                    final_score = None
             bet_detail = {
                 "id": bet.id,
                 "placed_at": bet.placed_at.isoformat() if bet.placed_at else None,
@@ -211,9 +223,10 @@ class BettingEngine:
                 "reason": bet.reason,
                 "parlay_id": bet.parlay_id,
                 "game": None,
-                "player": None
+                "player": None,
+                "final_score": final_score
             }
-            
+            #...
             # Add game details
             if bet.game_id and bet.game:
                 game = bet.game
@@ -267,15 +280,62 @@ class BettingEngine:
         return result
 
     async def grade_all_pending(self) -> Dict[str, Any]:
+        # Recheck scores from ESPN before grading
+        from ..espn_client import ESPNClient
+        espn_client = ESPNClient()
         pending = await self.bets.list_pending()
         results = []
         parlays_to_check = {}
         parlays_touched = set()
 
+
+        # ESPN sport/league mapping for all tracked sports
+        espn_sports = {
+            "nba": ("basketball", "nba"),
+            "nfl": ("football", "nfl"),
+            "mlb": ("baseball", "mlb"),
+            "nhl": ("hockey", "nhl"),
+            "ncaab": ("basketball", "ncaam"),
+            "ncaaf": ("football", "college-football"),
+            "soccer": ("soccer", "usa.1"), # MLS, update as needed
+        }
+        for bet in pending:
+            if bet.game_id:
+                try:
+                    game = await self.games.get(bet.game_id)
+                    sport_key = (getattr(game, 'league', None) or getattr(game, 'sport', None) or '').lower()
+                    sport, league = espn_sports.get(sport_key, ("basketball", "nba"))
+                    url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/summary?event={bet.game_id}"
+                    data = await espn_client.get_json(url)
+                    if data and ("boxscore" in data or "competitions" in data or "header" in data):
+                        competitions = data.get("competitions") or data.get("header", {}).get("competitions")
+                        if competitions:
+                            comp = competitions[0]
+                            home = next((t for t in comp.get("competitors", []) if t.get("homeAway") == "home"), None)
+                            away = next((t for t in comp.get("competitors", []) if t.get("homeAway") == "away"), None)
+                            if home and away:
+                                try:
+                                    home_score = int(home.get("score", 0))
+                                    away_score = int(away.get("score", 0))
+                                except Exception:
+                                    home_score = home.get("score", 0)
+                                    away_score = away.get("score", 0)
+                                # Update GameResult if scores differ
+                                result = await self.session.execute(select(GameResult).where(GameResult.game_id == bet.game_id))
+                                game_result = result.scalar_one_or_none()
+                                if game_result:
+                                    if game_result.home_score != home_score or game_result.away_score != away_score:
+                                        game_result.home_score = home_score
+                                        game_result.away_score = away_score
+                                        await self.session.flush()
+                except Exception:
+                    pass
+
         # Grade individual legs
         for bet in pending:
             graded = await self.grader.grade(bet)
             if graded:
+                await self.session.flush()
                 results.append(graded)
                 # Track parlay legs for profit recalculation
                 if bet.parlay_id:
@@ -289,30 +349,24 @@ class BettingEngine:
             # Skip if not all legs are graded
             if any(leg.status == "pending" for leg in legs):
                 continue
-                
             # Check if all legs won
             all_won = all(leg.status == "won" for leg in legs)
-            
             # Get original stake and parlay odds from first leg
             original_stake = legs[0].original_stake
             parlay_odds = legs[0].parlay_odds or legs[0].odds
-            
             if all_won:
-                # Calculate parlay win profit
-                if parlay_odds > 0:
-                    total_profit = original_stake * (parlay_odds / 100)
-                else:
-                    total_profit = original_stake / (abs(parlay_odds) / 100)
-                
-                # Distribute profit equally across legs
+                # Always use decimal odds for parlay win profit
+                total_profit = (original_stake * parlay_odds) - original_stake
                 profit_per_leg = total_profit / len(legs)
                 for leg in legs:
                     leg.profit = profit_per_leg
+                await self.session.flush()
             else:
                 # Parlay lost - all legs lose their stake
                 stake_per_leg = original_stake / len(legs)
                 for leg in legs:
                     leg.profit = -stake_per_leg
+                await self.session.flush()
 
         alerts = AlertManager(session=self.session)
 
@@ -441,7 +495,7 @@ class BettingEngine:
 
         return f"Single bet {status_label}: {bet_label}"
 
-    async def _build_parlay_alert_message(self, parlay_id: str, legs: List[Any], status: str) -> str:
+    async def _build_parlay_alert_message(self, parlay_id: str, legs: "Sequence[Bet]", status: str) -> str:
         if len(legs) == 1:
             return await self._build_single_alert_message(legs[0])
 
@@ -487,25 +541,16 @@ class BettingEngine:
         return None
 
     def _calculate_parlay_odds(self, leg_odds_list: List[float]) -> float:
-        """Calculate true parlay odds from individual leg odds"""
+        """Calculate true parlay odds from individual leg odds, always return decimal odds"""
         decimal_odds = []
-        
         for odds in leg_odds_list:
-            if odds > 0:
-                # Positive odds: decimal = (odds / 100) + 1
-                decimal = (odds / 100) + 1
+            if odds >= 1.01 and odds < 20:
+                decimal_odds.append(odds)
+            elif odds > 0:
+                decimal_odds.append((odds / 100) + 1)
             else:
-                # Negative odds: decimal = (100 / abs(odds)) + 1
-                decimal = (100 / abs(odds)) + 1
-            decimal_odds.append(decimal)
-        
-        # Multiply all decimal odds
+                decimal_odds.append((100 / abs(odds)) + 1)
         parlay_decimal = 1.0
         for decimal in decimal_odds:
             parlay_decimal *= decimal
-        
-        # Convert back to American odds
-        parlay_american = (parlay_decimal - 1) * 100
-        
-        # Return as integer
-        return int(round(parlay_american))
+        return round(parlay_decimal, 4)

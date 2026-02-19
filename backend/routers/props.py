@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_
 from sqlalchemy.orm import selectinload
 
-from ..db import get_session
+from ..db import get_db
 from ..services.intelligence.prop_intel import PropIntelligenceService
 from ..models.player import Player
 from ..models.player_stats import PlayerStats
@@ -13,7 +13,7 @@ router = APIRouter()
 
 
 @router.get("/players")
-async def get_all_players(session: AsyncSession = Depends(get_session)):
+async def get_all_players(session: AsyncSession = Depends(get_db)):
     """Get all players with basic info - team matched by both team_id and sport.
     
     OPTIMIZED: Uses eager loading to avoid N+1 query problem.
@@ -99,7 +99,7 @@ async def get_all_players(session: AsyncSession = Depends(get_session)):
 
 
 @router.get("/players/{player_id}/stats")
-async def get_player_stats(player_id: str, session: AsyncSession = Depends(get_session)):
+async def get_player_stats(player_id: str, session: AsyncSession = Depends(get_db)):
     """Get all stats for a specific player"""
     result = await session.execute(
         select(PlayerStats)
@@ -139,6 +139,6 @@ async def get_player_stats(player_id: str, session: AsyncSession = Depends(get_s
 
 
 @router.get("/{player_id}/{market}")
-async def prop_intel(player_id: int, market: str, session: AsyncSession = Depends(get_session)):
+async def prop_intel(player_id: int, market: str, session: AsyncSession = Depends(get_db)):
     svc = PropIntelligenceService(session)
     return await svc.suggest_prop(player_id, market)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 from sqlalchemy import String, Integer, ForeignKey
-from sqlalchemy.dialects.sqlite import JSON
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base
 
@@ -17,7 +17,7 @@ class Team(Base):
     record: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     stats_json: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
 
-    sport_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("sports.id"))
+    sport_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("sports.id", ondelete="SET NULL"))
     sport: Mapped["Sport"] = relationship("Sport", backref="teams")
 
     sport_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -34,14 +34,14 @@ class Team(Base):
 
     # Relationships to games (new ingestion)
     upcoming_home_games: Mapped[list["GameUpcoming"]] = relationship(
-        back_populates="home_team", foreign_keys="GameUpcoming.home_team_id"
+        back_populates="home_team_obj", foreign_keys="GameUpcoming.home_team_id"
     )
     upcoming_away_games: Mapped[list["GameUpcoming"]] = relationship(
-        back_populates="away_team", foreign_keys="GameUpcoming.away_team_id"
+        back_populates="away_team_obj", foreign_keys="GameUpcoming.away_team_id"
     )
     results_home_games: Mapped[list["GameResult"]] = relationship(
-        back_populates="home_team", foreign_keys="GameResult.home_team_id"
+        back_populates="home_team_obj", foreign_keys="GameResult.home_team_id"
     )
     results_away_games: Mapped[list["GameResult"]] = relationship(
-        back_populates="away_team", foreign_keys="GameResult.away_team_id"
+        back_populates="away_team_obj", foreign_keys="GameResult.away_team_id"
     )

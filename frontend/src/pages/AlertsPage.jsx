@@ -1,49 +1,70 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import api from "../services/api.js";
 import GameBoxscore from '../components/GameBoxscore';
 import BetWinCard from '../components/BetWinCard';
 import GameLiveCard from '../components/GameLiveCard';
 import './AlertsPage.css';
 
+// Constants
+const POLL_INTERVAL = 300000; // 5 minutes
+
 function AlertsPage() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const loadAlerts = () => {
-    api.get("/alerts/")
-      .then((res) => setAlerts(res.data || []))
-      .catch((err) => console.error('Failed to fetch alerts:', err))
+  const loadAlerts = useCallback(() => {
+    api.get("/api/alerts/")
+      .then((res) => {
+        setAlerts(res.data || []);
+        setError(null);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch alerts:', err);
+        setError('Failed to load alerts. Please try again.');
+      })
       .finally(() => setLoading(false));
-  };
+  }, []);
 
   useEffect(() => {
     loadAlerts();
+    
     // Poll for new alerts every 5 minutes
-    const interval = setInterval(loadAlerts, 300000);
+    const interval = setInterval(loadAlerts, POLL_INTERVAL);
     return () => clearInterval(interval);
+  }, [loadAlerts]);
+
+  const handleMarkAllRead = useCallback(() => {
+    // Optimistic update - clear UI immediately
+    setAlerts([]);
+    
+    // Notify Layout to refresh the badge
+    window.dispatchEvent(new Event('alertDismissed'));
+    
+    // Make API call in background (non-blocking)
+    api.post("/api/alerts/mark-all-read")
+      .catch((err) => {
+        console.error('Failed to mark all as read:', err);
+        // Could show error toast here
+      });
   }, []);
 
-  const handleMarkAllRead = () => {
-    api.post("/alerts/mark-all-read")
-      .then(() => {
-        setAlerts([]);
-        // Notify Layout to refresh the badge
-        window.dispatchEvent(new Event('alertDismissed'));
-      })
-      .catch((err) => console.error('Failed to mark all as read:', err));
-  };
+  const ack = useCallback((id) => {
+    // Optimistic update using functional setState to avoid stale closure
+    setAlerts(prevAlerts => prevAlerts.filter(alert => alert.id !== id));
+    
+    // Notify Layout to refresh the badge
+    window.dispatchEvent(new Event('alertDismissed'));
+    
+    // Make API call in background (non-blocking)
+    api.post(`/api/alerts/${id}/ack`)
+      .catch((err) => {
+        console.error(`Failed to acknowledge alert ${id}:`, err);
+        // Could show error toast here
+      });
+  }, []);
 
-  const ack = (id) => {
-    api.post(`/alerts/${id}/ack`)
-      .then(() => {
-        setAlerts(alerts.filter(alert => alert.id !== id));
-        // Notify Layout to refresh the badge
-        window.dispatchEvent(new Event('alertDismissed'));
-      })
-      .catch((err) => console.error('Failed to acknowledge alert:', err));
-  };
-
-  const renderAlert = (alert) => {
+  const renderAlert = useCallback((alert) => {
     const category = alert.category?.toLowerCase() || '';
     
     if (category.includes('live')) {
@@ -65,17 +86,47 @@ function AlertsPage() {
         <button 
           className="ack-button"
           onClick={() => ack(alert.id)}
+          aria-label={`Dismiss ${alert.category} alert`}
         >
           Dismiss
         </button>
       </div>
     );
-  };
+  }, [ack]);
 
   if (loading) {
     return (
       <div className="alerts-container">
-        <div className="loading">Loading alerts...</div>
+        <div className="loading" role="status" aria-live="polite">
+          Loading alerts...
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="alerts-container">
+        <div className="error-message" role="alert">
+          {error}
+          <button onClick={loadAlerts} className="retry-button">
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Defensive: handle null/undefined alerts
+  if (!alerts || !Array.isArray(alerts)) {
+    return (
+      <div className="alerts-container">
+        <div className="no-alerts">
+          <p>No alert data available.</p>
+          <button onClick={loadAlerts} className="retry-button">
+            Refresh
+          </button>
+        </div>
       </div>
     );
   }
@@ -85,18 +136,21 @@ function AlertsPage() {
       <div className="alerts-header">
         <h1>Alerts</h1>
         {alerts.length > 0 && (
-          <button className="mark-all-read-btn" onClick={handleMarkAllRead}>
+          <button 
+            className="mark-all-read-btn" 
+            onClick={handleMarkAllRead}
+            aria-label="Mark all alerts as read"
+          >
             Mark All as Read
           </button>
         )}
       </div>
-      
       {alerts.length === 0 ? (
         <div className="no-alerts">
           <p>No new alerts</p>
         </div>
       ) : (
-        <div className="alerts-list">
+        <div className="alerts-list" role="list">
           {alerts.map(renderAlert)}
         </div>
       )}

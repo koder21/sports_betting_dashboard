@@ -33,9 +33,11 @@ class AlertManager:
             return
 
         self.queue.enqueue(severity, category, message, metadata)
+        # Always return an awaitable so callers can safely await this method
+        await asyncio.sleep(0)
 
     async def list_unacknowledged(self) -> List[Dict[str, Any]]:
-        if self.session:
+        if self.session and self.alerts:
             items = await self.alerts.list_unacknowledged()
         elif self.session_factory:
             async with self.session_factory() as session:
@@ -56,7 +58,7 @@ class AlertManager:
         ]
 
     async def acknowledge(self, alert_id: int) -> None:
-        if self.session:
+        if self.session and self.alerts:
             alert = await self.alerts.get(alert_id)
             if alert:
                 alert.acknowledged = True
@@ -70,7 +72,7 @@ class AlertManager:
                     await session.commit()
 
     async def mark_all_as_read(self) -> None:
-        if self.session:
+        if self.session and self.alerts:
             await self.alerts.mark_all_as_read()
             await self.session.commit()
         elif self.session_factory:

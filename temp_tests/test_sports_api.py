@@ -11,7 +11,7 @@ async def test_sports():
         ('football', 'nfl', 'NFL'),
         ('football', 'college-football', 'NCAAF'),
         ('hockey', 'nhl', 'NHL'),
-        ('mma', 'ufc', 'UFC'),
+        ('mlb', 'mlb', 'MLB'),
         ('soccer', 'eng.1', 'EPL'),
     ]
     

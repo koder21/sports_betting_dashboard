@@ -8,7 +8,7 @@ function LiveTicker() {
 
   const loadLive = async () => {
     try {
-        const res = await api.get("/live");
+        const res = await api.get("/api/live");
         let list = res.data || [];
 
         // SMART ORDERING: live > final (results) > scheduled (upcoming)
@@ -72,9 +72,10 @@ function LiveTicker() {
     if (game.status === "in" && game.clock) {
       return <span className="clock">({game.clock})</span>;
     }
-    // For scheduled/upcoming games, show start time (EST)
+    // For scheduled/upcoming games, show start time in user's timezone
     if (game.status === "scheduled" && game.start_time) {
-      return <span className="start-time">{game.start_time}</span>;
+      // Use timezone conversion
+      return <span className="start-time">{convertToUserTimezone(game.start_time, "time-with-tz")}</span>;
     }
     // For finished games, show final
     if (game.status === "final") {
@@ -185,7 +186,7 @@ function LiveTicker() {
           display: flex;
           gap: 35px;
           padding: 0 35px;
-          animation: ticker-scroll 60s linear infinite;
+          animation: ticker-scroll 120s linear infinite;
           white-space: nowrap;
           height: 100%;
           align-items: center;
@@ -283,7 +284,7 @@ function LiveTicker() {
           .ticker-scroll {
             gap: 30px;
             padding: 0 30px;
-            animation: ticker-scroll 80s linear infinite;
+            animation: ticker-scroll 160s linear infinite;
           }
           .team-logo {
             width: 12px;

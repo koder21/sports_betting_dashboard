@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 import logging
 
-from ..db import get_session
+from ..db import get_db
 from ..services.alerts.manager import AlertManager
 
 logger = logging.getLogger(__name__)
@@ -11,7 +11,7 @@ router = APIRouter()
 
 
 @router.get("/")
-async def list_alerts(session: AsyncSession = Depends(get_session)):
+async def list_alerts(session: AsyncSession = Depends(get_db)):
     """List all unacknowledged alerts"""
     try:
         svc = AlertManager(session)
@@ -22,7 +22,7 @@ async def list_alerts(session: AsyncSession = Depends(get_session)):
 
 
 @router.post("/{alert_id}/ack")
-async def ack_alert(alert_id: int, session: AsyncSession = Depends(get_session)):
+async def ack_alert(alert_id: int, session: AsyncSession = Depends(get_db)):
     """Mark an alert as acknowledged"""
     try:
         svc = AlertManager(session)
@@ -34,7 +34,7 @@ async def ack_alert(alert_id: int, session: AsyncSession = Depends(get_session))
 
 
 @router.post("/mark-all-read")
-async def mark_all_read(session: AsyncSession = Depends(get_session)):
+async def mark_all_read(session: AsyncSession = Depends(get_db)):
     """Mark all alerts as read"""
     try:
         svc = AlertManager(session)

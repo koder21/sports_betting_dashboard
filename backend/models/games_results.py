@@ -9,7 +9,7 @@ class GameResult(Base):
     __tablename__ = "games_results"
 
     game_id: Mapped[str] = mapped_column(
-        String, ForeignKey("games.game_id"), primary_key=True
+        String, ForeignKey("games.game_id", ondelete="CASCADE"), primary_key=True, index=True
     )
 
     sport: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -24,15 +24,15 @@ class GameResult(Base):
     venue: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
     # Team IDs
-    home_team_id: Mapped[Optional[str]] = mapped_column(String, ForeignKey("teams.team_id"), nullable=True)
-    away_team_id: Mapped[Optional[str]] = mapped_column(String, ForeignKey("teams.team_id"), nullable=True)
+    home_team_id: Mapped[Optional[str]] = mapped_column(String, ForeignKey("teams.team_id", ondelete="SET NULL"), nullable=True, index=True)
+    away_team_id: Mapped[Optional[str]] = mapped_column(String, ForeignKey("teams.team_id", ondelete="SET NULL"), nullable=True, index=True)
 
-    # Relationships to Team
-    home_team: Mapped["Team"] = relationship(
+    # Relationships to Team (renamed to avoid column name conflict)
+    home_team_obj: Mapped["Team"] = relationship(
         back_populates="results_home_games",
         foreign_keys=[home_team_id]
     )
-    away_team: Mapped["Team"] = relationship(
+    away_team_obj: Mapped["Team"] = relationship(
         back_populates="results_away_games",
         foreign_keys=[away_team_id]
     )

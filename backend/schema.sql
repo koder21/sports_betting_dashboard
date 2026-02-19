@@ -188,7 +188,7 @@ CREATE TABLE IF NOT EXISTS player_stats (
     epl_tackles INTEGER,
     epl_saves INTEGER,
 
-    -- UFC
+
     strikes_landed INTEGER,
     strikes_attempted INTEGER,
     takedowns_landed INTEGER,

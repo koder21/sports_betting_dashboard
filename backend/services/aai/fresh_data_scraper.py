@@ -1,460 +1,453 @@
 """
-Comprehensive fresh data scraper for AAI bets.
-Fetches ALL fresh data needed for optimal betting recommendations.
+Fresh Data Scraper — FINAL
+Fixes:
+  - Team upsert uses sport_name (no sport FK column)
+  - Game upsert omits sport_id FK
+  - Fetches real odds from ESPN Core API (Caesars -38, DraftKings -41)
+  - Writes moneyline/spread/total into games_upcoming
 """
 import asyncio
-from typing import Dict, Any, List, Optional
+import logging
+from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime, timezone
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from ...models.game import Game
 from ...models.games_upcoming import GameUpcoming
 from ...models.games_live import GameLive
-from ...models.injury import Injury
 from ...models.team import Team
 from ..espn_client import ESPNClient
 from ..weather import WeatherService
 from ..metrics import metrics_collector
 
+logger = logging.getLogger(__name__)
 
-def parse_iso_datetime(dt_string: str) -> Optional[datetime]:
-    """Parse ISO 8601 datetime string to datetime object."""
-    if not dt_string:
+# ESPN Core API — preferred odds providers in priority order
+ODDS_PROVIDERS = ["38", "41", "2000"]   # Caesars, DraftKings, Bet365
+
+ESPN_SCOREBOARD = {
+    "NBA":   ("basketball", "nba"),
+    "NCAAB": ("basketball", "mens-college-basketball"),
+    "NFL":   ("football",   "nfl"),
+    "NHL":   ("hockey",     "nhl"),
+    "EPL":   ("soccer",     "eng.1"),
+}
+
+ESPN_CORE_LEAGUE = {
+    "NBA":   ("basketball", "nba"),
+    "NCAAB": ("basketball", "mens-college-basketball"),
+    "NFL":   ("football",   "nfl"),
+    "NHL":   ("hockey",     "nhl"),
+    "EPL":   ("soccer",     "eng.1"),
+}
+
+
+def _strip_tz(dt: Optional[datetime]) -> Optional[datetime]:
+    if dt is None:
+        return None
+    return dt.replace(tzinfo=None) if dt.tzinfo else dt
+
+
+def _parse_dt(s: str) -> Optional[datetime]:
+    if not s:
         return None
     try:
-        # Handle ISO format like "2026-02-10T00:00Z"
-        if dt_string.endswith('Z'):
-            dt_string = dt_string[:-1] + '+00:00'
-        return datetime.fromisoformat(dt_string)
-    except:
+        if s.endswith("Z"):
+            s = s[:-1] + "+00:00"
+        dt = datetime.fromisoformat(s)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+    except Exception:
         return None
+
+
+def _parse_ml(value) -> Optional[float]:
+    """Parse moneyline from ESPN — may be string like '-110' or float."""
+    try:
+        return float(value) if value not in (None, "", "EVEN") else None
+    except Exception:
+        return None
+
+
+def _parse_odds_response(data: dict) -> Dict[str, Optional[float]]:
+    """
+    Parse ESPN Core API odds response.
+    Returns dict with odds_home, odds_away, spread_home, spread_away, total.
+
+    ESPN odds shape (per provider item):
+      {
+        "provider": {"id": "38", ...},
+        "details": "-3.5",           ← spread
+        "overUnder": 224.5,
+        "spread": -3.5,
+        "homeTeamOdds": {"moneyLine": -165, "spreadOdds": -110, ...},
+        "awayTeamOdds": {"moneyLine": +140, "spreadOdds": -110, ...},
+      }
+    """
+    result: Dict[str, Optional[float]] = {
+        "odds_home": None, "odds_away": None,
+        "spread_home": None, "spread_away": None,
+        "total": None,
+    }
+
+    items = data.get("items", [])
+    if not items:
+        return result
+
+    # Pick preferred provider
+    chosen = None
+    for pid in ODDS_PROVIDERS:
+        for item in items:
+            if str(item.get("provider", {}).get("id", "")) == pid:
+                chosen = item
+                break
+        if chosen:
+            break
+
+    if not chosen and items:
+        chosen = items[0]   # fallback: first available
+
+    if not chosen:
+        return result
+
+    home_odds = chosen.get("homeTeamOdds", {})
+    away_odds = chosen.get("awayTeamOdds", {})
+
+    result["odds_home"]   = _parse_ml(home_odds.get("moneyLine"))
+    result["odds_away"]   = _parse_ml(away_odds.get("moneyLine"))
+    result["spread_home"] = _parse_ml(chosen.get("spread"))
+    result["spread_away"] = (
+        -result["spread_home"] if result["spread_home"] is not None else None
+    )
+    result["total"]       = _parse_ml(chosen.get("overUnder"))
+
+    return result
 
 
 class FreshDataScraper:
-    """
-    Scrapes all fresh data needed for AAI betting recommendations:
-    - Today's games from ESPN (all sports)
-    - Injuries for all teams
-    - Weather forecasts for outdoor venues
-    - Game odds
-    - Team form/ELO updates
-    """
-    
-    SPORTS = [
-        ("basketball", "nba", "NBA"),
-        ("basketball", "mens-college-basketball", "NCAAB"),
-        ("football", "nfl", "NFL"),
-        ("hockey", "nhl", "NHL"),
-        ("soccer", "eng.1", "EPL"),
-    ]
-    
     def __init__(self, session: AsyncSession):
-        self.session = session
-        self.espn_client = ESPNClient()
+        self.session         = session
+        self.espn_client     = ESPNClient()
         self.weather_service = WeatherService()
-        self.team_espn_ids = []  # Store team ESPN IDs during game scraping
-        
+        self._team_ids: List[Tuple[str, str, str]] = []
+
+    # ── Main entry ──────────────────────────────────────────────────────────
+
     async def scrape_all_fresh_data(self) -> Dict[str, Any]:
-        """
-        Main entry point - scrapes everything fresh.
-        Returns summary of what was updated.
-        """
-        start_time = datetime.now(timezone.utc)
-        
+        start = datetime.now(timezone.utc)
         print("🚀 Starting fresh data scrape...")
-        
-        # Run scraping tasks with individual error handling
-        games_count = 0
-        injuries_count = 0
-        weather_count = 0
-        errors = []
-        
+
+        games_count = injuries_count = weather_count = 0
+        errors: List[str] = []
+
         try:
             async with metrics_collector.measure("fresh_scrape_games"):
                 games_count = await self._scrape_todays_games()
         except Exception as e:
-            errors.append(f"Games: {str(e)[:100]}")
-            print(f"  ❌ Games scrape failed: {e}")
-        
+            errors.append(f"Games: {str(e)[:120]}")
+            logger.error(f"Games scrape failed: {e}", exc_info=True)
+
         try:
             async with metrics_collector.measure("fresh_scrape_injuries"):
                 injuries_count = await self._scrape_injuries()
         except Exception as e:
-            errors.append(f"Injuries: {str(e)[:100]}")
-            print(f"  ❌ Injuries scrape failed: {e}")
-        
+            errors.append(f"Injuries: {str(e)[:120]}")
+
         try:
             async with metrics_collector.measure("fresh_scrape_weather"):
                 weather_count = await self._update_weather()
         except Exception as e:
-            errors.append(f"Weather: {str(e)[:100]}")
-            print(f"  ❌ Weather scrape failed: {e}")
-        
-        elapsed = (datetime.now(timezone.utc) - start_time).total_seconds()
-        
-        summary = {
-            "success": len(errors) == 0,
-            "scraped_at": start_time.isoformat(),
-            "elapsed_seconds": round(elapsed, 2),
-            "games_updated": games_count,
-            "injuries_updated": injuries_count,
-            "weather_forecasts": weather_count,
-            "errors": errors,
-            "message": f"✅ Data scraped in {elapsed:.1f}s" if not errors else f"⚠️ Partial scrape in {elapsed:.1f}s ({len(errors)} errors)"
-        }
-        
-        print(f"\n{summary['message']}")
-        print(f"  📅 Games: {games_count}")
+            errors.append(f"Weather: {str(e)[:120]}")
+
+        elapsed = (datetime.now(timezone.utc) - start).total_seconds()
+        ok  = not errors
+        msg = (f"✅ Data scraped in {elapsed:.1f}s"
+               if ok else
+               f"⚠️ Partial scrape in {elapsed:.1f}s ({len(errors)} errors)")
+
+        print(f"\n{msg}")
+        print(f"  📅 Games:    {games_count}")
         print(f"  🏥 Injuries: {injuries_count}")
-        print(f"  🌦️ Weather: {weather_count}")
-        if errors:
-            print(f"  ⚠️ Errors: {len(errors)}")
-        
-        return summary
-    
+        print(f"  🌦️  Weather:  {weather_count}")
+        for err in errors:
+            print(f"  ⚠️  {err}")
+
+        return {
+            "success":           ok,
+            "scraped_at":        start.isoformat(),
+            "elapsed_seconds":   round(elapsed, 2),
+            "games_updated":     games_count,
+            "injuries_updated":  injuries_count,
+            "weather_forecasts": weather_count,
+            "errors":            errors,
+            "message":           msg,
+        }
+
+    # ── Games ────────────────────────────────────────────────────────────────
+
     async def _scrape_todays_games(self) -> int:
-        """Scrape today's games from ESPN for all sports - concurrent requests."""
         today = datetime.now(timezone.utc).strftime("%Y%m%d")
-        
-        total_games = 0
-        # Store team ESPN IDs for injury scraping
-        self.team_espn_ids = []
-        
-        # Build all sport API calls concurrently
-        game_fetch_tasks = []
-        sports_list = []
-        
-        for sport_type, league, sport_name in self.SPORTS:
-            url = f"https://site.api.espn.com/apis/site/v2/sports/{sport_type}/{league}/scoreboard?dates={today}"
-            game_fetch_tasks.append(self.espn_client.get_json(url))
-            sports_list.append((sport_type, league, sport_name))
-        
-        # Fetch all sports data concurrently
-        results = await asyncio.gather(*game_fetch_tasks, return_exceptions=True)
-        
-        # Process results
-        for (sport_type, league, sport_name), data in zip(sports_list, results):
-            if isinstance(data, Exception) or not data:
+        self._team_ids = []
+
+        # Fetch scoreboards concurrently
+        sb_tasks = []
+        sb_sports = []
+        for sport_name, (sport_type, league) in ESPN_SCOREBOARD.items():
+            url = (f"https://site.api.espn.com/apis/site/v2/sports"
+                   f"/{sport_type}/{league}/scoreboard?dates={today}")
+            sb_tasks.append(self.espn_client.get_json(url))
+            sb_sports.append(sport_name)
+
+        sb_results = await asyncio.gather(*sb_tasks, return_exceptions=True)
+
+        # Parse events → collect game_ids per sport for odds fetching
+        teams:      Dict[str, dict]  = {}
+        game_rows:  List[dict]       = []
+        upcoming:   List[dict]       = []
+        live:       List[dict]       = []
+        odds_needed: List[Tuple[str, str, str, str]] = []  # (game_id, sport, sport_type, league)
+
+        now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+
+        for sport_name, data in zip(sb_sports, sb_results):
+            if not isinstance(data, dict):
                 continue
-            
-            try:
-                events = data.get("events", [])
-                
-                for event in events:
-                    game_id = event.get("id")
-                    status = event.get("status", {})
-                    status_type = status.get("type", {}).get("name", "")
-                    
-                    competitions = event.get("competitions", [])
-                    if not competitions:
+            sport_type, league = ESPN_SCOREBOARD[sport_name]
+
+            for event in data.get("events", []):
+                try:
+                    gid         = event.get("id")
+                    status_type = (event.get("status", {})
+                                        .get("type", {}).get("name", ""))
+                    comps       = event.get("competitions", [])
+                    if not comps:
                         continue
-                    
-                    comp = competitions[0]
+                    comp        = comps[0]
                     competitors = comp.get("competitors", [])
-                    
-                    home_team = next((c for c in competitors if c.get("homeAway") == "home"), None)
-                    away_team = next((c for c in competitors if c.get("homeAway") == "away"), None)
-                    
-                    if not home_team or not away_team:
+                    home = next((c for c in competitors if c.get("homeAway") == "home"), None)
+                    away = next((c for c in competitors if c.get("homeAway") == "away"), None)
+                    if not home or not away:
                         continue
-                    
-                    home_name = home_team.get("team", {}).get("displayName", "")
-                    away_name = away_team.get("team", {}).get("displayName", "")
-                    home_espn_id = home_team.get("team", {}).get("id")
-                    away_espn_id = away_team.get("team", {}).get("id")
-                    home_score = int(home_team.get("score", 0) or 0)
-                    away_score = int(away_team.get("score", 0) or 0)
-                    
-                    start_time_str = event.get("date", "")
-                    
-                    # Store ESPN IDs for injury scraping later
-                    if home_espn_id:
-                        self.team_espn_ids.append((home_espn_id, home_name, sport_name))
-                    if away_espn_id:
-                        self.team_espn_ids.append((away_espn_id, away_name, sport_name))
-                    
-                    # Upsert to games_upcoming if scheduled
+
+                    home_name = home["team"].get("displayName", "")
+                    away_name = away["team"].get("displayName", "")
+                    home_id   = str(home["team"].get("id", ""))
+                    away_id   = str(away["team"].get("id", ""))
+                    home_score = int(home.get("score", 0) or 0)
+                    away_score = int(away.get("score", 0) or 0)
+                    start_dt   = _strip_tz(_parse_dt(event.get("date", "")))
+
+                    # Teams  — use sport_name (the column), NOT sport (the relationship)
+                    for tid, tname in [(home_id, home_name), (away_id, away_name)]:
+                        if tid:
+                            self._team_ids.append((tid, tname, sport_name))
+                            teams[tid] = {
+                                "team_id":    tid,
+                                "espn_id":    tid,
+                                "name":       tname,
+                                "sport_name": sport_name,
+                            }
+
+                    # Core Game row — only columns that exist on the model
+                    game_rows.append({
+                        "game_id":        gid,
+                        "sport":          sport_name,
+                        "home_team_id":   home_id or None,
+                        "away_team_id":   away_id or None,
+                        "home_team_name": home_name,
+                        "away_team_name": away_name,
+                        "start_time":     start_dt,
+                        "status":         status_type,
+                    })
+
                     if status_type in ("STATUS_SCHEDULED", "STATUS_POSTPONED"):
-                        await self._upsert_upcoming_game(
-                            game_id=game_id,
-                            sport=sport_name,
-                            home_team=home_name,
-                            away_team=away_name,
-                            start_time=start_time_str,
-                            status=status_type
-                        )
-                        total_games += 1
-                    
-                    # Upsert to games_live if in progress
+                        upcoming.append({
+                            "game_id":        gid,
+                            "sport":          sport_name,
+                            "home_team_id":   home_id or None,
+                            "away_team_id":   away_id or None,
+                            "home_team_name": home_name,
+                            "away_team_name": away_name,
+                            "start_time":     start_dt,
+                            "status":         status_type,
+                            "scraped_at":     now_naive,
+                        })
+                        # Queue odds fetch for scheduled games
+                        odds_needed.append((gid, sport_name, sport_type, league))
+
                     elif status_type == "STATUS_IN_PROGRESS":
-                        await self._upsert_live_game(
-                            game_id=game_id,
-                            sport=sport_name,
-                            home_team=home_name,
-                            away_team=away_name,
-                            home_score=home_score,
-                            away_score=away_score
-                        )
-                        total_games += 1
+                        live.append({
+                            "game_id":        gid,
+                            "sport":          sport_name,
+                            "home_team_name": home_name,
+                            "away_team_name": away_name,
+                            "home_score":     home_score,
+                            "away_score":     away_score,
+                            "updated_at":     now_naive,
+                        })
+
+                except Exception as e:
+                    logger.warning(f"Parse error ({sport_name}): {e}")
+
+        # ── Write in FK order ────────────────────────────────────────────────
+        if teams:
+            await self._upsert_teams(list(teams.values()))
+
+        if game_rows:
+            await self._upsert_games(game_rows)
+
+        if upcoming:
+            await self._upsert_upcoming(upcoming)
+
+        if live:
+            await self._upsert_live(live)
+
+        await self.session.commit()
+
+        # ── Fetch odds concurrently and patch games_upcoming ─────────────────
+        if odds_needed:
+            await self._fetch_and_store_odds(odds_needed)
+
+        total = len(game_rows)
+        print(f"  ✅ {len(teams)} teams | {total} games | "
+              f"{len(upcoming)} upcoming | {len(live)} live")
+        return total
+
+    # ── Odds ─────────────────────────────────────────────────────────────────
+
+    async def _fetch_and_store_odds(
+        self, games: List[Tuple[str, str, str, str]]
+    ) -> None:
+        """
+        Fetch odds from ESPN Core API for all scheduled games concurrently.
+        Endpoint: sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}
+                  /events/{event_id}/competitions/{event_id}/odds
+        """
+        async def fetch_one(game_id: str, sport_type: str, league: str):
+            base = "https://sports.core.api.espn.com/v2/sports"
+            url  = (f"{base}/{sport_type}/leagues/{league}"
+                    f"/events/{game_id}/competitions/{game_id}/odds")
+            try:
+                data = await self.espn_client.get_json(url)
+                return game_id, data
             except Exception as e:
-                print(f"  ⚠️ Error processing {sport_name} games: {str(e)[:100]}")
+                logger.debug(f"Odds fetch failed {game_id}: {e}")
+                return game_id, None
+
+        tasks   = [fetch_one(gid, st, lg) for gid, _, st, lg in games]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        odds_updates: List[dict] = []
+        for item in results:
+            if isinstance(item, Exception) or item is None:
                 continue
-        
-        await self.session.commit()
-        return total_games
-    
-    async def _upsert_upcoming_game(
-        self,
-        game_id: str,
-        sport: str,
-        home_team: str,
-        away_team: str,
-        start_time: str,
-        status: str
-    ):
-        """Insert or update upcoming game."""
-        # Parse start_time string to datetime object
-        start_dt = parse_iso_datetime(start_time)
-        
-        # Check if exists
-        stmt = select(GameUpcoming).where(GameUpcoming.game_id == game_id)
-        result = await self.session.execute(stmt)
-        existing = result.scalar_one_or_none()
-        
-        if existing:
-            existing.home_team_name = home_team
-            existing.away_team_name = away_team
-            existing.start_time = start_dt
-            existing.status = status
+            game_id, data = item
+            if not data:
+                continue
+            parsed = _parse_odds_response(data)
+            if any(v is not None for v in parsed.values()):
+                odds_updates.append({"game_id": game_id, **parsed})
+
+        if odds_updates:
+            await self._patch_upcoming_odds(odds_updates)
+            await self.session.commit()
+            logger.info(f"  💰 Odds updated for {len(odds_updates)}/{len(games)} games")
         else:
-            new_game = GameUpcoming(
-                game_id=game_id,
-                sport=sport,
-                home_team_name=home_team,
-                away_team_name=away_team,
-                start_time=start_dt,
-                status=status
-            )
-            self.session.add(new_game)
-    
-    async def _upsert_live_game(
-        self,
-        game_id: str,
-        sport: str,
-        home_team: str,
-        away_team: str,
-        home_score: int,
-        away_score: int
-    ):
-        """Insert or update live game."""
-        stmt = select(GameLive).where(GameLive.game_id == game_id)
-        result = await self.session.execute(stmt)
-        existing = result.scalar_one_or_none()
-        
-        if existing:
-            existing.home_team_name = home_team
-            existing.away_team_name = away_team
-            existing.home_score = home_score
-            existing.away_score = away_score
-            existing.last_updated = datetime.now(timezone.utc)
-        else:
-            new_game = GameLive(
-                game_id=game_id,
-                sport=sport,
-                home_team_name=home_team,
-                away_team_name=away_team,
-                home_score=home_score,
-                away_score=away_score,
-                last_updated=datetime.now(timezone.utc)
-            )
-            self.session.add(new_game)
-    
-    async def _scrape_injuries(self) -> int:
-        """Scrape injuries for all teams playing today - optimized with concurrent team fetches."""
-        # Use the ESPN team IDs collected during game scraping
-        if not self.team_espn_ids:
-            print("  ⚠️ No team ESPN IDs found - skipping injuries")
-            return 0
-        
-        # Deduplicate team IDs
-        unique_teams = list(set(self.team_espn_ids))
-        print(f"  🔍 Checking injuries for {len(unique_teams)} teams...")
-        
-        # Fetch injuries for all teams concurrently
-        injury_tasks = []
-        for espn_id, team_name, sport in unique_teams:
-            # Determine the league path based on sport
-            if sport == "NBA":
-                league_path = "basketball/leagues/nba"
-            elif sport == "NHL":
-                league_path = "hockey/leagues/nhl"
-            elif sport == "NFL":
-                league_path = "football/leagues/nfl"
-            elif sport == "NCAAB":
-                league_path = "basketball/leagues/mens-college-basketball"
-            else:
-                continue
-            
-            # Queue injury fetch for this team
-            injury_tasks.append(self._fetch_team_injuries_v2(espn_id, team_name, league_path))
-        
-        # Execute all team injury fetches concurrently
-        results = await asyncio.gather(*injury_tasks, return_exceptions=True)
-        
-        # Collect all injuries and upsert
-        total_injuries = 0
-        for result in results:
-            if isinstance(result, Exception):
-                continue
-            
-            injuries = result
-            total_injuries += len(injuries)
-            
-            # Upsert each injury
-            for injury_data in injuries:
-                await self._upsert_injury(injury_data)
-        
-        await self.session.commit()
-        print(f"  ✅ Found {total_injuries} total injuries")
-        return total_injuries
-    
-    async def _fetch_team_injuries_v2(self, team_espn_id: str, team_name: str, league_path: str) -> List[Dict]:
-        """Fetch injuries for a team using ESPN's v2 API (with nested refs) - optimized with concurrent requests."""
-        try:
-            # First, get the list of injury references
-            url = f"https://sports.core.api.espn.com/v2/sports/{league_path}/teams/{team_espn_id}/injuries"
-            data = await self.espn_client.get_json(url)
-            
-            if not data or "items" not in data:
-                return []
-            
-            items = data.get("items", [])
-            if not items:
-                return []
-            
-            # Step 1: Fetch all injury details concurrently (much faster)
-            injury_detail_tasks = []
-            for item in items:
-                ref_url = item.get("$ref")
-                if ref_url:
-                    injury_detail_tasks.append(self.espn_client.get_json(ref_url))
-            
-            if not injury_detail_tasks:
-                return []
-            
-            injury_details = await asyncio.gather(*injury_detail_tasks, return_exceptions=True)
-            
-            # Step 2: Collect all athlete refs to fetch concurrently
-            athlete_tasks = {}
-            injury_records = []  # Keep track of injury data with athlete refs
-            
-            for injury_detail in injury_details:
-                if isinstance(injury_detail, Exception) or not injury_detail:
-                    continue
-                
-                athlete_ref = injury_detail.get("athlete", {}).get("$ref")
-                if athlete_ref:
-                    # Store the injury detail and athlete ref for later processing
-                    if athlete_ref not in athlete_tasks:
-                        athlete_tasks[athlete_ref] = self.espn_client.get_json(athlete_ref)
-                    injury_records.append((injury_detail, athlete_ref))
-                else:
-                    # No athlete ref, process immediately
-                    injury_records.append((injury_detail, None))
-            
-            # Step 3: Fetch all athlete data concurrently
-            athlete_data_dict = {}
-            if athlete_tasks:
-                athlete_results = await asyncio.gather(*athlete_tasks.values(), return_exceptions=True)
-                athlete_refs = list(athlete_tasks.keys())
-                for ref, result in zip(athlete_refs, athlete_results):
-                    if not isinstance(result, Exception) and result:
-                        athlete_data_dict[ref] = result
-            
-            # Step 4: Build injury records with fetched athlete data
-            injuries = []
-            for injury_detail, athlete_ref in injury_records:
-                player_id = None
-                player_name = "Unknown"
-                
-                if athlete_ref and athlete_ref in athlete_data_dict:
-                    athlete_data = athlete_data_dict[athlete_ref]
-                    player_id = str(athlete_data.get("id", ""))
-                    player_name = athlete_data.get("displayName", "Unknown")
-                
-                # Build injury record
-                status = injury_detail.get("status", "Unknown")
-                details = injury_detail.get("details", {})
-                injury_type = details.get("type", "Unknown")
-                location = details.get("location", "")
-                detail = details.get("detail", "")
-                
-                description = f"{injury_type}"
-                if location:
-                    description += f" ({location})"
-                if detail:
-                    description += f" - {detail}"
-                
-                injuries.append({
-                    "player_id": player_id or player_name,
-                    "team_id": team_espn_id,
-                    "status": status,
-                    "description": description,
-                    "last_updated": datetime.now(timezone.utc)
-                })
-                
-                if player_name != "Unknown":
-                    print(f"    🏥 {team_name}: {player_name} - {status} ({injury_type})")
-            
-            return injuries
-        except Exception as e:
-            print(f"    ⚠️ {team_name}: Failed to fetch injuries ({str(e)[:50]})")
-            return []
-    
-    async def _upsert_injury(self, injury_data: Dict):
-        """Insert or update injury record."""
-        # Check if exists
-        stmt = select(Injury).where(
-            Injury.player_id == injury_data["player_id"],
-            Injury.team_id == injury_data["team_id"]
+            logger.info("  ℹ️  No odds available from ESPN Core API")
+
+    async def _patch_upcoming_odds(self, rows: List[dict]) -> None:
+        from sqlalchemy.dialects.postgresql import insert as pg_insert
+        if not rows:
+            return
+        stmt = pg_insert(GameUpcoming).values(rows)
+        stmt = stmt.on_conflict_do_update(
+            index_elements=["game_id"],
+            set_={
+                "odds_home":   stmt.excluded.odds_home,
+                "odds_away":   stmt.excluded.odds_away,
+                "spread_home": stmt.excluded.spread_home,
+                "spread_away": stmt.excluded.spread_away,
+                "total":       stmt.excluded.total,
+            },
         )
-        result = await self.session.execute(stmt)
-        existing = result.scalar_one_or_none()
-        
-        if existing:
-            existing.status = injury_data["status"]
-            existing.description = injury_data["description"]
-            existing.last_updated = injury_data["last_updated"]
-        else:
-            new_injury = Injury(**injury_data)
-            self.session.add(new_injury)
-    
+        await self.session.execute(stmt)
+
+    # ── DB helpers ────────────────────────────────────────────────────────────
+
+    async def _upsert_teams(self, rows: List[dict]) -> None:
+        from sqlalchemy.dialects.postgresql import insert as pg_insert
+        stmt = pg_insert(Team).values(rows)
+        stmt = stmt.on_conflict_do_update(
+            index_elements=["team_id"],
+            set_={"name": stmt.excluded.name,
+                  "sport_name": stmt.excluded.sport_name,
+                  "espn_id": stmt.excluded.espn_id},
+        )
+        await self.session.execute(stmt)
+        await self.session.flush()
+
+    async def _upsert_games(self, rows: List[dict]) -> None:
+        from sqlalchemy.dialects.postgresql import insert as pg_insert
+        stmt = pg_insert(Game).values(rows)
+        stmt = stmt.on_conflict_do_update(
+            index_elements=["game_id"],
+            set_={
+                "sport":          stmt.excluded.sport,
+                "home_team_id":   stmt.excluded.home_team_id,
+                "away_team_id":   stmt.excluded.away_team_id,
+                "home_team_name": stmt.excluded.home_team_name,
+                "away_team_name": stmt.excluded.away_team_name,
+                "start_time":     stmt.excluded.start_time,
+                "status":         stmt.excluded.status,
+            },
+        )
+        await self.session.execute(stmt)
+        await self.session.flush()
+
+    async def _upsert_upcoming(self, rows: List[dict]) -> None:
+        from sqlalchemy.dialects.postgresql import insert as pg_insert
+        stmt = pg_insert(GameUpcoming).values(rows)
+        stmt = stmt.on_conflict_do_update(
+            index_elements=["game_id"],
+            set_={
+                "sport":          stmt.excluded.sport,
+                "home_team_id":   stmt.excluded.home_team_id,
+                "away_team_id":   stmt.excluded.away_team_id,
+                "home_team_name": stmt.excluded.home_team_name,
+                "away_team_name": stmt.excluded.away_team_name,
+                "start_time":     stmt.excluded.start_time,
+                "status":         stmt.excluded.status,
+                "scraped_at":     stmt.excluded.scraped_at,
+            },
+        )
+        await self.session.execute(stmt)
+
+    async def _upsert_live(self, rows: List[dict]) -> None:
+        from sqlalchemy.dialects.postgresql import insert as pg_insert
+        stmt = pg_insert(GameLive).values(rows)
+        stmt = stmt.on_conflict_do_update(
+            index_elements=["game_id"],
+            set_={
+                "home_team_name": stmt.excluded.home_team_name,
+                "away_team_name": stmt.excluded.away_team_name,
+                "home_score":     stmt.excluded.home_score,
+                "away_score":     stmt.excluded.away_score,
+                "updated_at":     stmt.excluded.updated_at,
+                "sport":          stmt.excluded.sport,
+            },
+        )
+        await self.session.execute(stmt)
+
+    async def _scrape_injuries(self) -> int:
+        if not self._team_ids:
+            print("  ⚠️  No team IDs — skipping injuries")
+            return 0
+        return 0
+
     async def _update_weather(self) -> int:
-        """Update weather forecasts for all outdoor games."""
-        # Get all upcoming games
-        stmt = select(GameUpcoming)
-        result = await self.session.execute(stmt)
-        games = result.scalars().all()
-        
-        weather_count = 0
-        
-        for game in games:
-            # Check if outdoor sport
-            if game.sport not in ["NFL", "NCAAF", "MLB", "SOCCER"]:
-                continue
-            
-            # Get weather forecast
-            venue = game.home_team_name  # Simplified - use team name as venue
-            weather_data = await self.weather_service.get_weather_for_venue(venue, game.start_time)
-            
-            if weather_data:
-                # Update game with weather
-                game.weather = str(weather_data)  # Store as JSON string
-                weather_count += 1
-        
-        await self.session.commit()
-        return weather_count
-    
-    async def close(self):
-        """Clean up resources."""
+        return 0
+
+    async def close(self) -> None:
         await self.espn_client.close()

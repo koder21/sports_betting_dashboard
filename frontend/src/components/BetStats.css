@@ -1,0 +1,129 @@
+/* BetStats Component Styles */
+
+.bet-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  background: white;
+  border-radius: 6px;
+  border-left: 4px solid #e5e7eb;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-item.stat-win {
+  border-left-color: #22c55e;
+}
+
+.stat-item.stat-loss {
+  border-left-color: #ef4444;
+}
+
+.stat-item.stat-neutral {
+  border-left-color: #6b7280;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.stat-win .stat-value {
+  color: #16a34a;
+}
+
+.stat-loss .stat-value {
+  color: #dc2626;
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  .bet-stats {
+    background: #1e1e1e;
+    border: 1px solid #333;
+  }
+
+  .stat-item {
+    background: #2a2a2a;
+    border-left-color: #444;
+  }
+
+  .stat-item.stat-win {
+    border-left-color: #22c55e;
+  }
+
+  .stat-item.stat-loss {
+    border-left-color: #ef4444;
+  }
+
+  .stat-item.stat-neutral {
+    border-left-color: #6b7280;
+  }
+
+  .stat-label {
+    color: #9ca3af;
+  }
+
+  .stat-value {
+    color: #e0e0e0;
+  }
+
+  .stat-win .stat-value {
+    color: #22c55e;
+  }
+
+  .stat-loss .stat-value {
+    color: #ef4444;
+  }
+
+  .stat-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .bet-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .stat-item {
+    padding: 12px;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .bet-stats {
+    grid-template-columns: 1fr;
+  }
+}

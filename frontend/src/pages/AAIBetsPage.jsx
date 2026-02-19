@@ -1,11 +1,234 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import api from "../services/api.js";
 import { convertToUserTimezone } from "../services/timezoneService.js";
+import { getOddsFormat, formatOdds } from "../services/oddsService.js";
 import BetPlacementModal from "../components/BetPlacementModal.jsx";
 import CustomBetBuilder from "../components/CustomBetBuilder.jsx";
+import LoadingSpinner from "../components/LoadingSpinner.jsx";
+import ErrorMessage from "../components/ErrorMessage.jsx";
 import ErrorBoundary from "../components/ErrorBoundary.jsx";
 import "./AAIBetsPage.css";
 
+// Constants
+const API_TIMEOUT = 240000; // 4 minutes
+const MATRIX_FONT_SIZE = 14;
+const MATRIX_CHARS = "01".split("");
+const DEFAULT_BANKROLL = 1000;
+const DEFAULT_MIN_CONFIDENCE = 60;
+
+/**
+ * Enhanced BetCard with new backend data
+ */
+const BetCard = React.memo(({ pick, onPlaceBet }) => {
+  const oddsFormat = getOddsFormat();
+  
+  const renderValueBadge = (edge, evPercent) => {
+    if (!edge || edge < 2) return null;
+    
+    let badgeClass = 'value-badge';
+    let badgeText = '';
+    
+    if (edge >= 5 && evPercent >= 10) {
+      badgeClass += ' excellent';
+      badgeText = '⭐ EXCELLENT';
+    } else if (edge >= 3 && evPercent >= 5) {
+      badgeClass += ' good';
+      badgeText = '✅ GOOD VALUE';
+    } else {
+      badgeClass += ' marginal';
+      badgeText = '📊 VALUE';
+    }
+    
+    return <span className={badgeClass}>{badgeText}</span>;
+  };
+
+  const renderModelBreakdown = (models) => {
+    if (!models || typeof models !== 'object') return null;
+    
+    const entries = Object.entries(models).filter(
+      ([key]) => !['consensus', 'mean', 'confidence', 'models_used'].includes(key)
+    );
+    
+    if (entries.length === 0) return null;
+    
+    return (
+      <div className="model-breakdown">
+        <details>
+          <summary>📊 Models ({entries.length})</summary>
+          <div className="model-details">
+            {entries.map(([model, value]) => {
+              const percentage = typeof value === 'number' 
+                ? (value < 1 ? (value * 100).toFixed(1) : value.toFixed(1))
+                : value;
+              return (
+                <div key={model} className="model-row">
+                  <span className="model-label">{model}:</span>
+                  <span className="model-value">{percentage}%</span>
+                </div>
+              );
+            })}
+          </div>
+        </details>
+      </div>
+    );
+  };
+
+  const renderKellyInfo = (kellyStake, kellyFraction) => {
+    if (!kellyStake && !kellyFraction) return null;
+    
+    return (
+      <div className="kelly-info">
+        <div className="kelly-row">
+          <span className="kelly-label">💰 Optimal:</span>
+          <span className="kelly-value">${(kellyStake || 0).toFixed(2)}</span>
+        </div>
+        <div className="kelly-row secondary">
+          <span className="kelly-label">Kelly:</span>
+          <span className="kelly-value">{((kellyFraction || 0) * 100).toFixed(2)}%</span>
+        </div>
+      </div>
+    );
+  };
+
+  const renderRiskFactors = (riskFactors) => {
+    if (!riskFactors || riskFactors.length === 0) return null;
+    
+    const highRisk = riskFactors.filter(r => r.severity === 'high');
+    const mediumRisk = riskFactors.filter(r => r.severity === 'medium');
+    
+    if (highRisk.length === 0 && mediumRisk.length === 0) return null;
+    
+    return (
+      <div className="risk-factors">
+        {highRisk.map((risk, idx) => (
+          <div key={idx} className="risk-item high">
+            ⚠️ {risk.description}
+          </div>
+        ))}
+        {mediumRisk.map((risk, idx) => (
+          <div key={idx} className="risk-item medium">
+            ⚡ {risk.description}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <div className="aai-card">
+      <div className="aai-card-header">
+        <div className="aai-pick">
+          {pick.pick}
+          {renderValueBadge(pick.edge, pick.ev_percent)}
+        </div>
+        <div className="aai-confidence-column">
+          <div className="aai-confidence-label">Confidence</div>
+          <div className="aai-confidence">
+            {(pick.combined_confidence || pick.confidence || 0).toFixed(1)}%
+          </div>
+        </div>
+      </div>
+
+      <div className="aai-matchup">
+        {pick.away} @ {pick.home}
+      </div>
+
+      <div className="aai-stats-grid">
+        <div className="stat-item">
+          <span className="stat-label">Edge:</span>
+          <span className="stat-value highlight">{(pick.edge || 0).toFixed(2)}%</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-label">EV:</span>
+          <span className="stat-value highlight">{(pick.ev_percent || 0).toFixed(2)}%</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-label">Odds:</span>
+          <span className="stat-value">
+            {pick.odds ? formatOdds(pick.odds, oddsFormat) : 'N/A'}
+          </span>
+        </div>
+        {pick.market_odds && (
+          <div className="stat-item">
+            <span className="stat-label">Market:</span>
+            <span className="stat-value">
+              {formatOdds(pick.market_odds, oddsFormat)}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {pick.reason && (
+        <div className="aai-reason">{pick.reason}</div>
+      )}
+
+      {renderKellyInfo(pick.kelly_stake, pick.kelly_fraction)}
+      {renderRiskFactors(pick.risk_factors)}
+      {renderModelBreakdown(pick.models)}
+
+      {pick.start_time && (
+        <div className="aai-time">
+          🕐 {convertToUserTimezone(pick.start_time, "full")}
+        </div>
+      )}
+
+      <button 
+        className="aai-place-bet-btn"
+        onClick={() => onPlaceBet(pick)}
+        aria-label={`Place bet on ${pick.pick}`}
+      >
+        💰 Place Bet {pick.kelly_stake && `($${pick.kelly_stake.toFixed(0)})`}
+      </button>
+    </div>
+  );
+});
+
+BetCard.displayName = 'BetCard';
+
+/**
+ * Enhanced ParlayCard
+ */
+const ParlayCard = React.memo(({ parlay }) => (
+  <div className="aai-card parlay-card">
+    <div className="aai-card-header">
+      <div className="aai-pick">
+        {parlay.leg_count || parlay.legs?.length}-Leg Parlay
+      </div>
+      <div className="aai-confidence-column">
+        <div className="aai-confidence-label">Confidence</div>
+        <div className="aai-confidence">{(parlay.confidence || 0).toFixed(1)}%</div>
+      </div>
+    </div>
+
+    <div className="parlay-stats">
+      <div className="stat-item">
+        <span className="stat-label">Odds:</span>
+        <span className="stat-value highlight">
+          {parlay.parlay_odds_american > 0 ? '+' : ''}{parlay.parlay_odds_american}
+        </span>
+      </div>
+      <div className="stat-item">
+        <span className="stat-label">Decimal:</span>
+        <span className="stat-value">{(parlay.parlay_odds || 0).toFixed(2)}</span>
+      </div>
+    </div>
+
+    <ul className="aai-legs">
+      {parlay.legs?.map((leg, idx) => (
+        <li key={idx}>
+          <span className="leg-pick">{leg.pick}</span>
+          <span className="leg-confidence">{(leg.confidence || 0).toFixed(1)}%</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+));
+
+ParlayCard.displayName = 'ParlayCard';
+
+/**
+ * Main Component
+ */
 function AAIBetsPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -14,384 +237,357 @@ function AAIBetsPage() {
   const [selectedBet, setSelectedBet] = useState(null);
   const [showPlacementModal, setShowPlacementModal] = useState(false);
   const [showCustomBuilder, setShowCustomBuilder] = useState(false);
-  const canvasRef = useRef(null);
+  const [bankroll, setBankroll] = useState(DEFAULT_BANKROLL);
+  const [minConfidence, setMinConfidence] = useState(DEFAULT_MIN_CONFIDENCE);
+  const [selectedSports, setSelectedSports] = useState([]);
   
-  const modelOptions = [
-    { id: "all", label: "All" },
-    { id: "vegas", label: "Vegas" },
-    { id: "elo", label: "Elo" },
-    { id: "ml", label: "ML" },
-    { id: "kelly", label: "Kelly" },
-  ];
-  const [selectedModels, setSelectedModels] = useState(["all"]);
+  const canvasRef = useRef(null);
+  const animationFrameRef = useRef(null);
 
-  // Matrix effect
+  // Matrix animation
   useEffect(() => {
     if (!loading || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    
-    // Set canvas size
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-
-    const fontSize = 14;
-    const columns = Math.floor(canvas.width / fontSize);
+    const columns = Math.floor(canvas.width / MATRIX_FONT_SIZE);
     const drops = Array(columns).fill(1);
-
-    const matrix = "01"; // Binary characters
-    const matrixChars = matrix.split("");
-
-    let animationId;
     
     const draw = () => {
-      // Semi-transparent black to create trail effect
       ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.fillStyle = "#0F0"; // Green text
-      ctx.font = `${fontSize}px monospace`;
+      ctx.fillStyle = "#0F0";
+      ctx.font = `${MATRIX_FONT_SIZE}px monospace`;
 
       for (let i = 0; i < drops.length; i++) {
-        const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
-        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
-        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+        const text = MATRIX_CHARS[Math.floor(Math.random() * 2)];
+        ctx.fillText(text, i * MATRIX_FONT_SIZE, drops[i] * MATRIX_FONT_SIZE);
+        if (drops[i] * MATRIX_FONT_SIZE > canvas.height && Math.random() > 0.975) {
           drops[i] = 0;
         }
         drops[i]++;
       }
-
-      animationId = requestAnimationFrame(draw);
+      animationFrameRef.current = requestAnimationFrame(draw);
     };
-
     draw();
 
     return () => {
-      if (animationId) cancelAnimationFrame(animationId);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
     };
   }, [loading]);
 
-  const calculateOdds = async () => {
+  const calculateOdds = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const modelsParam = selectedModels.includes("all")
-        ? "all"
-        : selectedModels.join(",");
       
-      // Call the fresh data scraping + calculation endpoint with extended timeout
-      // This endpoint scrapes ALL fresh data (games, injuries, weather) so it needs time
+      const params = new URLSearchParams({
+        min_confidence: minConfidence,
+        bankroll: bankroll
+      });
+      
+      if (selectedSports.length > 0) {
+        params.append('sports', selectedSports.join(','));
+      }
+      
       const res = await api.get(
-        `/aai-bets/refresh-and-calculate?models=${modelsParam}`,
-        { timeout: 240000 } // 4 minute timeout for complete data collection
+        `/api/aai-bets/refresh-and-calculate?${params.toString()}`,
+        { timeout: API_TIMEOUT }
       );
+      
       setData(res.data || null);
       setHasCalculated(true);
     } catch (err) {
-      setError("Failed to load recommendations");
-      console.error(err);
+      setError(err.response?.data?.message || err.message || "Failed to load");
+      console.error('Error:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [minConfidence, bankroll, selectedSports]);
 
-  const toggleModel = (modelId) => {
-    if (modelId === "all") {
-      setSelectedModels(["all"]);
-      return;
-    }
-
-    setSelectedModels((prev) => {
-      const hasAll = prev.includes("all");
-      const base = hasAll ? [] : prev.slice();
-      if (base.includes(modelId)) {
-        const next = base.filter((m) => m !== modelId);
-        return next.length ? next : ["all"];
+  const getQuickRecommendations = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const params = new URLSearchParams({
+        min_confidence: minConfidence,
+        bankroll: bankroll
+      });
+      
+      if (selectedSports.length > 0) {
+        params.append('sports', selectedSports.join(','));
       }
-      return [...base, modelId];
-    });
-  };
-
-  const renderExternalOdds = (odds) => {
-    if (!odds || Object.keys(odds).length === 0) return null;
-    const modelCount = Object.keys(odds).filter((key) => key !== "mean").length;
-    return (
-      <div className="aai-external-odds">
-        <details>
-          <summary>External Models ({modelCount})</summary>
-          <div className="odds-breakdown">
-            {Object.entries(odds).map(([model, prob]) => (
-              <div key={model} className="odds-item">
-                <span className="model-name">{model}:</span>
-                <span className="model-prob">{prob}%</span>
-              </div>
-            ))}
-          </div>
-        </details>
-      </div>
-    );
-  };
-  const renderMomentumBadge = (momentum) => {
-    if (!momentum || !momentum.pick_team) return null;
-    
-    const status = momentum.pick_team;
-    if (status === "FIRE") {
-      return <span className="momentum-badge fire">🔥 FIRE</span>;
-    } else if (status === "FREEZING") {
-      return <span className="momentum-badge freezing">🧊 FREEZING</span>;
+      
+      const res = await api.get(
+        `/api/aai-bets/recommendations?${params.toString()}`
+      );
+      
+      setData(res.data || null);
+      setHasCalculated(true);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Failed");
+      console.error('Error:', err);
+    } finally {
+      setLoading(false);
     }
-    return null;
-  };
-  const openBetPlacementModal = (bet) => {
+  }, [minConfidence, bankroll, selectedSports]);
+
+  const toggleSport = useCallback((sport) => {
+    setSelectedSports(prev => 
+      prev.includes(sport) ? prev.filter(s => s !== sport) : [...prev, sport]
+    );
+  }, []);
+
+  const openBetPlacementModal = useCallback((bet) => {
     setSelectedBet(bet);
     setShowPlacementModal(true);
-  };
+  }, []);
 
-  const closeBetPlacementModal = () => {
+  const closeBetPlacementModal = useCallback(() => {
     setShowPlacementModal(false);
     setSelectedBet(null);
-  };
+  }, []);
 
-  const handleBetPlacedSuccess = (result) => {
-    // Show success message
-    console.log("Bet placed successfully:", result);
-    // Could add toast notification here
-  };
+  const openCustomBuilder = useCallback(() => setShowCustomBuilder(true), []);
+  const closeCustomBuilder = useCallback(() => setShowCustomBuilder(false), []);
 
-  const openCustomBuilder = () => {
-    setShowCustomBuilder(true);
-  };
+  const singles = useMemo(() => data?.singles || [], [data?.singles]);
+  const parlays = useMemo(() => data?.parlays || [], [data?.parlays]);
+  const freshData = useMemo(() => data?.fresh_data || {}, [data?.fresh_data]);
 
-  const closeCustomBuilder = (result) => {
-    setShowCustomBuilder(false);
-    if (result) {
-      console.log("Custom bet placed:", result);
-      // Could add toast notification here
-    }
-  };
+  const stats = useMemo(() => {
+    if (!singles.length) return null;
+    const highConf = singles.filter(s => (s.combined_confidence || s.confidence) >= 70).length;
+    const totalEdge = singles.reduce((sum, s) => sum + (s.edge || 0), 0);
+    const totalEV = singles.reduce((sum, s) => sum + (s.ev_percent || 0), 0);
+    return {
+      total: singles.length,
+      highConfidence: highConf,
+      avgEdge: (totalEdge / singles.length).toFixed(2),
+      totalEV: totalEV.toFixed(2)
+    };
+  }, [singles]);
 
-  return (
-    <div className="aai-bets-page">
-      {/* Matrix loading effect */}
-      {loading && (
-        <div className="matrix-container">
-          <canvas ref={canvasRef} className="matrix-canvas"></canvas>
-          <div className="matrix-overlay">
-            <div className="matrix-text">CALCULATING ODDS</div>
-            <div className="matrix-subtext">Analyzing data streams...</div>
+  if (loading) {
+    return (
+      <div className="matrix-container">
+        <canvas ref={canvasRef} className="matrix-canvas"></canvas>
+        <div className="matrix-overlay">
+          <div className="matrix-text">CALCULATING ODDS</div>
+          <div className="matrix-subtext">
+            {hasCalculated ? 'Refreshing...' : 'Analyzing with AI models...'}
           </div>
         </div>
-      )}
+      </div>
+    );
+  }
 
-      {/* Initial state - just the button */}
-      {!loading && !hasCalculated && (
+  if (!hasCalculated) {
+    return (
+      <div className="aai-bets-page">
         <div className="aai-initial-state">
           <div className="aai-hero">
             <h1 className="aai-hero-title">🤖 AAI Intelligence</h1>
-            <p className="aai-hero-subtitle">Advanced betting recommendations powered by real-time data and AI models.<br />(not recommended to use this page yet, or ever, as AI is normally better at this and prop bets are hard with free APIs. Use the Bets page.</p>
+            <p className="aai-hero-subtitle">
+              Advanced betting with 5 statistical models
+              <br />
+              Elo • Pythagorean • Form • Home • Vegas
+              <br />
+              <strong>Kelly Criterion • Expected Value • Risk Analysis</strong>
+            </p>
+
+            <div className="aai-settings">
+              <div className="setting-group">
+                <label>Bankroll ($)</label>
+                <input
+                  type="number"
+                  value={bankroll}
+                  onChange={(e) => setBankroll(Number(e.target.value))}
+                  min="100"
+                  max="100000"
+                  step="100"
+                />
+              </div>
+              <div className="setting-group">
+                <label>Min Confidence (%)</label>
+                <input
+                  type="number"
+                  value={minConfidence}
+                  onChange={(e) => setMinConfidence(Number(e.target.value))}
+                  min="50"
+                  max="90"
+                  step="5"
+                />
+              </div>
+            </div>
+
+            <div className="sport-filters">
+              {['NBA', 'NFL', 'NHL', 'MLB', 'NCAAB'].map(sport => (
+                <button
+                  key={sport}
+                  className={`sport-filter-btn ${selectedSports.includes(sport) ? 'active' : ''}`}
+                  onClick={() => toggleSport(sport)}
+                >
+                  {sport}
+                </button>
+              ))}
+            </div>
+
             <button className="calculate-odds-btn" onClick={calculateOdds}>
               <span className="btn-icon">⚡</span>
               <span className="btn-text">CALCULATE ODDS</span>
               <span className="btn-icon">⚡</span>
             </button>
+
             <div className="aai-features">
-              <div className="feature">
-                <span className="feature-icon">📊</span>
-                <span>Live Form Analysis</span>
-              </div>
-              <div className="feature">
-                <span className="feature-icon">🌦️</span>
-                <span>Weather Impact</span>
-              </div>
-              <div className="feature">
-                <span className="feature-icon">🏥</span>
-                <span>Injury Tracking</span>
-              </div>
-              <div className="feature">
-                <span className="feature-icon">🎯</span>
-                <span>Multi-Model Consensus</span>
-              </div>
+              <div className="feature"><span>📊</span><span>5 Models</span></div>
+              <div className="feature"><span>💰</span><span>Kelly Sizing</span></div>
+              <div className="feature"><span>📈</span><span>Expected Value</span></div>
+              <div className="feature"><span>🎯</span><span>Value Detection</span></div>
             </div>
           </div>
         </div>
-      )}
+      </div>
+    );
+  }
 
-      {/* Results after calculation */}
-      {!loading && hasCalculated && (
-        <div className="aai-results">
-          <div className="page-header">
-            <h1>🤖 AAI Bets</h1>
-            <p className="page-subtitle">Data-driven singles and parlays for today</p>
+  return (
+    <div className="aai-bets-page">
+      <div className="aai-results">
+        <div className="page-header">
+          <h1>🤖 AAI Recommendations</h1>
+          <p className="page-subtitle">Statistical models + Kelly Criterion</p>
+          <div className="header-actions">
+            <button className="quick-refresh-btn" onClick={getQuickRecommendations}>
+              🔄 Quick
+            </button>
             <button className="recalculate-btn" onClick={calculateOdds}>
-              🔄 Recalculate
+              ⚡ Full Refresh
             </button>
           </div>
+        </div>
 
-          <div className="aai-content">
-            {error && <div className="aai-error">{error}</div>}
+        <div className="aai-content">
+          {error && (
+            <ErrorMessage
+              message={error}
+              type="error"
+              onRetry={calculateOdds}
+              onDismiss={() => setError(null)}
+            />
+          )}
 
-            {!error && (
-              <>
-                {/* Fresh Data Summary */}
-                {data?.fresh_data && (
-                  <div className="fresh-data-banner">
-                    <div className="fresh-data-icon">✅</div>
-                    <div className="fresh-data-info">
-                      <div className="fresh-data-title">Fresh Data Loaded</div>
-                      <div className="fresh-data-stats">
-                        📅 {data.fresh_data.games_updated} games • 
-                        🏥 {data.fresh_data.injuries_updated} injuries • 
-                        🌦️ {data.fresh_data.weather_forecasts} forecasts • 
-                        ⏱️ {data.fresh_data.elapsed_seconds}s
-                      </div>
+          {!error && (
+            <>
+              {freshData?.success && (
+                <div className="fresh-data-banner">
+                  <div className="fresh-data-icon">✅</div>
+                  <div className="fresh-data-info">
+                    <div className="fresh-data-title">Fresh Data</div>
+                    <div className="fresh-data-stats">
+                      📅 {freshData.games_updated} games • 
+                      🏥 {freshData.injuries_updated} injuries • 
+                      ⏱️ {freshData.elapsed_seconds}s
                     </div>
                   </div>
-                )}
-
-                <div className="aai-disclaimer">
-                  {data?.disclaimer ||
-                    "These recommendations blend team form with external models. Not financial advice."}
                 </div>
-
-                <div className="aai-model-toggles">
-                  <div className="aai-model-label">Models</div>
-                  <div className="aai-model-options">
-                    {modelOptions.map((option) => (
-                      <button
-                        key={option.id}
-                        type="button"
-                        className={
-                          selectedModels.includes(option.id)
-                            ? "aai-model-btn active"
-                            : "aai-model-btn"
-                        }
-                        onClick={() => toggleModel(option.id)}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Singles */}
-                <div className="aai-section">
-                  <div className="aai-section-header">
-                    <h2>Singles</h2>
-                    <span className="aai-section-subtitle">Highest confidence picks</span>
-                  </div>
-              {data?.singles?.length ? (
-                <div className="aai-grid">
-                  {data.singles.map((pick) => (
-                    <div key={`${pick.game_id}-${pick.pick}`} className="aai-card">
-                      <div className="aai-card-header">
-                        <div className="aai-pick">
-                          {pick.pick}
-                          {pick.momentum && renderMomentumBadge(pick.momentum)}
-                        </div>
-                        <div className="aai-confidence-column">
-                          <div className="aai-confidence-label">Form</div>
-                          <div className="aai-confidence">{pick.confidence}%</div>
-                          {pick.combined_confidence && pick.combined_confidence !== pick.confidence && (
-                            <>
-                              <div className="aai-confidence-label">Blended</div>
-                              <div className="aai-confidence-combined">{pick.combined_confidence}%</div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="aai-matchup">
-                        {pick.away} @ {pick.home}
-                      </div>
-                      <div className="aai-reason">{pick.reason}</div>
-                      {pick.external_odds && renderExternalOdds(pick.external_odds)}
-                      {pick.start_time && (
-                        <div className="aai-time">{convertToUserTimezone(pick.start_time, "full")}</div>
-                      )}
-                      <button 
-                        className="aai-place-bet-btn"
-                        onClick={() => openBetPlacementModal(pick)}
-                      >
-                        💰 Place Bet
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="aai-empty">No singles available for today.</div>
               )}
-            </div>
 
-            {/* Parlays */}
-            <div className="aai-section">
-              <div className="aai-section-header">
-                <h2>Parlays</h2>
-                <span className="aai-section-subtitle">Low-variance combinations</span>
+              {stats && (
+                <div className="stats-summary">
+                  <div className="stat-box">
+                    <div className="stat-value">{stats.total}</div>
+                    <div className="stat-label">Picks</div>
+                  </div>
+                  <div className="stat-box highlight">
+                    <div className="stat-value">{stats.highConfidence}</div>
+                    <div className="stat-label">High Conf</div>
+                  </div>
+                  <div className="stat-box">
+                    <div className="stat-value">{stats.avgEdge}%</div>
+                    <div className="stat-label">Avg Edge</div>
+                  </div>
+                  <div className="stat-box">
+                    <div className="stat-value">{stats.totalEV}%</div>
+                    <div className="stat-label">Total EV</div>
+                  </div>
+                </div>
+              )}
+
+              <div className="current-settings">
+                <span>💰 ${bankroll}</span>
+                <span>📊 {minConfidence}%</span>
+                {selectedSports.length > 0 && <span>🏀 {selectedSports.join(', ')}</span>}
               </div>
-              {data?.parlays?.length ? (
-                <div className="aai-grid">
-                  {data.parlays.map((parlay, idx) => (
-                    <div key={`parlay-${idx}`} className="aai-card">
-                      <div className="aai-card-header">
-                        <div className="aai-pick">{parlay.leg_count}-Leg Parlay</div>
-                        <div className="aai-confidence-column">
-                          <div className="aai-confidence-label">Form</div>
-                          <div className="aai-confidence">{parlay.confidence}%</div>
-                          {parlay.combined_confidence && parlay.combined_confidence !== parlay.confidence && (
-                            <>
-                              <div className="aai-confidence-label">Blended</div>
-                              <div className="aai-confidence-combined">{parlay.combined_confidence}%</div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <ul className="aai-legs">
-                        {parlay.legs.map((leg, legIdx) => (
-                          <li key={`${leg.game_id}-${legIdx}`}>
-                            {leg.pick} <span>{leg.confidence}%</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="aai-empty">No parlays generated.</div>
-              )}
-            </div>
-              {/* Custom Bet Builder */}
+
               <div className="aai-section">
                 <div className="aai-section-header">
-                  <h2>Custom Bet Builder</h2>
-                  <span className="aai-section-subtitle">Build your own single or parlay from upcoming games</span>
+                  <h2>Singles</h2>
+                  <span className="aai-section-subtitle">{singles.length} picks</span>
                 </div>
+                {singles.length > 0 ? (
+                  <div className="aai-grid">
+                    {singles.map((pick, idx) => (
+                      <BetCard key={pick.game_id || idx} pick={pick} onPlaceBet={openBetPlacementModal} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="aai-empty">No picks. Try lower confidence.</div>
+                )}
+              </div>
+
+              {data?.parlays && typeof data.parlays === 'object' && (
+                Object.entries(data.parlays).map(([size, parlays]) => (
+                  <div className="aai-section" key={size}>
+                    <div className="aai-section-header">
+                      <h2>{size.replace('_', '-')} Parlays</h2>
+                      <span className="aai-section-subtitle">{parlays.length}</span>
+                    </div>
+                    <div className="aai-grid">
+                      {parlays.map((parlay, i) => (
+                        <ParlayCard 
+                          key={parlay.legs.map(l => l.pick).join('-') || i}
+                          parlay={parlay}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
+
+              <div className="aai-section">
                 <button className="aai-custom-builder-btn" onClick={openCustomBuilder}>
                   🎯 Build Custom Bet
                 </button>
               </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
-    </div>
-    )}
 
-      {/* Bet Placement Modal */}
-      <BetPlacementModal 
-        bet={selectedBet}
-        isOpen={showPlacementModal}
-        onClose={closeBetPlacementModal}
-        onSuccess={handleBetPlacedSuccess}
-      />
-
-      {/* Custom Bet Builder Modal */}
-      <ErrorBoundary>
-        <CustomBetBuilder 
-          games={data?.upcoming_games || []}
-          isOpen={showCustomBuilder}
-          onClose={closeCustomBuilder}
+      {showPlacementModal && (
+        <BetPlacementModal 
+          bet={selectedBet}
+          isOpen={showPlacementModal}
+          onClose={closeBetPlacementModal}
+          onSuccess={() => {}}
         />
-      </ErrorBoundary>
+      )}
+
+      {showCustomBuilder && (
+        <ErrorBoundary>
+          <CustomBetBuilder 
+            games={data?.upcoming_games || []}
+            isOpen={showCustomBuilder}
+            onClose={closeCustomBuilder}
+          />
+        </ErrorBoundary>
+      )}
     </div>
   );
 }

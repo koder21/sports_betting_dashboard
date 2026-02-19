@@ -16,8 +16,10 @@ function SportsAnalyticsPage() {
     { code: "ALL", name: "All Sports", icon: "🌐" },
     { code: "NBA", name: "NBA", icon: "🏀" },
     { code: "NCAAB", name: "NCAAB", icon: "🎓" },
+    { code: "NCAAF", name: "NCAAF", icon: "🏈" },
     { code: "NFL", name: "NFL", icon: "🏈" },
     { code: "NHL", name: "NHL", icon: "🏒" },
+    { code: "MLB", name: "MLB", icon: "⚾" },
     { code: "EPL", name: "EPL", icon: "⚽" },
   ];
 
@@ -26,8 +28,8 @@ function SportsAnalyticsPage() {
       setLoading(true);
       try {
         const endpoint = activeSport === "ALL" 
-          ? "/sports-analytics/overview" 
-          : `/sports-analytics/stats/${activeSport}`;
+          ? "/api/sports-analytics/overview" 
+          : `/api/sports-analytics/stats/${activeSport}`;
         const res = await api.get(endpoint);
         setSportData(res.data);
       } catch (err) {

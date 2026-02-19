@@ -22,7 +22,7 @@ class AlertService:
             meta=metadata,
             acknowledged=False,
         )
-        await self.alerts.add(alert)
+        self.alerts.add(alert)  # ✅ FIXED: Removed await - add() is not async
         await self.session.commit()
 
     async def list_alerts(self) -> List[Dict[str, Any]]:

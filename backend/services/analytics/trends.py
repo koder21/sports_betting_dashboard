@@ -1,16 +1,23 @@
 from typing import Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
+from backend.db import get_session
 
 from ...repositories.bet_repo import BetRepository
 
 
 class TrendAnalytics:
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: Optional[AsyncSession] = None):
         self.session = session
-        self.bets = BetRepository(session)
+        self.bets = BetRepository(session) if session else None
 
     async def win_loss_trend(self) -> Dict[str, Any]:
-        all_bets = await self.bets.list_all()
+        if self.session is None:
+            async with get_session() as session:
+                bets = BetRepository(session)
+                all_bets = await bets.list_all_with_relations()
+        else:
+            all_bets = await self.bets.list_all_with_relations()
 
         # Group by parlay_id to count bets, not legs
         parlays_by_id = {}
@@ -37,6 +44,8 @@ class TrendAnalytics:
         
         # Determine status for each multi-leg parlay
         for parlay_id, legs in parlays_by_id.items():
+            if legs[0].original_stake is None:
+                continue
             graded_legs = [l for l in legs if l.status in ["won", "lost", "push", "void"]]
             pending_legs = [l for l in legs if l.status == "pending"]
             
@@ -76,7 +85,12 @@ class TrendAnalytics:
         }
 
     async def by_market(self) -> Dict[str, Any]:
-        all_bets = await self.bets.list_all()
+        if self.session is None:
+            async with get_session() as session:
+                bets = BetRepository(session)
+                all_bets = await bets.list_all_with_relations()
+        else:
+            all_bets = await self.bets.list_all_with_relations()
 
         # Group by parlay_id to count bets, not legs
         parlays_by_id = {}
@@ -139,7 +153,12 @@ class TrendAnalytics:
 
     async def streak_analysis(self) -> Dict[str, Any]:
         """Calculate current and longest win/loss streaks"""
-        all_bets = await self.bets.list_all_with_relations()
+        if self.session is None:
+            async with get_session() as session:
+                bets = BetRepository(session)
+                all_bets = await bets.list_all_with_relations()
+        else:
+            all_bets = await self.bets.list_all_with_relations()
         
         # Group by parlay_id to count bets, not legs
         parlays_by_id = {}
