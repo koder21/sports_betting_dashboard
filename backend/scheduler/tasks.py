@@ -57,6 +57,17 @@ SPORTS_CONFIG = [
 
 
 class Scheduler:
+    async def periodic_backup_check(self):
+        """Check every 30 minutes if a backup is needed, and run it if so."""
+        import os
+        import subprocess
+        while True:
+            try:
+                script_path = os.path.join(os.path.dirname(__file__), 'db_backup.py')
+                subprocess.run(['python3', script_path], check=True)
+            except Exception as e:
+                logger.error(f"Backup check failed: {e}")
+            await asyncio.sleep(1800)  # 30 minutes
     """
     Background scheduler for sports betting data.
     
@@ -96,9 +107,10 @@ class Scheduler:
         ]
     
     async def start(self):
-        """Start all background workers"""
+        """Start all background workers and periodic backup check"""
         await self.alerts.queue.start_worker()
         await self.write_queue.start_worker()
+        asyncio.create_task(self.periodic_backup_check())
     
     async def stop(self):
         """Stop all background workers"""
