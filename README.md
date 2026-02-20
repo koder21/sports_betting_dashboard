@@ -7,7 +7,7 @@ A full-stack sports betting intelligence platform with AI-powered recommendation
 ### Prerequisites
 - Python 3.10+
 - Node.js 16+
-- SQLite 3
+- PostgreSQL 14+
 
 ### Installation
 
@@ -29,7 +29,7 @@ Frontend runs on `http://localhost:5173`
 
 3. **Database**
 ```bash
-# Apply migrations
+# Create PostgreSQL database and set credentials in backend/config.py
 alembic upgrade head
 ```
 
@@ -66,16 +66,18 @@ Real-time game updates from ESPN with:
 - Game status and timing
 - Start time conversion to your timezone
 
-### 🤖 AAI Betting (AI Recommendations)
+### 🤖 AAI Betting (AI Recommendations & Custom Parlays)
 Data-driven bet suggestions combining:
 - **Form Analysis**: Recent team performance (5 games/90 days)
 - **External Models**: Vegas odds, Elo ratings, ML predictions, Kelly criterion
 - **Confidence Blending**: 50% form-based + 50% model-based
 
+
 Features:
 - Model selection toggles (Vegas, Elo, ML, Kelly, All)
 - Multiple parlay sizes: 2, 3, 4, 5, 7, 12-leg
 - Expanded model breakdown with individual probabilities
+- **Custom Parlay Builder**: Default pick is always 'TeamName ML' for moneyline bets, and default reason is 'AAI Custom Bet'. All custom parlays send a valid pick field matching backend expectations.
 
 ### 💰 Bet Tracking
 - Log bets with rich details
@@ -103,8 +105,8 @@ API Layer (FastAPI)
 Business Logic (Services)
         ↓
 Data Layer (Repositories)
-        ↓
-Database (SQLite)
+      ↓
+   Database (PostgreSQL)
 ```
 
 ### Key Components
@@ -183,11 +185,12 @@ Removes cache, test files, and temporary data.
 
 ### Database maintenance
 ```bash
-# Backup
-cp sports_intel.db sports_intel.db.backup
+# Backup (PostgreSQL)
+pg_dump <your_db_name> > backup.sql
 
 # Reset
-rm sports_intel.db
+dropdb <your_db_name>
+createdb <your_db_name>
 alembic upgrade head
 ```
 
@@ -202,7 +205,8 @@ alembic upgrade head
 
 **Python** (backend/requirements.txt)
 - FastAPI
-- SQLAlchemy (async)
+- SQLAlchemy (async, PostgreSQL)
+- asyncpg (PostgreSQL driver)
 - aiohttp (API requests)
 - Pydantic (validation)
 
@@ -211,6 +215,7 @@ alembic upgrade head
 - React Router
 - Axios (HTTP client)
 - Vite (build tool)
+- Custom Parlay Builder (see Features)
 
 ## 🤝 Contributing
 
@@ -259,4 +264,4 @@ Check the documentation guides in [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.m
 ---
 
 **Last Updated**: February 2026  
-**Status**: For individual use only, bettings bad, this git can't be blamed for any losses you accrue.
+**Status**: For individual use only. This is the only README—see here for all project instructions. Bet responsibly; this git can't be blamed for any losses you accrue.
