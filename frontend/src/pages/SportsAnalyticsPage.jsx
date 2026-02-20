@@ -285,7 +285,8 @@ function SportsAnalyticsPage() {
                     <Line type="monotone" dataKey="NFL" stroke={COLORS[1]} strokeWidth={2} dot={{ r: 3 }} />
                     <Line type="monotone" dataKey="NCAAB" stroke={COLORS[2]} strokeWidth={2} dot={{ r: 3 }} />
                     <Line type="monotone" dataKey="NHL" stroke={COLORS[3]} strokeWidth={2} dot={{ r: 3 }} />
-                    <Line type="monotone" dataKey="EPL" stroke={COLORS[4]} strokeWidth={2} dot={{ r: 3 }} />
+                    <Line type="monotone" dataKey="MLB" stroke={COLORS[4]} strokeWidth={2} dot={{ r: 3 }} />
+                    <Line type="monotone" dataKey="EPL" stroke={COLORS[5]} strokeWidth={2} dot={{ r: 3 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

@@ -7,11 +7,10 @@ BACKUP_FILE_PREFIX = 'postgres_backup'
 LAST_BACKUP_FILE = os.path.join(BACKUP_DIR, 'last_backup.txt')
 
 DB_NAME = os.environ.get('POSTGRES_DB', 'sports_intel')
-DB_USER = os.environ.get('POSTGRES_USER', 'postgres')
+DB_USER = os.environ.get('POSTGRES_USER', 'sbd')
 DB_HOST = os.environ.get('POSTGRES_HOST', 'localhost')
 DB_PORT = os.environ.get('POSTGRES_PORT', '5432')
-
-# You may want to set DB_PASSWORD in your environment or .pgpass
+DB_PASSWORD = os.environ.get('POSTGRES_PASSWORD', 'sbddb')
 
 
 def get_last_backup_time():
@@ -46,7 +45,7 @@ def perform_backup():
         DB_NAME
     ]
     env = os.environ.copy()
-    env['PGPASSWORD'] = env.get('POSTGRES_PASSWORD', '')
+    env['PGPASSWORD'] = DB_PASSWORD
     try:
         subprocess.run(cmd, check=True, env=env)
         set_last_backup_time(now)

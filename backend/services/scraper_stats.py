@@ -345,7 +345,7 @@ class PlayerStatsScraper:
         result = await session.execute(
             select(GameResult).where(
                 GameResult.status.isnot(None),
-                GameResult.status.notin_("upcoming", "scheduled", "pre-game", "preseason", "tba", "preview"),
+                GameResult.status.notin_(("upcoming", "scheduled", "pre-game", "preseason", "tba", "preview")),
                 or_(
                     not_(exists().where(PlayerStats.game_id == GameResult.game_id)),
                     (GameResult.home_team_obj.has(or_(Team.stats_json.is_(None), cast(Team.stats_json, SAString) == '{}'))),
@@ -555,7 +555,14 @@ class PlayerStatsScraper:
                 except Exception as rollback_e:
                     logger.error(f"[Boxscore] Rollback failed after failed commit for game {game_id}: {rollback_e}", exc_info=True)
                 return 0
-
+            result_check = await session.execute(select(GameResult).where(GameResult.game_id == game_id))
+            exists = result_check.scalar_one_or_none()
+            if not exists:
+                return 0
+            status_type = (data.get("header", {}).get("competitions", [{}])[0].get("status", {}).get("type", {}) or {})
+            status_name = status_type.get("name") or ""
+            if status_name not in ("STATUS_FINAL", "STATUS_FULL_TIME"):
+                return 0
             boxscore = data["boxscore"]
             stats_added = 0
 
@@ -921,7 +928,6 @@ class PlayerStatsScraper:
         except Exception:
             pass
         try:
-            logger.debug(f"[PlayerStats] Attempting to save stats for player_id={player_id}, game_id={game_id}, team_id={team_id}, sport={sport}, league={league}, stats_list={stats_list}, stat_labels={stat_labels}, stat_type={stat_type}")
             from sqlalchemy import update
             # Check player exists
             player_check = await session.execute(
@@ -980,7 +986,8 @@ class PlayerStatsScraper:
             team_check = await session.execute(select(Team).where(Team.team_id == team_id))
             existing_team = team_check.scalar_one_or_none()
             if not existing_team:
-                new_team = Team(team_id=team_id, name=f"NBA Team {team_id.split('-')[-1]}", abbreviation=None, sport_name=sport, league=league)
+                team_suffix = team_id.split('-')[-1] if team_id and '-' in str(team_id) else str(team_id) if team_id else "Unknown"
+                new_team = Team(team_id=team_id, name=f"NBA Team {team_suffix}", abbreviation=None, sport_name=sport, league=league)
                 session.add(new_team)
                 await session.flush()
             # Check if stats already exist for this game/player
@@ -995,13 +1002,11 @@ class PlayerStatsScraper:
             # Parse stats based on sport and stat type
             # Use parsed_stats unless extra_stats is provided (for NBA aggregation)
             stats_to_save = extra_stats if extra_stats else self._parse_stats(sport, stats_list, stat_type, stat_labels or [])
-            logger.debug(f"[PlayerStats] Stats to save for player_id={player_id}: {stats_to_save}")
             if existing:
                 # Update existing record with new stats (merge with existing)
                 for key, value in stats_to_save.items():
                     if value is not None:
                         setattr(existing, key, value)
-                logger.debug(f"[PlayerStats] Updated existing stats record for player_id={player_id}, game_id={game_id}")
                 return True
             else:
                 # Always use full normalized team_id (SPORT-##)

@@ -160,7 +160,7 @@ class TrendAnalytics:
         else:
             all_bets = await self.bets.list_all_with_relations()
         
-        # Group by parlay_id to count bets, not legs
+        # Group bets by parlay_id (multi-leg parlays) and singles
         parlays_by_id = {}
         parlay_dates = {}
         singles = []
@@ -172,20 +172,18 @@ class TrendAnalytics:
                 parlays_by_id[b.parlay_id].append(b)
             else:
                 singles.append(b)
-        
-        # Separate 1-leg parlays into singles (treat as singles, not parlays)
-        one_leg_parlays = [pid for pid, legs in parlays_by_id.items() if len(legs) == 1]
-        for pid in one_leg_parlays:
-            singles.extend(parlays_by_id[pid])
-            del parlays_by_id[pid]
-            del parlay_dates[pid]
-        
-        # Determine status for each multi-leg parlay and sort by date
+
+        # Only count grouped bets (multi-leg parlays and singles)
         bet_statuses = []
+
+        # Multi-leg parlays: count as one grouped bet
         for parlay_id, legs in parlays_by_id.items():
+            if len(legs) == 1:
+                # Treat 1-leg parlays as singles
+                singles.append(legs[0])
+                continue
             graded_legs = [l for l in legs if l.status in ["won", "lost", "push", "void"]]
             pending_legs = [l for l in legs if l.status == "pending"]
-            
             status = None
             if pending_legs:
                 status = "pending"
@@ -195,30 +193,29 @@ class TrendAnalytics:
                 status = "lost"
             else:
                 status = "other"  # push/void
-            
-            if status in ["won", "lost"]:  # Only count graded bets for streaks
+            if status in ["won", "lost"]:
                 bet_statuses.append({
                     "status": status,
                     "date": parlay_dates.get(parlay_id)
                 })
-        
-        # Add singles to bet statuses
+
+        # Singles: count as one grouped bet each
         for bet in singles:
-            if bet.status in ["won", "lost"]:  # Only count graded bets
+            if bet.status in ["won", "lost"]:
                 bet_statuses.append({
                     "status": bet.status,
                     "date": bet.placed_at or bet.created_at
                 })
-        
-        # Sort by date
+
+        # Sort by date (most recent first)
         bet_statuses.sort(key=lambda x: x["date"] or "", reverse=True)
-        
+
         # Calculate streaks
         current_win_streak = 0
         current_loss_streak = 0
         longest_win_streak = 0
         longest_loss_streak = 0
-        
+
         for bet in bet_statuses:
             if bet["status"] == "won":
                 current_win_streak += 1
@@ -228,7 +225,7 @@ class TrendAnalytics:
                 current_loss_streak += 1
                 current_win_streak = 0
                 longest_loss_streak = max(longest_loss_streak, current_loss_streak)
-        
+
         return {
             "current_win_streak": current_win_streak,
             "current_loss_streak": current_loss_streak,

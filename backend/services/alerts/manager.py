@@ -17,22 +17,29 @@ class AlertManager:
         self.alerts = AlertRepository(session) if session else None
         self.queue = AlertQueue(session=session, session_factory=session_factory)
 
-    async def create(self, severity: str, category: str, message: str, metadata: str = "") -> None:
+    async def create(self, severity: str, category: str, message: str, metadata: Any = "") -> None:
         """Create an alert (immediate if session provided, else queue)"""
+        import json
+        meta_str = metadata
+        if isinstance(metadata, (dict, list)):
+            try:
+                meta_str = json.dumps(metadata)
+            except Exception:
+                meta_str = str(metadata)
         if self.session and self.alerts:
             alert = Alert(
                 created_at=datetime.utcnow(),
                 severity=severity,
                 category=category,
                 message=message,
-                meta=metadata,
+                meta=meta_str,
                 acknowledged=False,
             )
             await self.alerts.add(alert)
             await self.session.commit()
             return
 
-        self.queue.enqueue(severity, category, message, metadata)
+        self.queue.enqueue(severity, category, message, meta_str)
         # Always return an awaitable so callers can safely await this method
         await asyncio.sleep(0)
 

@@ -1,4 +1,5 @@
 from typing import List, Dict, Any, Optional
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import insert
 from backend.models.injury import Injury
@@ -12,6 +13,7 @@ async def upsert_injuries(session: AsyncSession, injuries: List[Dict[str, Any]])
     """
     # First, batch upsert all teams referenced in injuries
     team_rows = []
+    player_rows = []
     injury_rows = []
     for injury in injuries:
         player_id = str(injury.get("playerId")) or None
@@ -35,10 +37,25 @@ async def upsert_injuries(session: AsyncSession, injuries: List[Dict[str, Any]])
         team_id = f"{sport_prefix}_{team_id_raw}" if team_id_raw else None
         description = injury.get("description") or injury.get("detail") or ""
         status = injury.get("status") or injury.get("type") or ""
-        last_updated = injury.get("lastUpdated") or injury.get("dateUpdated")
+        last_updated_raw = injury.get("lastUpdated") or injury.get("dateUpdated")
+        if isinstance(last_updated_raw, str) and last_updated_raw:
+            try:
+                last_updated = datetime.fromisoformat(last_updated_raw.replace("Z", "+00:00")).replace(tzinfo=None)
+            except ValueError:
+                last_updated = None
+        else:
+            last_updated = last_updated_raw
         if not player_id or not team_id:
             continue
-        team_rows.append(dict(team_id=team_id, name=None))
+        player_rows.append(dict(
+            player_id=player_id,
+            name=injury.get("playerName") or injury.get("displayName") or None,
+            full_name=injury.get("playerName") or injury.get("displayName") or None,
+            team_id=team_id,
+            sport=sport_prefix,
+            league=sport_prefix,
+        ))
+        team_rows.append(dict(team_id=team_id, name=injury.get("team_name") or None))
         injury_rows.append(dict(
             player_id=player_id,
             team_id=team_id,
@@ -46,21 +63,43 @@ async def upsert_injuries(session: AsyncSession, injuries: List[Dict[str, Any]])
             status=status,
             last_updated=last_updated,
         ))
-    # Upsert teams first
+    # Upsert teams first (deduplicate by team_id to avoid CardinalityViolationError)
     if team_rows:
         from sqlalchemy.dialects.postgresql import insert as pg_insert
-        team_stmt = pg_insert(Team).values(team_rows)
+        seen_team_ids = set()
+        unique_team_rows = []
+        for row in team_rows:
+            if row["team_id"] not in seen_team_ids:
+                seen_team_ids.add(row["team_id"])
+                unique_team_rows.append(row)
+        team_stmt = pg_insert(Team).values(unique_team_rows)
         team_stmt = team_stmt.on_conflict_do_nothing(index_elements=["team_id"])
         await session.execute(team_stmt)
     await session.flush()
-    # Upsert injuries
-    for injury in injury_rows:
-        stmt = insert(Injury).values(**injury).on_conflict_do_update(
-            index_elements=["player_id", "team_id", "description"],
-            set_={
-                "status": injury["status"],
-                "last_updated": injury["last_updated"],
-            }
-        )
-        await session.execute(stmt)
-    await session.commit()
+    # Upsert players (stub rows to satisfy FK; deduplicate by player_id)
+    if player_rows:
+        from sqlalchemy.dialects.postgresql import insert as pg_insert
+        seen_player_ids = set()
+        unique_player_rows = []
+        for row in player_rows:
+            if row["player_id"] not in seen_player_ids:
+                seen_player_ids.add(row["player_id"])
+                unique_player_rows.append(row)
+        player_stmt = pg_insert(Player).values(unique_player_rows)
+        player_stmt = player_stmt.on_conflict_do_nothing(index_elements=["player_id"])
+        await session.execute(player_stmt)
+    await session.flush()
+    # Upsert injuries in batches
+    BATCH_SIZE = 500
+    for i in range(0, len(injury_rows), BATCH_SIZE):
+        batch = injury_rows[i:i+BATCH_SIZE]
+        for injury in batch:
+            stmt = insert(Injury).values(**injury).on_conflict_do_update(
+                index_elements=["player_id", "team_id", "description"],
+                set_={
+                    "status": injury["status"],
+                    "last_updated": injury["last_updated"],
+                }
+            )
+            await session.execute(stmt)
+        await session.flush()

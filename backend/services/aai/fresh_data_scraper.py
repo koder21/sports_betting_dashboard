@@ -31,6 +31,7 @@ ESPN_SCOREBOARD = {
     "NCAAB": ("basketball", "mens-college-basketball"),
     "NFL":   ("football",   "nfl"),
     "NHL":   ("hockey",     "nhl"),
+    "MLB":   ("baseball",   "mlb"),
     "EPL":   ("soccer",     "eng.1"),
 }
 
@@ -39,6 +40,7 @@ ESPN_CORE_LEAGUE = {
     "NCAAB": ("basketball", "mens-college-basketball"),
     "NFL":   ("football",   "nfl"),
     "NHL":   ("hockey",     "nhl"),
+    "MLB":   ("baseball",   "mlb"),
     "EPL":   ("soccer",     "eng.1"),
 }
 
@@ -441,10 +443,127 @@ class FreshDataScraper:
         await self.session.execute(stmt)
 
     async def _scrape_injuries(self) -> int:
-        if not self._team_ids:
-            print("  ⚠️  No team IDs — skipping injuries")
+        """
+        Fetch injuries from ESPN's dedicated injuries endpoint — NOT game summaries.
+
+        Endpoint: https://site.api.espn.com/apis/site/v2/sports/{sport_type}/{league}/injuries
+        This endpoint returns all current roster injuries regardless of whether a game
+        is scheduled today, which is why using game summaries was returning zero injuries
+        on low-game days or for sports not in today's scoreboard.
+        """
+        from backend.services.scraper_injury import upsert_injuries
+
+        # (sport_type, league, sport_label) — matches ESPN URL path structure
+        INJURY_SPORTS = [
+            ("basketball", "nba",                    "NBA"),
+            ("football",   "nfl",                    "NFL"),
+            ("hockey",     "nhl",                    "NHL"),
+            ("basketball", "mens-college-basketball", "NCAAB"),
+            ("football",   "college-football",        "NCAAF"),
+            ("baseball",   "mlb",                    "MLB"),
+        ]
+
+        async def fetch_injuries_for_sport(
+            sport_type: str, league: str, sport_label: str
+        ) -> List[dict]:
+            url = (f"https://site.api.espn.com/apis/site/v2/sports"
+                   f"/{sport_type}/{league}/injuries")
+            try:
+                data = await self.espn_client.get_json(url)
+            except Exception as e:
+                print(f"[InjuryScrape] {sport_label}: ERROR {e}")
+                return []
+
+            injuries: List[dict] = []
+            # ESPN actual shape — grouped by team:
+            # { "injuries": [
+            #     { "id": "teamId",
+            #       "displayName": "Team Name",
+            #       "injuries": [
+            #         { "athlete": {"id": "playerId", "displayName": "Player Name", ...},
+            #           "status": "Out",
+            #           "longComment": "...",
+            #           "shortComment": "...",
+            #           "date": "2026-02-18T..." },
+            #         ...
+            #       ]
+            #     },
+            #     ...
+            #   ]
+            # }
+            for team_block in data.get("injuries", []):
+                team_id   = str(team_block.get("id", "")).strip()
+                team_name = team_block.get("displayName", "")
+                if not team_id:
+                    continue
+                for inj in team_block.get("injuries", []):
+                    athlete    = inj.get("athlete", {})
+                    # Log full athlete object once per sport to diagnose key structure
+                    if not hasattr(fetch_injuries_for_sport, f"_logged_{sport_label}"):
+                        setattr(fetch_injuries_for_sport, f"_logged_{sport_label}", True)
+                    # Try direct id field first (often empty string in ESPN response)
+                    athlete_id = str(athlete.get("id", "")).strip()
+                    if not athlete_id or not athlete_id.isdigit():
+                        # Extract from links: href like ".../player/_/id/5619/..."
+                        import re as _re
+                        for link in athlete.get("links", []):
+                            m = _re.search(r'/_/id/(\d+)', link.get("href", ""))
+                            if m:
+                                athlete_id = m.group(1)
+                                break
+                    if not athlete_id:
+                        logger.debug(
+                            f"[InjuryScrape][{sport_label}] No athlete id, keys: {list(inj.keys())}"
+                        )
+                        continue
+                    injuries.append({
+                        # Field names must match upsert_injuries() expectations
+                        "sport":       sport_label,
+                        "playerId":    athlete_id,
+                        "teamId":      team_id,
+                        "team_name":   team_name,
+                        "description": inj.get("longComment", inj.get("shortComment", "")),
+                        "status":      inj.get("status", ""),
+                        "lastUpdated": inj.get("date", None),
+                    })
+
+            print(f"[InjuryScrape] {sport_label}: {len(injuries)} injuries found.")
+            return injuries
+
+        tasks = [
+            fetch_injuries_for_sport(st, lg, label)
+            for st, lg, label in INJURY_SPORTS
+        ]
+        all_injuries_nested = await asyncio.gather(*tasks, return_exceptions=True)
+
+        all_injuries: List[dict] = []
+        for label, result in zip([s[2] for s in INJURY_SPORTS], all_injuries_nested):
+            if isinstance(result, Exception):
+                pass
+            else:
+                all_injuries.extend(result)
+
+        print(f"[InjuryScrape] TOTAL injuries to upsert: {len(all_injuries)}")
+        if not all_injuries:
+            logger.warning("No injuries found for any supported sport.")
             return 0
-        return 0
+
+        # Wrap in a SAVEPOINT so a upsert failure cannot poison the outer session.
+        # Without this, any exception here raises InFailedSQLTransactionError on
+        # every subsequent query in the same request (e.g. games_results SELECT).
+        try:
+            async with self.session.begin_nested():   # ← SAVEPOINT
+                await upsert_injuries(self.session, all_injuries)
+        except Exception as e:
+            logger.error(
+                f"Failed to upsert injuries (savepoint rolled back, session intact): {e}",
+                exc_info=True,
+            )
+            print(f"[InjuryScrape] DB upsert ERROR: {e}")
+            # Session outer transaction is still alive — only the savepoint was rolled back
+            return 0
+
+        return len(all_injuries)
 
     async def _update_weather(self) -> int:
         return 0

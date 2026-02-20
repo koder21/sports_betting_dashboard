@@ -22,6 +22,40 @@ class BetVerifier:
         self.games = GameRepository(session)
         self.stats = PlayerStatRepository(session)
 
+    async def _verify_single_bet(self, bet: Bet) -> Optional[Dict[str, Any]]:
+        """Verify a single bet and return discrepancy if found."""
+        expected_status = await self._calculate_expected_status(bet)
+        profit = None
+        if expected_status == "won":
+            profit = bet.stake * (bet.odds - 1)
+        elif expected_status == "lost":
+            profit = -bet.stake
+
+        discrepancy = None
+        if expected_status != bet.status or (profit is not None and bet.profit != profit):
+            # Update bet in DB
+            bet.status = expected_status
+            bet.profit = profit
+            bet.graded_at = datetime.utcnow()
+            await self.session.flush()
+            discrepancy = {
+                "type": "single",
+                "bet_id": bet.id,
+                "selection": bet.selection,
+                "current_status": bet.status,
+                "expected_status": expected_status,
+                "current_profit": bet.profit,
+                "stake": bet.stake,
+                "odds": bet.odds,
+                "reason": await self._get_verification_reason(bet, expected_status),
+            }
+        return discrepancy
+    def __init__(self, session: AsyncSession):
+        self.session = session
+        self.bets = BetRepository(session)
+        self.games = GameRepository(session)
+        self.stats = PlayerStatRepository(session)
+
     async def verify_all_graded_bets(self) -> Dict[str, Any]:
         """
         Re-check all graded bets (won/lost) against actual game/player data.
@@ -68,12 +102,23 @@ class BetVerifier:
         legs = result.scalars().all()
         if not legs:
             return None
-            if expected_status == "won":
-                # Always use decimal odds for backend calculations
-                # Profit = (stake * odds) - stake
-                profit = (bet.stake * bet.odds) - bet.stake
+
+        expected_statuses = []
+        leg_verifications = []
+        for leg in legs:
+            expected_status = await self._calculate_expected_status(leg)
             expected_statuses.append(expected_status)
             if expected_status and expected_status != leg.status:
+                # Correct the leg status and profit
+                leg.status = expected_status
+                if expected_status == "won":
+                    leg.profit = (leg.stake * (leg.odds - 1))
+                elif expected_status == "lost":
+                    leg.profit = -leg.stake
+                else:
+                    leg.profit = 0
+                leg.graded_at = datetime.utcnow()
+                await self.session.flush()
                 leg_verifications.append({
                     "bet_id": leg.id,
                     "selection": leg.selection,

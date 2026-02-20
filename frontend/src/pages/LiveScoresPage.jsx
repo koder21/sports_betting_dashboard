@@ -1,10 +1,12 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { convertToUserTimezone } from "../services/timezoneService";
 
 function LiveScoresPage() {
+    // Sport filter state
+    const [sportFilter, setSportFilter] = useState("ALL");
+    const SPORT_OPTIONS = ["ALL", "NBA", "NFL", "MLB", "NHL", "NCAAB", "NCAAF", "SOCCER"];
   const [games, setGames] = useState([]);
   const [upcomingGames, setUpcomingGames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -124,7 +126,7 @@ function LiveScoresPage() {
     return teamMomentum[teamId].momentum_status;
   };
 
-  const SPORT_ORDER = ["NFL", "NBA", "NCAAF", "NHL", "NCAAB", "SOCCER"];
+  const SPORT_ORDER = ["NFL", "NBA", "NCAAF", "NHL", "NCAAB", "MLB", "SOCCER"];
 
   // Separate live games with active bets (sticky at top)
 
@@ -199,127 +201,131 @@ function LiveScoresPage() {
   // Render a table for a list of games
   const renderGamesTable = (gamesList, title) => {
     if (!gamesList || gamesList.length === 0) return null;
+    // Filter by sport
+    let filteredGames = gamesList;
+    if (sportFilter !== "ALL") {
+      filteredGames = filteredGames.filter(g => (g.sport || "").toUpperCase() === sportFilter);
+    }
     return (
       <div className="games-section">
         <h2 className="section-title">{title}</h2>
-        <div>
-          {groupGamesBySport(gamesList) &&
-            Object.entries(groupGamesBySport(gamesList)).map(([sport, sportGames]) => (
-              <div className="sport-table-container" key={sport}>
-                <h3 className="sport-subtitle">{sport}</h3>
-                <table className="table live-table">
-                  <thead>
-                    <tr>
-                      <th>Matchup</th>
-                      <th>Bets</th>
-                      {title === "✅ Finished Games" && <th>Score</th>}
-                      {title !== "✅ Finished Games" && title !== "📅 Upcoming Games" && <th>Score</th>}
-                      {title !== "✅ Finished Games" && title !== "📅 Upcoming Games" && <th>Clock</th>}
-                      {title !== "✅ Finished Games" && title !== "📅 Upcoming Games" && <th>Period</th>}
-                      {title === "📅 Upcoming Games" && <th>Start Time</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sportGames.map((g) => {
-                      const pendingInfo = pendingBetsByGame[g.game_id];
-                      const selections = pendingInfo?.selections || [];
-                      const players = pendingInfo?.players || [];
-                      const finished = pendingInfo?.finished || [];
-                      const hasHomeBet = teamMatchesSelection(g.home_team, selections);
-                      const hasAwayBet = teamMatchesSelection(g.away_team, selections);
-                      const hasPlayerBet = players.length > 0;
-                      const homeMomentum = getMomentumStatus(g.home_team_id);
-                      const awayMomentum = getMomentumStatus(g.away_team_id);
-                      // Bets column content
-                      let betsContent = null;
-                      if (hasHomeBet || hasAwayBet || hasPlayerBet || finished.length > 0) {
-                        betsContent = (
-                          <div className="bet-badges">
-                            {hasHomeBet && <span className="bet-badge home">Home</span>}
-                            {hasAwayBet && <span className="bet-badge away">Away</span>}
-                            {hasPlayerBet && (
-                              <span className="bet-badge player" title={players.join(", ")}>Player ({players.length})</span>
-                            )}
-                            {finished.length > 0 && (
-                              <>
-                                {finished.map((result, idx) => (
-                                  <span
-                                    key={idx}
-                                    className={`bet-badge ${result === "W" ? "win" : "loss"}`}
-                                  >
-                                    {result}
-                                  </span>
-                                ))}
-                              </>
-                            )}
+        <div className="filter-row">
+          <label className="filter-label">Sport:</label>
+          <select className="filter-select" value={sportFilter} onChange={e => setSportFilter(e.target.value)}>
+            {SPORT_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+          </select>
+        </div>
+        <div className="sport-table-container">
+          <table className="table live-table modern-table">
+            <thead>
+              <tr>
+                <th>Matchup</th>
+                <th>Bets</th>
+                {title === "✅ Finished Games" && <th>Score</th>}
+                {title !== "✅ Finished Games" && title !== "📅 Upcoming Games" && <th>Score</th>}
+                {title !== "✅ Finished Games" && title !== "📅 Upcoming Games" && <th>Clock</th>}
+                {title !== "✅ Finished Games" && title !== "📅 Upcoming Games" && <th>Period</th>}
+                {title === "📅 Upcoming Games" && <th>Start Time</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredGames.map((g) => {
+                const pendingInfo = pendingBetsByGame[g.game_id];
+                const selections = pendingInfo?.selections || [];
+                const players = pendingInfo?.players || [];
+                const finished = pendingInfo?.finished || [];
+                const hasHomeBet = teamMatchesSelection(g.home_team, selections);
+                const hasAwayBet = teamMatchesSelection(g.away_team, selections);
+                const hasPlayerBet = players.length > 0;
+                const homeMomentum = getMomentumStatus(g.home_team_id);
+                const awayMomentum = getMomentumStatus(g.away_team_id);
+                let betsContent = null;
+                if (hasHomeBet || hasAwayBet || hasPlayerBet || finished.length > 0) {
+                  betsContent = (
+                    <div className="bet-badges">
+                      {hasHomeBet && <span className="bet-badge home">Home</span>}
+                      {hasAwayBet && <span className="bet-badge away">Away</span>}
+                      {hasPlayerBet && (
+                        <span className="bet-badge player" title={players.join(", ")}>Player ({players.length})</span>
+                      )}
+                      {finished.length > 0 && (
+                        <>
+                          {finished.map((result, idx) => (
+                            <span
+                              key={idx}
+                              className={`bet-badge ${result === "W" ? "win" : "loss"}`}
+                            >
+                              {result}
+                            </span>
+                          ))}
+                        </>
+                      )}
+                    </div>
+                  );
+                } else {
+                  betsContent = <span className="bet-badge none">None</span>;
+                }
+                return (
+                  <tr
+                    key={g.game_id}
+                    className={`game-row ${getStatusClass(g.status)}`}
+                    onClick={() => navigate(`/games/${g.game_id}/details`)}
+                  >
+                    <td>
+                      <div className="matchup-container">
+                        <span className="team-name">
+                          {g.home_logo && <img src={g.home_logo} className="team-logo" alt="" />}
+                          {g.home_team}
+                          {homeMomentum === "FIRE" && <span className="momentum-badge fire">🔥 FIRE</span>}
+                          {homeMomentum === "FREEZING" && <span className="momentum-badge freezing">🧊 FREEZING</span>}
+                        </span>
+                        <span className="vs-text"> vs </span>
+                        <span className="team-name">
+                          {g.away_logo && <img src={g.away_logo} className="team-logo" alt="" />}
+                          {g.away_team}
+                          {awayMomentum === "FIRE" && <span className="momentum-badge fire">🔥 FIRE</span>}
+                          {awayMomentum === "FREEZING" && <span className="momentum-badge freezing">🧊 FREEZING</span>}
+                        </span>
+                      </div>
+                    </td>
+                    <td>{betsContent}</td>
+                    {title === "✅ Finished Games" && (
+                      <td>
+                        <span className={g.homeScoreChanged ? "score flash" : "score"}>{g.home_score}</span>
+                        {" - "}
+                        <span className={g.awayScoreChanged ? "score flash" : "score"}>{g.away_score}</span>
+                      </td>
+                    )}
+                    {title !== "✅ Finished Games" && title !== "📅 Upcoming Games" && (
+                      <td>
+                        <span className={g.homeScoreChanged ? "score flash" : "score"}>{g.home_score}</span>
+                        {" - "}
+                        <span className={g.awayScoreChanged ? "score flash" : "score"}>{g.away_score}</span>
+                      </td>
+                    )}
+                    {title !== "✅ Finished Games" && title !== "📅 Upcoming Games" && (
+                      <>
+                        <td>{g.clock || "-"}</td>
+                        <td>{g.period || "-"}</td>
+                      </>
+                    )}
+                    {title === "📅 Upcoming Games" && (
+                      <td>
+                        {g.start_time ? (
+                          <div className="game-time-stack">
+                            <span className="game-date">{convertToUserTimezone(g.start_time, "date")}</span>
+                            <span className="game-time">{convertToUserTimezone(g.start_time, "time-with-tz")}</span>
                           </div>
-                        );
-                      } else {
-                        betsContent = <span className="bet-badge none">None</span>;
-                      }
-                      return (
-                        <tr
-                          key={g.game_id}
-                          className={`game-row ${getStatusClass(g.status)}`}
-                          onClick={() => navigate(`/games/${g.game_id}/details`)}
-                        >
-                          <td>
-                            <div className="matchup-container">
-                              <span className="team-name">
-                                {g.home_logo && <img src={g.home_logo} className="team-logo" alt="" />}
-                                {g.home_team}
-                                {homeMomentum === "FIRE" && <span className="momentum-badge fire">🔥 FIRE</span>}
-                                {homeMomentum === "FREEZING" && <span className="momentum-badge freezing">🧊 FREEZING</span>}
-                              </span>
-                              <span className="vs-text"> vs </span>
-                              <span className="team-name">
-                                {g.away_logo && <img src={g.away_logo} className="team-logo" alt="" />}
-                                {g.away_team}
-                                {awayMomentum === "FIRE" && <span className="momentum-badge fire">🔥 FIRE</span>}
-                                {awayMomentum === "FREEZING" && <span className="momentum-badge freezing">🧊 FREEZING</span>}
-                              </span>
-                            </div>
-                          </td>
-                          <td>{betsContent}</td>
-                          {title === "✅ Finished Games" && (
-                            <td>
-                              <span className={g.homeScoreChanged ? "score flash" : "score"}>{g.home_score}</span>
-                              {" - "}
-                              <span className={g.awayScoreChanged ? "score flash" : "score"}>{g.away_score}</span>
-                            </td>
-                          )}
-                          {title !== "✅ Finished Games" && title !== "📅 Upcoming Games" && (
-                            <td>
-                              <span className={g.homeScoreChanged ? "score flash" : "score"}>{g.home_score}</span>
-                              {" - "}
-                              <span className={g.awayScoreChanged ? "score flash" : "score"}>{g.away_score}</span>
-                            </td>
-                          )}
-                          {title !== "✅ Finished Games" && title !== "📅 Upcoming Games" && (
-                            <>
-                              <td>{g.clock || "-"}</td>
-                              <td>{g.period || "-"}</td>
-                            </>
-                          )}
-                          {title === "📅 Upcoming Games" && (
-                            <td>
-                              {g.start_time ? (
-                                <div className="game-time-stack">
-                                  <span className="game-date">{convertToUserTimezone(g.start_time, "date")}</span>
-                                  <span className="game-time">{convertToUserTimezone(g.start_time, "time-with-tz")}</span>
-                                </div>
-                              ) : (
-                                "-"
-                              )}
-                            </td>
-                          )}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            ))}
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
     );

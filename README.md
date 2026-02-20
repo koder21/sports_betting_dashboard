@@ -1,3 +1,20 @@
+## 🔑 Environment Variables (Recommended)
+
+To securely configure your PostgreSQL database credentials, set these environment variables in your shell profile (e.g., ~/.zshrc or ~/.bash_profile):
+
+```
+export POSTGRES_DB="sports_intel"
+export POSTGRES_USER="sbd"
+export POSTGRES_PASSWORD="sbddb"
+export POSTGRES_HOST="localhost"
+export POSTGRES_PORT="5432"
+```
+
+After editing your profile, run:
+```
+source ~/.zshrc
+```
+or restart your terminal. This ensures all scripts and services use your credentials securely.
 # Sports Betting Dashboard
 
 A full-stack sports betting intelligence platform with AI-powered recommendations, real-time live scores, and advanced analytics.

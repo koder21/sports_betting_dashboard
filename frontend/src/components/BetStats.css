@@ -49,16 +49,10 @@
 .stat-value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1f2937;
+  color: #fff;
 }
 
-.stat-win .stat-value {
-  color: #16a34a;
-}
-
-.stat-loss .stat-value {
-  color: #dc2626;
-}
+/* Remove color overrides for stat-value in win/loss/neutral */
 
 /* Dark Mode */
 @media (prefers-color-scheme: dark) {
@@ -89,16 +83,9 @@
   }
 
   .stat-value {
-    color: #e0e0e0;
+    color: #fff;
   }
-
-  .stat-win .stat-value {
-    color: #22c55e;
-  }
-
-  .stat-loss .stat-value {
-    color: #ef4444;
-  }
+  /* Remove color overrides for stat-value in win/loss/neutral */
 
   .stat-item:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
