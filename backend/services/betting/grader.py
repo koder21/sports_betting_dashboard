@@ -51,12 +51,6 @@ class BetGrader:
             if not game or not self._is_final_status(game.status):
                 game_result = await self._get_game_result(bet.game_id)
                 if not game_result or not self._is_final_status(game_result.status):
-                    logger.debug(
-                        "[Grader] Skipping bet %s: game not final. Game status=%s, GameResult status=%s",
-                        bet.id,
-                        game.status if game else "none",
-                        game_result.status if game_result else "none",
-                    )
                     return None
 
             stat = await self.stats.get_for_player_game(bet.player_id, bet.game_id)
@@ -131,12 +125,6 @@ class BetGrader:
             if not game or not self._is_final_status(game.status):
                 game_result = await self._get_game_result(bet.game_id)
                 if not game_result or not self._is_final_status(game_result.status):
-                    logger.debug(
-                        "[Grader] Skipping bet %s: game not final. Game status=%s, GameResult status=%s",
-                        bet.id,
-                        game.status if game else "none",
-                        game_result.status if game_result else "none",
-                    )
                     return None
                 
                 if game and game_result:

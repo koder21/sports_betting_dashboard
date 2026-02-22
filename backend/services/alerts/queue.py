@@ -134,7 +134,7 @@ class AlertQueue:
             acknowledged=False,
         )
         
-        await repo.add(alert)
+        repo.add(alert)
         await session.commit()
     
     async def stop_worker(self) -> None:

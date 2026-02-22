@@ -87,12 +87,29 @@ export const computeGroupPnlAndStake = (groupBets) => {
   }
 
   if (isParlay) {
-    // For parlays, use original_stake from first bet
-    stake = groupBets[0].original_stake || 
+    // Total stake = first leg's original_stake (which equals the full parlay wager)
+    // Fall back to summing stakes if original_stake not set
+    stake = groupBets[0].original_stake ||
             groupBets.reduce((sum, b) => sum + (b.stake || 0), 0) || 0;
-    
+
     if (status === 'won') {
-      pnl = calcParlayProfit(stake, groupBets[0].parlay_odds || 0);
+      // parlay_odds is the combined decimal multiplier (e.g. 1.5291 × 1.6494 = 2.5217)
+      // profit = stake × parlay_odds − stake
+      const parlayOdds = groupBets[0].parlay_odds;
+      if (parlayOdds && parlayOdds > 1) {
+        pnl = stake * (parlayOdds - 1);
+      } else {
+        // parlay_odds missing - fall back to multiplying individual leg odds
+        const combinedOdds = groupBets.reduce((product, b) => {
+          const legOdds = b.odds || 0;
+          // handle decimal odds (1.01-20 range) vs american
+          if (legOdds >= 1.01 && legOdds < 100) return product * legOdds;
+          if (legOdds > 0) return product * ((legOdds / 100) + 1);
+          if (legOdds < 0) return product * ((100 / Math.abs(legOdds)) + 1);
+          return product;
+        }, 1.0);
+        pnl = stake * (combinedOdds - 1);
+      }
     } else if (status === 'lost') {
       pnl = -stake;
     }

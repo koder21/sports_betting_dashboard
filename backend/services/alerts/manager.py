@@ -25,7 +25,13 @@ class AlertManager:
             try:
                 meta_str = json.dumps(metadata)
             except Exception:
-                meta_str = str(metadata)
+                meta_str = "{}"  # fallback to empty JSON
+        elif isinstance(metadata, str):
+            # Validate if string is valid JSON
+            try:
+                json.loads(metadata)
+            except Exception:
+                meta_str = "{}"  # fallback to empty JSON
         if self.session and self.alerts:
             alert = Alert(
                 created_at=datetime.utcnow(),
@@ -40,8 +46,8 @@ class AlertManager:
             return
 
         self.queue.enqueue(severity, category, message, meta_str)
-        # Always return an awaitable so callers can safely await this method
-        await asyncio.sleep(0)
+        # Explicitly return None for queued alerts
+        return None
 
     async def list_unacknowledged(self) -> List[Dict[str, Any]]:
         if self.session and self.alerts:
@@ -52,17 +58,25 @@ class AlertManager:
                 items = await repo.list_unacknowledged()
         else:
             items = []
-        return [
-            {
+        import json
+        result = []
+        for a in items:
+            meta = a.meta
+            meta_dict = {}
+            if meta:
+                try:
+                    meta_dict = json.loads(meta)
+                except Exception:
+                    meta_dict = {}
+            result.append({
                 "id": a.id,
                 "created_at": a.created_at.isoformat(),
                 "severity": a.severity,
                 "category": a.category,
                 "message": a.message,
-                "metadata": a.meta,
-            }
-            for a in items
-        ]
+                "metadata": meta_dict,
+            })
+        return result
 
     async def acknowledge(self, alert_id: int) -> None:
         if self.session and self.alerts:

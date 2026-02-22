@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
@@ -134,7 +135,6 @@ async def _build_ai_context(
 ) -> Dict[str, object]:
     now_utc = datetime.utcnow().replace(microsecond=0)
     next_24h_utc = now_utc + timedelta(hours=24)
-    logger.info(f"[AI] Filtering upcoming games: now_utc={now_utc}, next_24h_utc={next_24h_utc}")
     now_pst = datetime.now(pst_tz)
     today_pst = now_pst.date()
     yesterday_pst = today_pst - timedelta(days=1)
@@ -182,8 +182,6 @@ async def _build_ai_context(
     game_lookup: Dict[str, Game] = {}
 
     if game_ids_to_lookup:
-        import asyncio
-
         upcoming_result, game_result = await asyncio.gather(
             session.execute(
                 select(GameUpcoming).where(
@@ -255,15 +253,12 @@ async def _build_ai_context(
     upcoming: List[GameLive] = []
     for game_live, start_time in all_live_games_rows:
         if not start_time:
-            logger.info(f"[AI] Skipping game {getattr(game_live, 'game_id', None)}: no start_time")
             continue
         start_time_naive = start_time.replace(microsecond=0)
         if not (now_utc <= start_time_naive < next_24h_utc):
-            logger.info(f"[AI] Skipping game {getattr(game_live, 'game_id', None)}: start_time {start_time_naive} not in window {now_utc} - {next_24h_utc}")
             continue
         # Include all games in window, regardless of status
         upcoming.append(game_live)
-        logger.info(f"[AI] Including upcoming game {getattr(game_live, 'game_id', None)}: start_time {start_time_naive}, status {getattr(game_live, 'status', None)}")
 
     # ===== Build game/team mapping for injuries =====
     game_id_list = [g.game_id for g in upcoming if g.game_id]
@@ -492,12 +487,13 @@ async def _build_ai_context(
                 or game.away_team_name
                 or "Away"
             )
-            home_team_id = meta.get("home_team_id") or team_id_by_name.get(
-                home_name
-            )
-            away_team_id = meta.get("away_team_id") or team_id_by_name.get(
-                away_name
-            )
+            home_team_id = meta.get("home_team_id") or team_id_by_name.get(home_name)
+            away_team_id = meta.get("away_team_id") or team_id_by_name.get(away_name)
+            # Patch: Ensure home_team_id and away_team_id fallback to game object if missing
+            if not home_team_id:
+                home_team_id = getattr(game, "home_team_id", None)
+            if not away_team_id:
+                away_team_id = getattr(game, "away_team_id", None)
 
             home_key = home_team_id
             away_key = away_team_id

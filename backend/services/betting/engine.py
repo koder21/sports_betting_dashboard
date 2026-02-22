@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 from typing import Optional, Dict, Any, List, Sequence
 import json
@@ -94,6 +95,8 @@ class BettingEngine:
             parlay_groups[parlay_name].append(bet_data)
         
         # Second pass: create bets with divided stakes for parlays
+        # Batch bet creation
+        bet_objects = []
         for parlay_name, group_bets in parlay_groups.items():
             parlay_id = str(uuid.uuid4())
             parlay_ids[parlay_name] = parlay_id
@@ -107,11 +110,14 @@ class BettingEngine:
                             "status": "error",
                             "message": f"Parlay '{parlay_name}' cannot be placed: original_stake missing for at least one leg. All parlay legs must have original_stake set."
                         }
+            # For parlays, original_stake = total wager; stake = per-leg share
+            parlay_total_stake = group_bets[0].get("stake", 100) if is_parlay else None
             for bet_data in group_bets:
-                original_stake = bet_data.get("stake", 100)
                 if is_parlay:
+                    original_stake = parlay_total_stake
                     stake = original_stake / len(group_bets)
                 else:
+                    original_stake = bet_data.get("stake", 100)
                     stake = original_stake
                 odds = bet_data.get("odds", -110)
                 parlay_legs.setdefault(parlay_name, []).append(odds)
@@ -133,7 +139,7 @@ class BettingEngine:
                     reason=bet_data.get("reason"),
                     status="pending",
                 )
-                await self.bets.add(bet)
+                bet_objects.append(bet)
                 created_bets.append({
                     "id": bet.id,
                     "selection": bet.selection,
@@ -142,18 +148,16 @@ class BettingEngine:
                     "game_id": bet.game_id,
                     "parlay_id": bet.parlay_id
                 })
-
+        # Bulk add bets
+        await self.bets.bulk_add(bet_objects)
         await self.session.commit()
-        
-        # Calculate and update parlay odds
+        # Update parlay odds sequentially - concurrent updates on the same session
+        # cause silent commit failures leaving parlay_odds null in the DB
         for parlay_name, leg_odds in parlay_legs.items():
             if len(leg_odds) > 1:  # Only calculate for actual parlays
                 parlay_odds = self._calculate_parlay_odds(leg_odds)
                 parlay_id = parlay_ids[parlay_name]
-                
-                # Update all bets in this parlay with the calculated odds
                 await self.bets.update_parlay_odds(parlay_id, parlay_odds)
-
         await self.session.commit()
 
         return {
@@ -299,43 +303,74 @@ class BettingEngine:
             "ncaaf": ("football", "college-football"),
             "soccer": ("soccer", "usa.1"), # MLS, update as needed
         }
-        for bet in pending:
-            if bet.game_id:
+        # Batch and async ESPN scraping with persistent Redis cache
+        import aioredis
+        redis = await aioredis.from_url("redis://localhost")
+        game_id_to_bet = {bet.game_id: bet for bet in pending if bet.game_id}
+        game_id_to_game = {}
+        for game_id in game_id_to_bet:
+            game = await self.games.get(game_id)
+            game_id_to_game[game_id] = game
+        # Build all URLs
+        game_id_to_url = {}
+        for game_id, game in game_id_to_game.items():
+            sport_key = (getattr(game, 'league', None) or getattr(game, 'sport', None) or '').lower()
+            sport, league = espn_sports.get(sport_key, ("basketball", "nba"))
+            url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/summary?event={game_id}"
+            game_id_to_url[game_id] = url
+        async def fetch(game_id, url):
+            cache_key = f"espn_game_{game_id}"
+            cached = await redis.get(cache_key)
+            if cached:
                 try:
-                    game = await self.games.get(bet.game_id)
-                    sport_key = (getattr(game, 'league', None) or getattr(game, 'sport', None) or '').lower()
-                    sport, league = espn_sports.get(sport_key, ("basketball", "nba"))
-                    url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/summary?event={bet.game_id}"
-                    data = await espn_client.get_json(url)
-                    if data and ("boxscore" in data or "competitions" in data or "header" in data):
-                        competitions = data.get("competitions") or data.get("header", {}).get("competitions")
-                        if competitions:
-                            comp = competitions[0]
-                            home = next((t for t in comp.get("competitors", []) if t.get("homeAway") == "home"), None)
-                            away = next((t for t in comp.get("competitors", []) if t.get("homeAway") == "away"), None)
-                            if home and away:
-                                try:
-                                    home_score = int(home.get("score", 0))
-                                    away_score = int(away.get("score", 0))
-                                except Exception:
-                                    home_score = home.get("score", 0)
-                                    away_score = away.get("score", 0)
-                                # Update GameResult if scores differ
-                                result = await self.session.execute(select(GameResult).where(GameResult.game_id == bet.game_id))
-                                game_result = result.scalar_one_or_none()
-                                if game_result:
-                                    if game_result.home_score != home_score or game_result.away_score != away_score:
-                                        game_result.home_score = home_score
-                                        game_result.away_score = away_score
-                                        await self.session.flush()
+                    return game_id, json.loads(cached)
                 except Exception:
                     pass
+            try:
+                data = await espn_client.get_json(url)
+                await redis.set(cache_key, json.dumps(data), ex=3600)  # 1 hour expiry
+                return game_id, data
+            except Exception:
+                await redis.set(cache_key, json.dumps(None), ex=600)
+                return game_id, None
+        scrape_tasks = [fetch(game_id, url) for game_id, url in game_id_to_url.items()]
+        scrape_results = await asyncio.gather(*scrape_tasks)
+        game_id_to_data = {gid: data for gid, data in scrape_results}
+        # Cache and update results
+        for game_id, data in game_id_to_data.items():
+            if not data:
+                continue
+            competitions = data.get("competitions") or data.get("header", {}).get("competitions")
+            if competitions:
+                comp = competitions[0]
+                home = next((t for t in comp.get("competitors", []) if t.get("homeAway") == "home"), None)
+                away = next((t for t in comp.get("competitors", []) if t.get("homeAway") == "away"), None)
+                if home and away:
+                    try:
+                        home_score = int(home.get("score", 0))
+                        away_score = int(away.get("score", 0))
+                    except Exception:
+                        home_score = home.get("score", 0)
+                        away_score = away.get("score", 0)
+                    # Update GameResult if scores differ
+                    result = await self.session.execute(select(GameResult).where(GameResult.game_id == game_id))
+                    game_result = result.scalar_one_or_none()
+                    if game_result:
+                        if game_result.home_score != home_score or game_result.away_score != away_score:
+                            game_result.home_score = home_score
+                            game_result.away_score = away_score
+                            await self.session.flush()
 
-        # Grade individual legs
-        for bet in pending:
+        # Grade individual legs concurrently
+        async def grade_leg(bet):
             graded = await self.grader.grade(bet)
             if graded:
                 await self.session.flush()
+            return bet, graded
+        grade_tasks = [grade_leg(bet) for bet in pending]
+        grade_results = await asyncio.gather(*grade_tasks)
+        for bet, graded in grade_results:
+            if graded:
                 results.append(graded)
                 # Track parlay legs for profit recalculation
                 if bet.parlay_id:
@@ -345,48 +380,53 @@ class BettingEngine:
                     parlays_touched.add(bet.parlay_id)
 
         # Recalculate parlay profits based on all legs
+        # Bulk parlay profit updates
+        parlay_updates = []
         for parlay_id, legs in parlays_to_check.items():
-            # Skip if not all legs are graded
             if any(leg.status == "pending" for leg in legs):
                 continue
-            # Check if all legs won
             all_won = all(leg.status == "won" for leg in legs)
-            # Get original stake and parlay odds from first leg
             original_stake = legs[0].original_stake
-            parlay_odds = legs[0].parlay_odds or legs[0].odds
+            # Use stored parlay_odds if available; otherwise multiply individual leg odds
+            parlay_odds = legs[0].parlay_odds
+            if not parlay_odds or parlay_odds <= 1:
+                parlay_odds = 1.0
+                for leg in legs:
+                    lo = leg.odds or 0
+                    if lo >= 1.01 and lo < 100:
+                        parlay_odds *= lo
+                    elif lo > 0:
+                        parlay_odds *= (lo / 100) + 1
+                    elif lo < 0:
+                        parlay_odds *= (100 / abs(lo)) + 1
             if all_won:
-                # Always use decimal odds for parlay win profit
                 total_profit = (original_stake * parlay_odds) - original_stake
                 profit_per_leg = total_profit / len(legs)
                 for leg in legs:
                     leg.profit = profit_per_leg
-                await self.session.flush()
             else:
-                # Parlay lost - all legs lose their stake
                 stake_per_leg = original_stake / len(legs)
                 for leg in legs:
                     leg.profit = -stake_per_leg
-                await self.session.flush()
+            parlay_updates.extend(legs)
+        if parlay_updates:
+            self.session.add_all(parlay_updates)
 
         alerts = AlertManager(session=self.session)
 
-        # Alerts for single bets
-        for bet in pending:
+        # Async alerts for single bets
+        async def create_single_alert(bet):
             if bet.parlay_id:
-                continue
+                return
             if bet.status not in ("won", "lost"):
-                continue
-
+                return
             message = await self._build_single_alert_message(bet)
             severity = "info" if bet.status == "won" else "warning"
-            
-            # Get game info for context
             game_info = None
             if bet.game_id:
                 game = await self.games.get(bet.game_id)
                 if game:
                     game_info = f"{game.home_team_name} vs {game.away_team_name}"
-            
             metadata = json.dumps({
                 "bet_id": bet.id,
                 "status": bet.status,
@@ -404,47 +444,51 @@ class BettingEngine:
                 message=message,
                 metadata=metadata,
             )
+        alert_tasks = [create_single_alert(bet) for bet in pending]
+        await asyncio.gather(*alert_tasks)
 
-        # Alerts for parlays (only when all legs are graded)
-        for parlay_id in parlays_touched:
-            legs = await self._get_parlay_legs(parlay_id)
-            if not legs:
-                continue
-            if any(leg.status == "pending" for leg in legs):
-                continue
-
-            if all(leg.status == "won" for leg in legs):
-                parlay_status = "won"
-            elif any(leg.status == "lost" for leg in legs):
-                parlay_status = "lost"
-            else:
-                continue
-
-            message = await self._build_parlay_alert_message(parlay_id, legs, parlay_status)
-            severity = "info" if parlay_status == "won" else "warning"
-            
-            # Calculate total profit for the parlay
-            total_profit = sum(leg.profit for leg in legs if leg.profit)
-            
-            is_single = len(legs) == 1
-            metadata = json.dumps({
-                "parlay_id": parlay_id,
-                "status": parlay_status,
-                "leg_count": len(legs),
-                "selection": "Single Bet" if is_single else f"{len(legs)}-Leg Parlay",
-                "odds": legs[0].parlay_odds if legs else 0,
-                "stake": (legs[0].stake if is_single else legs[0].original_stake) if legs else 0,
-                "profit": total_profit,
-                "bet_type": "single" if is_single else "parlay",
-                "sport": legs[0].sport.name if legs and legs[0].sport else None,
-                "legs": [{"selection": leg.selection, "status": leg.status} for leg in legs],
-            })
-            await alerts.create(
-                severity=severity,
-                category="bet_graded",
-                message=message,
-                metadata=metadata,
-            )
+        # Bulk fetch all parlay legs
+        if parlays_touched:
+            stmt = select(self.bets.model).where(self.bets.model.parlay_id.in_(list(parlays_touched)))
+            result = await self.session.execute(stmt)
+            all_legs = result.scalars().all()
+            parlay_legs_map = {}
+            for leg in all_legs:
+                parlay_legs_map.setdefault(leg.parlay_id, []).append(leg)
+            for parlay_id in parlays_touched:
+                legs = parlay_legs_map.get(parlay_id, [])
+                if not legs:
+                    continue
+                if any(leg.status == "pending" for leg in legs):
+                    continue
+                if all(leg.status == "won" for leg in legs):
+                    parlay_status = "won"
+                elif any(leg.status == "lost" for leg in legs):
+                    parlay_status = "lost"
+                else:
+                    continue
+                message = await self._build_parlay_alert_message(parlay_id, legs, parlay_status)
+                severity = "info" if parlay_status == "won" else "warning"
+                total_profit = sum(leg.profit for leg in legs if leg.profit)
+                is_single = len(legs) == 1
+                metadata = json.dumps({
+                    "parlay_id": parlay_id,
+                    "status": parlay_status,
+                    "leg_count": len(legs),
+                    "selection": "Single Bet" if is_single else f"{len(legs)}-Leg Parlay",
+                    "odds": legs[0].parlay_odds if legs else 0,
+                    "stake": (legs[0].stake if is_single else legs[0].original_stake) if legs else 0,
+                    "profit": total_profit,
+                    "bet_type": "single" if is_single else "parlay",
+                    "sport": legs[0].sport.name if legs and legs[0].sport else None,
+                    "legs": [{"selection": leg.selection, "status": leg.status} for leg in legs],
+                })
+                await alerts.create(
+                    severity=severity,
+                    category="bet_graded",
+                    message=message,
+                    metadata=metadata,
+                )
 
         # Clean up ESPN client
         await self.grader.close()

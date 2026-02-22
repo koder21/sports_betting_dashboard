@@ -22,6 +22,10 @@ class GameLive(Base):
     home_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     away_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
+    # Logo fields for frontend display
+    home_logo: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    away_logo: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
     clock: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     period: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     possession: Mapped[Optional[str]] = mapped_column(String, nullable=True)

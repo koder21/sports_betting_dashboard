@@ -242,7 +242,10 @@ class FreshDataScraper:
                     start_dt   = _strip_tz(_parse_dt(event.get("date", "")))
 
                     # Teams  — use sport_name (the column), NOT sport (the relationship)
-                    for tid, tname in [(home_id, home_name), (away_id, away_name)]:
+                    for comp in [home, away]:
+                        tid = str(comp["team"].get("id", ""))
+                        tname = comp["team"].get("displayName", "")
+                        logo_url = comp["team"].get("logo", "")
                         if tid:
                             self._team_ids.append((tid, tname, sport_name))
                             teams[tid] = {
@@ -250,6 +253,7 @@ class FreshDataScraper:
                                 "espn_id":    tid,
                                 "name":       tname,
                                 "sport_name": sport_name,
+                                "logo":       logo_url,
                             }
 
                     # Core Game row — only columns that exist on the model
@@ -380,12 +384,17 @@ class FreshDataScraper:
 
     async def _upsert_teams(self, rows: List[dict]) -> None:
         from sqlalchemy.dialects.postgresql import insert as pg_insert
+        if not rows:
+            return
         stmt = pg_insert(Team).values(rows)
         stmt = stmt.on_conflict_do_update(
             index_elements=["team_id"],
-            set_={"name": stmt.excluded.name,
-                  "sport_name": stmt.excluded.sport_name,
-                  "espn_id": stmt.excluded.espn_id},
+            set_={
+                "name": stmt.excluded.name,
+                "sport_name": stmt.excluded.sport_name,
+                "espn_id": stmt.excluded.espn_id,
+                "logo": stmt.excluded.logo,
+            },
         )
         await self.session.execute(stmt)
         await self.session.flush()
@@ -410,6 +419,23 @@ class FreshDataScraper:
 
     async def _upsert_upcoming(self, rows: List[dict]) -> None:
         from sqlalchemy.dialects.postgresql import insert as pg_insert
+        if not rows:
+            return
+        # Fetch all team logos in parallel
+        home_ids = [r["home_team_id"] for r in rows if r.get("home_team_id")]
+        away_ids = [r["away_team_id"] for r in rows if r.get("away_team_id")]
+        team_ids = set(home_ids + away_ids)
+        from backend.models.team import Team
+        logos = {}
+        if team_ids:
+            q = await self.session.execute(
+                Team.__table__.select().where(Team.team_id.in_(list(team_ids)))
+            )
+            for t in q.fetchall():
+                logos[t.team_id] = t.logo
+        for r in rows:
+            r["home_logo"] = logos.get(r.get("home_team_id"), "")
+            r["away_logo"] = logos.get(r.get("away_team_id"), "")
         stmt = pg_insert(GameUpcoming).values(rows)
         stmt = stmt.on_conflict_do_update(
             index_elements=["game_id"],
@@ -422,12 +448,30 @@ class FreshDataScraper:
                 "start_time":     stmt.excluded.start_time,
                 "status":         stmt.excluded.status,
                 "scraped_at":     stmt.excluded.scraped_at,
+                "home_logo":      stmt.excluded.home_logo,
+                "away_logo":      stmt.excluded.away_logo,
             },
         )
         await self.session.execute(stmt)
 
     async def _upsert_live(self, rows: List[dict]) -> None:
         from sqlalchemy.dialects.postgresql import insert as pg_insert
+        if not rows:
+            return
+        home_ids = [r["home_team_id"] for r in rows if r.get("home_team_id")]
+        away_ids = [r["away_team_id"] for r in rows if r.get("away_team_id")]
+        team_ids = set(home_ids + away_ids)
+        from backend.models.team import Team
+        logos = {}
+        if team_ids:
+            q = await self.session.execute(
+                Team.__table__.select().where(Team.team_id.in_(list(team_ids)))
+            )
+            for t in q.fetchall():
+                logos[t.team_id] = t.logo
+        for r in rows:
+            r["home_logo"] = logos.get(r.get("home_team_id"), "")
+            r["away_logo"] = logos.get(r.get("away_team_id"), "")
         stmt = pg_insert(GameLive).values(rows)
         stmt = stmt.on_conflict_do_update(
             index_elements=["game_id"],
@@ -438,6 +482,8 @@ class FreshDataScraper:
                 "away_score":     stmt.excluded.away_score,
                 "updated_at":     stmt.excluded.updated_at,
                 "sport":          stmt.excluded.sport,
+                "home_logo":      stmt.excluded.home_logo,
+                "away_logo":      stmt.excluded.away_logo,
             },
         )
         await self.session.execute(stmt)

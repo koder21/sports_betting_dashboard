@@ -219,6 +219,7 @@ function LiveScoresPage() {
           <table className="table live-table modern-table">
             <thead>
               <tr>
+                <th>Sport</th>
                 <th>Matchup</th>
                 <th>Bets</th>
                 {title === "✅ Finished Games" && <th>Score</th>}
@@ -237,6 +238,14 @@ function LiveScoresPage() {
                 const hasHomeBet = teamMatchesSelection(g.home_team, selections);
                 const hasAwayBet = teamMatchesSelection(g.away_team, selections);
                 const hasPlayerBet = players.length > 0;
+                // LOG game object and possible keys
+                console.log('Game object:', g);
+                console.log('home_team_id:', g.home_team_id);
+                console.log('away_team_id:', g.away_team_id);
+                console.log('sport:', g.sport);
+                // LOG momentum lookup keys
+                console.log('Momentum lookup home:', g.home_team_id);
+                console.log('Momentum lookup away:', g.away_team_id);
                 const homeMomentum = getMomentumStatus(g.home_team_id);
                 const awayMomentum = getMomentumStatus(g.away_team_id);
                 let betsContent = null;
@@ -271,20 +280,21 @@ function LiveScoresPage() {
                     className={`game-row ${getStatusClass(g.status)}`}
                     onClick={() => navigate(`/games/${g.game_id}/details`)}
                   >
+                    <td>{g.sport || "OTHER"}</td>
                     <td>
                       <div className="matchup-container">
                         <span className="team-name">
                           {g.home_logo && <img src={g.home_logo} className="team-logo" alt="" />}
                           {g.home_team}
-                          {homeMomentum === "FIRE" && <span className="momentum-badge fire">🔥 FIRE</span>}
-                          {homeMomentum === "FREEZING" && <span className="momentum-badge freezing">🧊 FREEZING</span>}
+                          {homeMomentum === "FIRE" && <span className="momentum-badge fire">🔥</span>}
+                          {homeMomentum === "FREEZING" && <span className="momentum-badge freezing">🧊</span>}
                         </span>
                         <span className="vs-text"> vs </span>
                         <span className="team-name">
                           {g.away_logo && <img src={g.away_logo} className="team-logo" alt="" />}
                           {g.away_team}
-                          {awayMomentum === "FIRE" && <span className="momentum-badge fire">🔥 FIRE</span>}
-                          {awayMomentum === "FREEZING" && <span className="momentum-badge freezing">🧊 FREEZING</span>}
+                          {awayMomentum === "FIRE" && <span className="momentum-badge fire">🔥</span>}
+                          {awayMomentum === "FREEZING" && <span className="momentum-badge freezing">🧊</span>}
                         </span>
                       </div>
                     </td>
@@ -363,6 +373,14 @@ function LiveScoresPage() {
                 const hasHomeBet = teamMatchesSelection(g.home_team, selections);
                 const hasAwayBet = teamMatchesSelection(g.away_team, selections);
                 const hasPlayerBet = players.length > 0;
+                // LOG game object and possible keys
+                console.log('Game object:', g);
+                console.log('home_team_id:', g.home_team_id);
+                console.log('away_team_id:', g.away_team_id);
+                console.log('sport:', g.sport);
+                // LOG momentum lookup keys
+                console.log('Momentum lookup home:', g.home_team_id);
+                console.log('Momentum lookup away:', g.away_team_id);
                 const homeMomentum = getMomentumStatus(g.home_team_id);
                 const awayMomentum = getMomentumStatus(g.away_team_id);
                 return (
@@ -376,15 +394,15 @@ function LiveScoresPage() {
                             <span className="team-name">
                               {g.home_logo && <img src={g.home_logo} className="team-logo" alt="" />}
                               {g.home_team}
-                              {homeMomentum === "FIRE" && <span className="momentum-badge fire">🔥 FIRE</span>}
-                              {homeMomentum === "FREEZING" && <span className="momentum-badge freezing">🧊 FREEZING</span>}
+                              {homeMomentum === "FIRE" && <span className="momentum-badge fire">🔥</span>}
+                              {homeMomentum === "FREEZING" && <span className="momentum-badge freezing">🧊</span>}
                             </span>
                             <span className="vs-text"> vs </span>
                             <span className="team-name">
                               {g.away_logo && <img src={g.away_logo} className="team-logo" alt="" />}
                               {g.away_team}
-                              {awayMomentum === "FIRE" && <span className="momentum-badge fire">🔥 FIRE</span>}
-                              {awayMomentum === "FREEZING" && <span className="momentum-badge freezing">🧊 FREEZING</span>}
+                              {awayMomentum === "FIRE" && <span className="momentum-badge fire">🔥</span>}
+                              {awayMomentum === "FREEZING" && <span className="momentum-badge freezing">🧊</span>}
                             </span>
                           </div>
                         </td>

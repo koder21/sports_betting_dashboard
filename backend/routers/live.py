@@ -35,6 +35,8 @@ async def get_upcoming_games(session: AsyncSession = Depends(get_db)):
                 "away_score": getattr(game, 'away_score', 0) or 0,
                 "home_team": getattr(game, 'home_team_name', None) or getattr(game, 'home_team', None) or "Home Team",
                 "away_team": getattr(game, 'away_team_name', None) or getattr(game, 'away_team', None) or "Away Team",
+                "home_team_id": getattr(game, 'home_team_id', None),
+                "away_team_id": getattr(game, 'away_team_id', None),
                 "status": getattr(game, 'status', 'scheduled'),
                 "sport": (getattr(game, 'sport', None) or "Unknown").upper(),
             }
@@ -146,12 +148,32 @@ async def _get_live_scores(session: AsyncSession):
                 parsed_start = start_time
         if parsed_start and parsed_start > now and status != "completed":
             continue
+        # Fetch team IDs from core Game record if available
+        core_game = game_records.get(game.game_id)
+        home_team_id = None
+        away_team_id = None
+        if core_game:
+                home_team_id = getattr(core_game, 'home_team_id', None)
+                away_team_id = getattr(core_game, 'away_team_id', None)
+                # Patch: prepend sport prefix for all teams to match analytics
+                sport = getattr(core_game, 'sport', None)
+                if sport:
+                    sport_prefix = sport.upper()
+                    for prefix in ['NBA', 'NFL', 'NHL', 'NCAAB', 'NCAAF', 'MLB', 'EPL']:
+                        if sport_prefix == prefix:
+                            if home_team_id and not str(home_team_id).startswith(f'{prefix}-'):
+                                home_team_id = f'{prefix}-{home_team_id}'
+                            if away_team_id and not str(away_team_id).startswith(f'{prefix}-'):
+                                away_team_id = f'{prefix}-{away_team_id}'
+                            break
         game_dict = {
             "game_id": game.game_id,
             "home_score": game.home_score or 0,
             "away_score": game.away_score or 0,
             "home_team": game.home_team_name or "Home Team",
             "away_team": game.away_team_name or "Away Team",
+            "home_team_id": home_team_id,
+            "away_team_id": away_team_id,
             "status": status,
             "sport": (game.sport or "Unknown").upper(),
         }

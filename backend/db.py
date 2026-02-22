@@ -43,16 +43,17 @@ async def init_db() -> None:
     """Initialize database by creating all tables."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    # Ensure MLB is present in the sports table
+    # Ensure MLB and EPL are present in the sports table
     async with AsyncSessionLocal() as session:
         from .models.sport import Sport
         from sqlalchemy.dialects.postgresql import insert
-        stmt = insert(Sport).values(
-            name="MLB",
-            espn_league_code="mlb",
-            league="MLB"
-        ).on_conflict_do_nothing(index_elements=["name"])
-        await session.execute(stmt)
+        sports_to_insert = [
+            {"name": "MLB", "espn_league_code": "mlb", "league": "MLB"},
+            {"name": "EPL", "espn_league_code": "epl", "league": "EPL"},
+        ]
+        for sport in sports_to_insert:
+            stmt = insert(Sport).values(**sport).on_conflict_do_nothing(index_elements=["name"])
+            await session.execute(stmt)
         await session.commit()
 
 

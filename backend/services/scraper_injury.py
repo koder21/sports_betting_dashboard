@@ -36,6 +36,8 @@ async def upsert_injuries(session: AsyncSession, injuries: List[Dict[str, Any]])
             sport_prefix = sport
         team_id = f"{sport_prefix}_{team_id_raw}" if team_id_raw else None
         description = injury.get("description") or injury.get("detail") or ""
+        if len(description) > 512:
+            description = description[:512]
         status = injury.get("status") or injury.get("type") or ""
         last_updated_raw = injury.get("lastUpdated") or injury.get("dateUpdated")
         if isinstance(last_updated_raw, str) and last_updated_raw:
@@ -72,10 +74,26 @@ async def upsert_injuries(session: AsyncSession, injuries: List[Dict[str, Any]])
             if row["team_id"] not in seen_team_ids:
                 seen_team_ids.add(row["team_id"])
                 unique_team_rows.append(row)
-        team_stmt = pg_insert(Team).values(unique_team_rows)
-        team_stmt = team_stmt.on_conflict_do_nothing(index_elements=["team_id"])
-        await session.execute(team_stmt)
-    await session.flush()
+        TEAM_BATCH_SIZE = 100
+        for i in range(0, len(unique_team_rows), TEAM_BATCH_SIZE):
+            batch = unique_team_rows[i:i+TEAM_BATCH_SIZE]
+            try:
+                team_stmt = pg_insert(Team).values(batch)
+                team_stmt = team_stmt.on_conflict_do_nothing(index_elements=["team_id"])
+                await session.execute(team_stmt)
+            except Exception as e:
+                # If batch fails, try inserting teams one by one
+                failed_team_ids = []
+                for row in batch:
+                    try:
+                        team_stmt = pg_insert(Team).values([row])
+                        team_stmt = team_stmt.on_conflict_do_nothing(index_elements=["team_id"])
+                        await session.execute(team_stmt)
+                    except Exception as inner_e:
+                        failed_team_ids.append(row["team_id"])
+                if failed_team_ids:
+                    print(f"[InjuryUpsert] Failed to insert teams: {failed_team_ids} (error: {e})")
+        await session.flush()
     # Upsert players (stub rows to satisfy FK; deduplicate by player_id)
     if player_rows:
         from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -89,17 +107,22 @@ async def upsert_injuries(session: AsyncSession, injuries: List[Dict[str, Any]])
         player_stmt = player_stmt.on_conflict_do_nothing(index_elements=["player_id"])
         await session.execute(player_stmt)
     await session.flush()
-    # Upsert injuries in batches
-    BATCH_SIZE = 500
-    for i in range(0, len(injury_rows), BATCH_SIZE):
-        batch = injury_rows[i:i+BATCH_SIZE]
-        for injury in batch:
-            stmt = insert(Injury).values(**injury).on_conflict_do_update(
-                index_elements=["player_id", "team_id", "description"],
-                set_={
-                    "status": injury["status"],
-                    "last_updated": injury["last_updated"],
-                }
+    # Upsert injuries using bulk executemany - one round trip per 250 rows
+    # instead of 1244 individual INSERT round trips that cause statement timeouts
+    if injury_rows:
+        from sqlalchemy import text
+        BATCH_SIZE = 250
+        for i in range(0, len(injury_rows), BATCH_SIZE):
+            batch = injury_rows[i:i + BATCH_SIZE]
+            await session.execute(
+                text("""
+                    INSERT INTO injuries (player_id, team_id, description, status, last_updated)
+                    VALUES (:player_id, :team_id, :description, :status, :last_updated)
+                    ON CONFLICT (player_id, team_id, description)
+                    DO UPDATE SET
+                        status = EXCLUDED.status,
+                        last_updated = EXCLUDED.last_updated
+                """),
+                batch,
             )
-            await session.execute(stmt)
         await session.flush()

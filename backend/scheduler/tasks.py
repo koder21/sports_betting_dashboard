@@ -1,4 +1,5 @@
 import asyncio
+import asyncio
 import logging
 import sys
 from datetime import datetime, timezone
@@ -135,6 +136,7 @@ class Scheduler:
             try:
                 await scraper.scrape()
             except Exception as e:
+                # Only await if AlertManager.create is actually async (session provided)
                 await self.alerts.create(
                     severity="error",
                     category="scraper",
@@ -151,13 +153,12 @@ class Scheduler:
                 fresh_scraper = FreshDataScraper(session)
                 try:
                     # OPTIMIZATION: Run fresh scraper operations concurrently (3x speedup)
+                    # Run sequentially - these share a session and cannot run concurrently
                     logger.info("Fetching today's games...")
-                    games_count, injuries_count, weather_count = await asyncio.gather(
-                        fresh_scraper._scrape_todays_games(),
-                        fresh_scraper._scrape_injuries(),
-                        fresh_scraper._update_weather(),
-                        return_exceptions=False
-                    )
+                    games_count = await fresh_scraper._scrape_todays_games()
+                    injuries_count = await fresh_scraper._scrape_injuries()
+                    await fresh_scraper.session.commit()  # commit after injuries
+                    weather_count = await fresh_scraper._update_weather()
                     
                     logger.info(f"Scrape complete: {games_count} games, {injuries_count} injuries, {weather_count} weather forecasts")
                 finally:
@@ -207,13 +208,14 @@ class Scheduler:
                         continue
                     sport_type, league = sport_league_map[sport_upper]
                     try:
-                        await stats_scraper._scrape_game_boxscore(session, game.game_id, sport_type, league, sport_upper)
-                        await session.commit()
+                        # Use a fresh session per game to avoid greenlet/async context errors
+                        async with self.session_factory() as stats_session:
+                            await stats_scraper._scrape_game_boxscore(stats_session, game.game_id, sport_type, league, sport_upper)
+                            await stats_session.commit()
                     except Exception as scrape_e:
                         import traceback
                         tb_scrape = traceback.format_exc()
                         logger.error(f"Auto-scraper failed for game {game.game_id}: {scrape_e}\n{tb_scrape}")
-                        await session.rollback()
                         continue
         except Exception as e:
             import traceback
@@ -337,22 +339,27 @@ class Scheduler:
                             # Queue alert if game just went live
                             if is_now_live:
                                 import json
-                                await self.alerts.create(
-                                    severity="info",
-                                    category="game_live",
-                                    message=f"{away_team_name} @ {home_team_name} is now LIVE",
-                                    metadata=json.dumps({
-                                        "game_id": game_id,
-                                        "home_team_name": home_team_name,
-                                        "away_team_name": away_team_name,
-                                        "home_score": home_score,
-                                        "away_score": away_score,
-                                        "sport": sport_name,
-                                        "status": status_detail,
-                                        "period": period,
-                                        "clock": clock
-                                    })
-                                )
+                                try:
+                                    coro = self.alerts.create(
+                                        severity="info",
+                                        category="game_live",
+                                        message=f"{away_team_name} @ {home_team_name} is now LIVE",
+                                        metadata=json.dumps({
+                                            "game_id": game_id,
+                                            "home_team_name": home_team_name,
+                                            "away_team_name": away_team_name,
+                                            "home_score": home_score,
+                                            "away_score": away_score,
+                                            "sport": sport_name,
+                                            "status": status_detail,
+                                            "period": period,
+                                            "clock": clock
+                                        })
+                                    )
+                                    if asyncio.iscoroutine(coro):
+                                        await coro
+                                except Exception as alert_err:
+                                    logger.warning(f"[Alert] Failed to create live-game alert: {alert_err}")
                         
                         # Parse start_time to datetime if it's a string
                         parsed_start_time = start_time
@@ -393,6 +400,7 @@ class Scheduler:
             
         except Exception as e:
             print(f"Live games update failed: {e}")
+            # asyncio is already imported globally
             await self.alerts.create(
                 severity="error",
                 category="scraper",
@@ -779,6 +787,7 @@ class Scheduler:
                             await client.close()
         except Exception as e:
             logger.error(f"[Backfill] Error during backfill: {e}", exc_info=True)
+            # asyncio is already imported globally
             await self.alerts.create(
                 severity="warning",
                 category="backfill",

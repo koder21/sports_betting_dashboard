@@ -1,3 +1,6 @@
+html {
+  background: #18181b !important;
+}
 :root {
   --bg: #05060a;
   --bg-alt: #0b0d14;
