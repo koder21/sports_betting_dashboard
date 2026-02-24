@@ -3,20 +3,11 @@ import asyncio
 import logging
 import sys
 from datetime import datetime, timezone
-
-from ..models.team import Team
-from ..models.games_results import GameResult
-from ..models.game import Game
-from ..models.games_live import GameLive
-from ..models.games_upcoming import GameUpcoming
-
-from sqlalchemy import text, select, update, or_
-from sqlalchemy.orm import selectinload
-
+from dateutil import parser
+from sqlalchemy import text
 from ..services.unified_sport_scraper import NBAScraper, MLBScraper, NHLScraper, NFLScraper, NCAABScraper, NCAAFScraper
 from ..services.scraper_stats import PlayerStatsScraper
 from ..services.espn_client import ESPNClient
-from ..services.betting.engine import BettingEngine
 from ..services.alerts.manager import AlertManager
 from ..services.aai.fresh_data_scraper import FreshDataScraper
 from .write_queue import DatabaseWriteQueue
@@ -364,7 +355,6 @@ class Scheduler:
                         # Parse start_time to datetime if it's a string
                         parsed_start_time = start_time
                         if isinstance(start_time, str):
-                            from dateutil import parser
                             try:
                                 parsed_start_time = parser.isoparse(start_time)
                             except Exception:
