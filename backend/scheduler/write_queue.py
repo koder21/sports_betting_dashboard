@@ -1,6 +1,6 @@
 """Database write queue to prevent locking conflicts from concurrent writes"""
 import asyncio
-from typing import Callable, Any, Optional
+from typing import Callable, Optional
 from dataclasses import dataclass
 
 
@@ -10,7 +10,7 @@ class WriteTask:
     name: str  # Task name for logging
     operation: Callable  # async callable that performs the write
     args: tuple = ()
-    kwargs: dict = None
+    kwargs: Optional[dict] = None
     
     def __post_init__(self):
         if self.kwargs is None:
@@ -19,7 +19,7 @@ class WriteTask:
 
 class DatabaseWriteQueue:
     """
-    Serializes all database writes to prevent SQLite locking conflicts.
+    Serializes all database writes to prevent postgresql locking conflicts.
     Only one write operation runs at a time, preventing "database is locked" errors.
     """
     
@@ -56,10 +56,7 @@ class DatabaseWriteQueue:
                 
                 try:
                     # Execute the write operation
-                    if asyncio.iscoroutinefunction(task.operation):
-                        result = await task.operation(*task.args, **task.kwargs)
-                    else:
-                        result = task.operation(*task.args, **task.kwargs)
+                    await task.operation(*task.args, **task.kwargs)
                     
                     # Log successful completion (queued size for debugging)
                     queue_size = self.queue.qsize()
