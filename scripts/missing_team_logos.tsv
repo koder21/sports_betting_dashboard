@@ -1,0 +1,1130 @@
+   team_id    |                     name                     | sport_name 
+--------------+----------------------------------------------+------------
+ NBA-26       | Utah Jazz                                    | NBA
+ NBA-27       | Washington Wizards                           | NBA
+ NCAAB-44     | American University Eagles                   | NCAAB
+ NCAAB-9      | Arizona State Sun Devils                     | NCAAB
+ NCAAB-12     | Arizona Wildcats                             | NCAAB
+ NCAAB-8      | Arkansas Razorbacks                          | NCAAB
+ NCAAB-2      | Auburn Tigers                                | NCAAB
+ NCAAB-91     | Bellarmine Knights                           | NCAAB
+ NCAAB-68     | Boise State Broncos                          | NCAAB
+ NCAAB-103    | Boston College Eagles                        | NCAAB
+ NCAAB-104    | Boston University Terriers                   | NCAAB
+ NCAAB-189    | Bowling Green Falcons                        | NCAAB
+ NCAAB-71     | Bradley Braves                               | NCAAB
+ NCAAB-13     | Cal Poly Mustangs                            | NCAAB
+ NCAAB-25     | California Golden Bears                      | NCAAB
+ NCAAB-38     | Colorado Buffaloes                           | NCAAB
+ NCAAB-36     | Colorado State Rams                          | NCAAB
+ NCAAB-171    | Columbia Lions                               | NCAAB
+ NCAAB-172    | Cornell Big Red                              | NCAAB
+ NCAAB-156    | Creighton Bluejays                           | NCAAB
+ NCAAB-159    | Dartmouth Big Green                          | NCAAB
+ NCAAB-48     | Delaware Blue Hens                           | NCAAB
+ NCAAB-150    | Duke Blue Devils                             | NCAAB
+ NCAAB-151    | East Carolina Pirates                        | NCAAB
+ NCAAB-161    | Fairleigh Dickinson Knights                  | NCAAB
+ NCAAB-50     | Florida A&M Rattlers                         | NCAAB
+ NCAAB-57     | Florida Gators                               | NCAAB
+ NCAAB-52     | Florida State Seminoles                      | NCAAB
+ NCAAB-45     | George Washington Revolutionaries            | NCAAB
+ NCAAB-46     | Georgetown Hoyas                             | NCAAB
+ NCAAB-61     | Georgia Bulldogs                             | NCAAB
+ NCAAB-59     | Georgia Tech Yellow Jackets                  | NCAAB
+ NCAAB-108    | Harvard Crimson                              | NCAAB
+ NCAAB-62     | Hawai'i Rainbow Warriors                     | NCAAB
+ NCAAB-107    | Holy Cross Crusaders                         | NCAAB
+ NCAAB-47     | Howard Bison                                 | NCAAB
+ NCAAB-85     | IU Indianapolis Jaguars                      | NCAAB
+ NCAAB-70     | Idaho Vandals                                | NCAAB
+ NCAAB-84     | Indiana Hoosiers                             | NCAAB
+ NCAAB-66     | Iowa State Cyclones                          | NCAAB
+ NCAAB-55     | Jacksonville State Gamecocks                 | NCAAB
+ NCAAB-140    | Kansas City Roos                             | NCAAB
+ NCAAB-96     | Kentucky Wildcats                            | NCAAB
+ NCAAB-99     | LSU Tigers                                   | NCAAB
+ NCAAB-97     | Louisville Cardinals                         | NCAAB
+ NCAAB-120    | Maryland Terrapins                           | NCAAB
+ NCAAB-113    | Massachusetts Minutemen                      | NCAAB
+ NCAAB-193    | Miami (OH) RedHawks                          | NCAAB
+ NCAAB-127    | Michigan State Spartans                      | NCAAB
+ NCAAB-130    | Michigan Wolverines                          | NCAAB
+ NCAAB-135    | Minnesota Golden Gophers                     | NCAAB
+ NCAAB-142    | Missouri Tigers                              | NCAAB
+ NCAAB-149    | Montana Grizzlies                            | NCAAB
+ NCAAB-147    | Montana State Bobcats                        | NCAAB
+ NCAAB-116    | Mount St. Mary's Mountaineers                | NCAAB
+ NCAAB-93     | Murray State Racers                          | NCAAB
+ NCAAB-152    | NC State Wolfpack                            | NCAAB
+ NCAAB-158    | Nebraska Cornhuskers                         | NCAAB
+ NCAAB-160    | New Hampshire Wildcats                       | NCAAB
+ NCAAB-167    | New Mexico Lobos                             | NCAAB
+ NCAAB-166    | New Mexico State Aggies                      | NCAAB
+ NCAAB-153    | North Carolina Tar Heels                     | NCAAB
+ NCAAB-155    | North Dakota Fighting Hawks                  | NCAAB
+ NCAAB-111    | Northeastern Huskies                         | NCAAB
+ NCAAB-94     | Northern Kentucky Norse                      | NCAAB
+ NCAAB-77     | Northwestern Wildcats                        | NCAAB
+ NCAAB-87     | Notre Dame Fighting Irish                    | NCAAB
+ NCAAB-195    | Ohio Bobcats                                 | NCAAB
+ NCAAB-194    | Ohio State Buckeyes                          | NCAAB
+ NCAAB-201    | Oklahoma Sooners                             | NCAAB
+ NCAAB-197    | Oklahoma State Cowboys                       | NCAAB
+ NCAAB-145    | Ole Miss Rebels                              | NCAAB
+ NCAAB-198    | Oral Roberts Golden Eagles                   | NCAAB
+ NCAAB-204    | Oregon State Beavers                         | NCAAB
+ NCAAB-213    | Penn State Nittany Lions                     | NCAAB
+ NCAAB-219    | Pennsylvania Quakers                         | NCAAB
+ NCAAB-163    | Princeton Tigers                             | NCAAB
+ NCAAB-164    | Rutgers Scarlet Knights                      | NCAAB
+ NCAAB-16     | Sacramento State Hornets                     | NCAAB
+ NCAAB-139    | Saint Louis Billikens                        | NCAAB
+ NCAAB-21     | San Diego State Aztecs                       | NCAAB
+ NCAAB-23     | San José State Spartans                      | NCAAB
+ NCAAB-6      | South Alabama Jaguars                        | NCAAB
+ NCAAB-58     | South Florida Bulls                          | NCAAB
+ NCAAB-79     | Southern Illinois Salukis                    | NCAAB
+ NCAAB-179    | St. Bonaventure Bonnies                      | NCAAB
+ NCAAB-24     | Stanford Cardinal                            | NCAAB
+ NCAAB-56     | Stetson Hatters                              | NCAAB
+ NCAAB-183    | Syracuse Orange                              | NCAAB
+ NCAAB-218    | Temple Owls                                  | NCAAB
+ NCAAB-119    | Towson Tigers                                | NCAAB
+ NCAAB-202    | Tulsa Golden Hurricane                       | NCAAB
+ NCAAB-5      | UAB Blazers                                  | NCAAB
+ NCAAB-27     | UC Riverside Highlanders                     | NCAAB
+ NCAAB-28     | UC San Diego Tritons                         | NCAAB
+ NCAAB-26     | UCLA Bruins                                  | NCAAB
+ NCAAB-41     | UConn Huskies                                | NCAAB
+ NCAAB-82     | UIC Flames                                   | NCAAB
+ NCAAB-30     | USC Trojans                                  | NCAAB
+ NCAAB-154    | Wake Forest Demon Deacons                    | NCAAB
+ NCAAB-98     | Western Kentucky Hilltoppers                 | NCAAB
+ NCAAB-43     | Yale Bulldogs                                | NCAAB
+ NFL-22       | Arizona Cardinals                            | NFL
+ NFL-1        | Atlanta Falcons                              | NFL
+ NFL-33       | Baltimore Ravens                             | NFL
+ NFL-2        | Buffalo Bills                                | NFL
+ NFL-29       | Carolina Panthers                            | NFL
+ NFL-3        | Chicago Bears                                | NFL
+ NFL-4        | Cincinnati Bengals                           | NFL
+ NFL-5        | Cleveland Browns                             | NFL
+ NFL-6        | Dallas Cowboys                               | NFL
+ NFL-7        | Denver Broncos                               | NFL
+ NFL-8        | Detroit Lions                                | NFL
+ NFL-9        | Green Bay Packers                            | NFL
+ NFL-34       | Houston Texans                               | NFL
+ NFL-11       | Indianapolis Colts                           | NFL
+ NFL-30       | Jacksonville Jaguars                         | NFL
+ NFL-12       | Kansas City Chiefs                           | NFL
+ NFL-13       | Las Vegas Raiders                            | NFL
+ NFL-24       | Los Angeles Chargers                         | NFL
+ NFL-14       | Los Angeles Rams                             | NFL
+ NFL-15       | Miami Dolphins                               | NFL
+ NFL-16       | Minnesota Vikings                            | NFL
+ NFL-17       | New England Patriots                         | NFL
+ NFL-18       | New Orleans Saints                           | NFL
+ NFL-19       | New York Giants                              | NFL
+ NFL-20       | New York Jets                                | NFL
+ NFL-21       | Philadelphia Eagles                          | NFL
+ NFL-23       | Pittsburgh Steelers                          | NFL
+ NFL-25       | San Francisco 49ers                          | NFL
+ NFL-26       | Seattle Seahawks                             | NFL
+ NFL-27       | Tampa Bay Buccaneers                         | NFL
+ NFL-10       | Tennessee Titans                             | NFL
+ NFL-28       | Washington Commanders                        | NFL
+ NCAAF-7      | Amherst Mammoths                             | NCAAF
+ NCAAF-15     | Anna Maria College Amcats                    | NCAAF
+ NCAAF-9      | Arizona State Sun Devils                     | NCAAF
+ NCAAF-12     | Arizona Wildcats                             | NCAAF
+ NCAAF-8      | Arkansas Razorbacks                          | NCAAF
+ NCAAF-2      | Auburn Tigers                                | NCAAF
+ NCAAF-124    | Augsburg Auggies                             | NCAAF
+ NCAAF-121    | Bates Bobcats                                | NCAAF
+ NCAAF-132    | Bemidji State Beavers                        | NCAAF
+ NCAAF-68     | Boise State Broncos                          | NCAAF
+ NCAAF-103    | Boston College Eagles                        | NCAAF
+ NCAAF-18     | Bridgewater State Bears                      | NCAAF
+ NCAAF-63     | Buena Vista Beavers                          | NCAAF
+ NCAAF-13     | Cal Poly Mustangs                            | NCAAF
+ NCAAF-25     | California Golden Bears                      | NCAAF
+ NCAAF-32     | Carroll University (WI) Pioneers             | NCAAF
+ NCAAF-80     | Chicago Maroons                              | NCAAF
+ NCAAF-17     | Claremont-Mudd-Scripps College Stags/Athenas | NCAAF
+ NCAAF-33     | Colby College White Mules                    | NCAAF
+ NCAAF-38     | Colorado Buffaloes                           | NCAAF
+ NCAAF-11     | Colorado Mesa Mavericks                      | NCAAF
+ NCAAF-36     | Colorado State Rams                          | NCAAF
+ NCAAF-40     | Curry College Colonels                       | NCAAF
+ NCAAF-48     | Delaware Blue Hens                           | NCAAF
+ NCAAF-83     | Depauw Tigers                                | NCAAF
+ NCAAF-49     | Dubuque Spartans                             | NCAAF
+ NCAAF-150    | Duke Blue Devils                             | NCAAF
+ NCAAF-72     | Elmhurst Bluejays                            | NCAAF
+ NCAAF-101    | Eureka College Red Devils                    | NCAAF
+ NCAAF-114    | Fitchburg State Falcons                      | NCAAF
+ NCAAF-50     | Florida A&M Rattlers                         | NCAAF
+ NCAAF-57     | Florida Gators                               | NCAAF
+ NCAAF-52     | Florida State Seminoles                      | NCAAF
+ NCAAF-46     | Georgetown Hoyas                             | NCAAF
+ NCAAF-61     | Georgia Bulldogs                             | NCAAF
+ NCAAF-59     | Georgia Tech Yellow Jackets                  | NCAAF
+ NCAAF-125    | Grand Valley State University Lakers         | NCAAF
+ NCAAF-65     | Grinnell Pioneers                            | NCAAF
+ NCAAF-146    | Grove City College Wolverines                | NCAAF
+ NCAAF-108    | Harvard Crimson                              | NCAAF
+ NCAAF-62     | Hawai'i Rainbow Warriors                     | NCAAF
+ NCAAF-107    | Holy Cross Crusaders                         | NCAAF
+ NCAAF-47     | Howard Bison                                 | NCAAF
+ NCAAF-70     | Idaho Vandals                                | NCAAF
+ NCAAF-84     | Indiana Hoosiers                             | NCAAF
+ NCAAF-66     | Iowa State Cyclones                          | NCAAF
+ NCAAF-55     | Jacksonville State Gamecocks                 | NCAAF
+ NCAAF-118    | Johns Hopkins University Blue Jays           | NCAAF
+ NCAAF-126    | Kalamazoo Hornets                            | NCAAF
+ NCAAF-96     | Kentucky Wildcats                            | NCAAF
+ NCAAF-99     | LSU Tigers                                   | NCAAF
+ NCAAF-97     | Louisville Cardinals                         | NCAAF
+ NCAAF-67     | Luther Norse                                 | NCAAF
+ NCAAF-109    | MIT Engineers                                | NCAAF
+ NCAAF-120    | Maryland Terrapins                           | NCAAF
+ NCAAF-110    | Mass Maritime Buccaneers                     | NCAAF
+ NCAAF-113    | Massachusetts Minutemen                      | NCAAF
+ NCAAF-127    | Michigan State Spartans                      | NCAAF
+ NCAAF-130    | Michigan Wolverines                          | NCAAF
+ NCAAF-74     | Millikin Big Blue                            | NCAAF
+ NCAAF-134    | Minnesota Duluth Bulldogs                    | NCAAF
+ NCAAF-135    | Minnesota Golden Gophers                     | NCAAF
+ NCAAF-142    | Missouri Tigers                              | NCAAF
+ NCAAF-137    | Missouri Western Griffons                    | NCAAF
+ NCAAF-149    | Montana Grizzlies                            | NCAAF
+ NCAAF-147    | Montana State Bobcats                        | NCAAF
+ NCAAF-60     | Morehouse College Maroon Tigers              | NCAAF
+ NCAAF-93     | Murray State Racers                          | NCAAF
+ NCAAF-75     | North Park Vikings                           | NCAAF
+ NCAAF-128    | Northern Michigan Wildcats                   | NCAAF
+ NCAAF-138    | Northwest Missouri St Bearcats               | NCAAF
+ NCAAF-77     | Northwestern Wildcats                        | NCAAF
+ NCAAF-87     | Notre Dame Fighting Irish                    | NCAAF
+ NCAAF-145    | Ole Miss Rebels                              | NCAAF
+ NCAAF-95     | Pikeville Bears                              | NCAAF
+ NCAAF-90     | Pittsburg St Gorillas                        | NCAAF
+ NCAAF-29     | Redlands Bulldogs                            | NCAAF
+ NCAAF-86     | Rose-Hulman Fightin' Engineers               | NCAAF
+ NCAAF-16     | Sacramento State Hornets                     | NCAAF
+ NCAAF-129    | Saginaw Valley State Cardinals               | NCAAF
+ NCAAF-21     | San Diego State Aztecs                       | NCAAF
+ NCAAF-23     | San José State Spartans                      | NCAAF
+ NCAAF-6      | South Alabama Jaguars                        | NCAAF
+ NCAAF-58     | South Florida Bulls                          | NCAAF
+ NCAAF-79     | Southern Illinois Salukis                    | NCAAF
+ NCAAF-81     | Springfield Pride                            | NCAAF
+ NCAAF-133    | St. Olaf Oles                                | NCAAF
+ NCAAF-24     | Stanford Cardinal                            | NCAAF
+ NCAAF-56     | Stetson Hatters                              | NCAAF
+ NCAAF-119    | Towson Tigers                                | NCAAF
+ NCAAF-112    | Tufts Jumbos                                 | NCAAF
+ NCAAF-5      | UAB Blazers                                  | NCAAF
+ NCAAF-26     | UCLA Bruins                                  | NCAAF
+ NCAAF-41     | UConn Huskies                                | NCAAF
+ NCAAF-30     | USC Trojans                                  | NCAAF
+ NCAAF-89     | Wabash College Little Giants                 | NCAAF
+ NCAAF-143    | Washington University (St. Louis) Bears      | NCAAF
+ NCAAF-131    | Wayne State (MI) Warriors                    | NCAAF
+ NCAAF-98     | Western Kentucky Hilltoppers                 | NCAAF
+ NCAAF-43     | Yale Bulldogs                                | NCAAF
+ NHL-25       | Anaheim Ducks                                | NHL
+ NHL-1        | Boston Bruins                                | NHL
+ NHL-2        | Buffalo Sabres                               | NHL
+ NHL-3        | Calgary Flames                               | NHL
+ NHL-7        | Carolina Hurricanes                          | NHL
+ NHL-4        | Chicago Blackhawks                           | NHL
+ NHL-17       | Colorado Avalanche                           | NHL
+ NHL-29       | Columbus Blue Jackets                        | NHL
+ NHL-9        | Dallas Stars                                 | NHL
+ NHL-5        | Detroit Red Wings                            | NHL
+ NHL-6        | Edmonton Oilers                              | NHL
+ NHL-26       | Florida Panthers                             | NHL
+ NHL-8        | Los Angeles Kings                            | NHL
+ NHL-30       | Minnesota Wild                               | NHL
+ NHL-10       | Montreal Canadiens                           | NHL
+ NHL-27       | Nashville Predators                          | NHL
+ NHL-11       | New Jersey Devils                            | NHL
+ NHL-12       | New York Islanders                           | NHL
+ NHL-13       | New York Rangers                             | NHL
+ NHL-14       | Ottawa Senators                              | NHL
+ NHL-15       | Philadelphia Flyers                          | NHL
+ NHL-16       | Pittsburgh Penguins                          | NHL
+ NHL-18       | San Jose Sharks                              | NHL
+ NHL-124292   | Seattle Kraken                               | NHL
+ NHL-19       | St. Louis Blues                              | NHL
+ NHL-20       | Tampa Bay Lightning                          | NHL
+ NHL-21       | Toronto Maple Leafs                          | NHL
+ NHL-129764   | Utah Mammoth                                 | NHL
+ NHL-22       | Vancouver Canucks                            | NHL
+ NHL-37       | Vegas Golden Knights                         | NHL
+ NHL-23       | Washington Capitals                          | NHL
+ NHL-28       | Winnipeg Jets                                | NHL
+ EPL-349      | AFC Bournemouth                              | EPL
+ EPL-359      | Arsenal                                      | EPL
+ EPL-362      | Aston Villa                                  | EPL
+ EPL-337      | Brentford                                    | EPL
+ EPL-331      | Brighton & Hove Albion                       | EPL
+ EPL-379      | Burnley                                      | EPL
+ EPL-363      | Chelsea                                      | EPL
+ EPL-384      | Crystal Palace                               | EPL
+ EPL-368      | Everton                                      | EPL
+ EPL-370      | Fulham                                       | EPL
+ EPL-357      | Leeds United                                 | EPL
+ EPL-364      | Liverpool                                    | EPL
+ EPL-382      | Manchester City                              | EPL
+ EPL-360      | Manchester United                            | EPL
+ EPL-361      | Newcastle United                             | EPL
+ EPL-393      | Nottingham Forest                            | EPL
+ EPL-366      | Sunderland                                   | EPL
+ EPL-367      | Tottenham Hotspur                            | EPL
+ EPL-371      | West Ham United                              | EPL
+ EPL-380      | Wolverhampton Wanderers                      | EPL
+ NBA-99       | Test Team                                    | NBA
+ NCAAB-2272   | NCAAB Team 2272                              | NCAAB
+ SOCCER-380   | NBA Team 380                                 | SOCCER
+ NCAAB-2181   | NCAAB Team 2181                              | NCAAB
+ NBA-111136   | NBA Team 111136                              | NBA
+ NCAAF-2483   | NCAAF Team 2483                              | NCAAF
+ NCAAF-2132   | NCAAF Team 2132                              | NCAAF
+ NCAAF-194    | NCAAF Team 194                               | NCAAF
+ NCAAF-254    | NCAAF Team 254                               | NCAAF
+ NCAAF-356    | NCAAF Team 356                               | NCAAF
+ NCAAF-248    | NCAAF Team 248                               | NCAAF
+ NCAAB-2464   | NCAAB Team 2464                              | NCAAB
+ NCAAF-228    | NCAAF Team 228                               | NCAAF
+ NCAAB-350    | NCAAB Team 350                               | NCAAB
+ NCAAF-167    | NCAAF Team 167                               | NCAAF
+ NCAAF-2439   | NCAAF Team 2439                              | NCAAF
+ NCAAF-2655   | NCAAF Team 2655                              | NCAAF
+ NCAAF-235    | NCAAF Team 235                               | NCAAF
+ NCAAB-2413   | NCAAB Team 2413                              | NCAAB
+ NCAAF-309    | NCAAF Team 309                               | NCAAF
+ NCAAF-259    | NCAAF Team 259                               | NCAAF
+ NCAAF-197    | NCAAF Team 197                               | NCAAF
+ NCAAF-276    | NCAAF Team 276                               | NCAAF
+ NCAAB-2229   | NCAAB Team 2229                              | NCAAB
+ NCAAF-2433   | NCAAF Team 2433                              | NCAAF
+ 235          | Memphis Tigers                               | NCAAB
+ NCAAF-204    | NCAAF Team 204                               | NCAAF
+ NCAAF-2305   | NCAAF Team 2305                              | NCAAF
+ NBA_1        | Atlanta Hawks                                | 
+ NCAAB-309    | NCAAB Team 309                               | NCAAB
+ 259          | Virginia Tech Hokies                         | 
+ SOCCER-337   | Brentford                                    | SOCCER
+ 254          | Utah Utes                                    | 
+ NCAAB-2441   | NCAAB Team 2441                              | NCAAB
+ 2752         | Xavier Musketeers                            | 
+ NCAAF-218    | NCAAF Team 218                               | NCAAF
+ NCAAF-2382   | NCAAF Team 2382                              | NCAAF
+ NCAAF-322    | NCAAF Team 322                               | NCAAF
+ NBA_2        | Boston Celtics                               | 
+ NCAAF-2747   | NCAAF Team 2747                              | NCAAF
+ NBA_17       | Brooklyn Nets                                | 
+ NCAAF-2630   | NCAAF Team 2630                              | NCAAF
+ NCAAF-2277   | NCAAF Team 2277                              | NCAAF
+ NCAAF-257    | NCAAF Team 257                               | NCAAF
+ NCAAF-2771   | NCAAF Team 2771                              | NCAAF
+ NCAAB-259    | NBA Team 259                                 | NCAAB
+ 38           | Colorado Buffaloes                           | 
+ NCAAB-2752   | NBA Team 2752                                | NCAAB
+ NCAAB-2057   | NCAAB Team 2057                              | NCAAB
+ SOCCER-361   | NBA Team 361                                 | SOCCER
+ NBA-131570   | NBA Team 131570                              | NBA
+ NCAAF-2567   | NCAAF Team 2567                              | NCAAF
+ NCAAB-2182   | NCAAB Team 2182                              | NCAAB
+ NCAAB-2623   | NCAAB Team 2623                              | NCAAB
+ NCAAF-154    | NCAAF Team 154                               | NCAAF
+ NCAAF-251    | NCAAF Team 251                               | NCAAF
+ NCAAF-2628   | NCAAF Team 2628                              | NCAAF
+ NCAAF-290    | NCAAF Team 290                               | NCAAF
+ NCAAF-249    | NCAAF Team 249                               | NCAAF
+ NCAAF-349    | NCAAF Team 349                               | NCAAF
+ NCAAF-2229   | NCAAF Team 2229                              | NCAAF
+ NCAAF-195    | NCAAF Team 195                               | NCAAF
+ NCAAF-245    | NCAAF Team 245                               | NCAAF
+ NCAAF-152    | NCAAF Team 152                               | NCAAF
+ NCAAB-2066   | NCAAB Team 2066                              | NCAAB
+ NCAAF-2653   | NCAAF Team 2653                              | NCAAF
+ NCAAB-2127   | NCAAB Team 2127                              | NCAAB
+ NCAAF-2429   | NCAAF Team 2429                              | NCAAF
+ NCAAF-2226   | NCAAF Team 2226                              | NCAAF
+ NCAAF-2247   | NCAAF Team 2247                              | NCAAF
+ NCAAF-202    | NCAAF Team 202                               | NCAAF
+ NCAAB-2473   | NCAAB Team 2473                              | NCAAB
+ SOCCER-357   | Leeds United                                 | SOCCER
+ NCAAF-153    | NCAAF Team 153                               | NCAAF
+ SOCCER-382   | Manchester City                              | SOCCER
+ NCAAF-2084   | NCAAF Team 2084                              | NCAAF
+ NCAAF-189    | NCAAF Team 189                               | NCAAF
+ NCAAB-2086   | Butler Bulldogs                              | NCAAB
+ NCAAF-231    | NCAAF Team 231                               | NCAAF
+ NCAAB-282    | NCAAB Team 282                               | NCAAB
+ NCAAB-2458   | NCAAB Team 2458                              | NCAAB
+ NCAAF-2097   | NCAAF Team 2097                              | NCAAF
+ NCAAF-2569   | NCAAF Team 2569                              | NCAAF
+ NCAAB-2130   | NCAAB Team 2130                              | NCAAB
+ NCAAB-311    | NCAAB Team 311                               | NCAAB
+ NCAAF-311    | NCAAF Team 311                               | NCAAF
+ NCAAF-2729   | NCAAF Team 2729                              | NCAAF
+ NCAAF-2466   | NCAAF Team 2466                              | NCAAF
+ NCAAF-2198   | NCAAF Team 2198                              | NCAAF
+ NCAAF-2582   | NCAAF Team 2582                              | NCAAF
+ NCAAF-2755   | NCAAF Team 2755                              | NCAAF
+ NCAAF-2193   | NCAAF Team 2193                              | NCAAF
+ NCAAB-338    | NCAAB Team 338                               | NCAAB
+ NCAAF-2717   | NCAAF Team 2717                              | NCAAF
+ SOCCER-371   | SOCCER Team 371                              | SOCCER
+ NCAAF-2428   | NCAAF Team 2428                              | NCAAF
+ NCAAF-2127   | NCAAF Team 2127                              | NCAAF
+ NCAAB-2641   | Texas Tech Red Raiders                       | NCAAB
+ NCAAB-88     | NCAAB Team 88                                | NCAAB
+ NCAAF-331    | NCAAF Team 331                               | NCAAF
+ SOCCER-366   | SOCCER Team 366                              | SOCCER
+ NCAAF-233    | NCAAF Team 233                               | NCAAF
+ NCAAF-2523   | NCAAF Team 2523                              | NCAAF
+ NCAAB-249    | NCAAB Team 249                               | NCAAB
+ NCAAF-236    | NCAAF Team 236                               | NCAAF
+ NCAAF-2320   | NCAAF Team 2320                              | NCAAF
+ NCAAF-2210   | NCAAF Team 2210                              | NCAAF
+ NCAAB-2330   | NCAAB Team 2330                              | NCAAB
+ NCAAB-2885   | NBA Team 2885                                | NCAAB
+ NCAAB-2172   | NCAAB Team 2172                              | NCAAB
+ NCAAB-2344   | NCAAB Team 2344                              | NCAAB
+ NCAAB-2393   | NBA Team 2393                                | NCAAB
+ NCAAB-2771   | NCAAB Team 2771                              | NCAAB
+ NCAAB-2427   | NCAAB Team 2427                              | NCAAB
+ NCAAB-2174   | NBA Team 2174                                | NCAAB
+ NCAAB-112358 | NBA Team 112358                              | NCAAB
+ NCAAB-2275   | NBA Team 2275                                | NCAAB
+ NCAAB-2572   | NCAAB Team 2572                              | NCAAB
+ NCAAB-2247   | NBA Team 2247                                | NCAAB
+ NCAAB-324    | NBA Team 324                                 | NCAAB
+ NCAAB-2000   | NCAAB Team 2000                              | NCAAB
+ NCAAB-2630   | NBA Team 2630                                | NCAAB
+ NCAAB-2710   | NCAAB Team 2710                              | NCAAB
+ NCAAB-235    | NBA Team 235                                 | NCAAB
+ NCAAB-2634   | NBA Team 2634                                | NCAAB
+ NCAAB-2239   | NBA Team 2239                                | NCAAB
+ NCAAB-221    | NBA Team 221                                 | NCAAB
+ NCAAB-2390   | NBA Team 2390                                | NCAAB
+ NCAAB-252    | NBA Team 252                                 | NCAAB
+ NCAAB-245    | NBA Team 245                                 | NCAAB
+ NCAAB-2633   | NBA Team 2633                                | NCAAB
+ NCAAB-305    | NBA Team 305                                 | NCAAB
+ NCAAB-2608   | NBA Team 2608                                | NCAAB
+ MLB-19       | MLB Team 19                                  | MLB
+ NCAAB-2599   | St. John's Red Storm                         | NCAAB
+ NCAAB-2509   | NBA Team 2509                                | NCAAB
+ SOCCER-359   | NBA Team 359                                 | SOCCER
+ SOCCER-370   | NBA Team 370                                 | SOCCER
+ NCAAB-2934   | NCAAB Team 2934                              | NCAAB
+ NBA-126120   | NBA Team 126120                              | NBA
+ NCAAF-242    | NCAAF Team 242                               | NCAAF
+ NCAAF-344    | NCAAF Team 344                               | NCAAF
+ NCAAF-2294   | NCAAF Team 2294                              | NCAAF
+ NCAAF-324    | NCAAF Team 324                               | NCAAF
+ NCAAB-2287   | NCAAB Team 2287                              | NCAAB
+ NCAAF-2026   | NCAAF Team 2026                              | NCAAF
+ NCAAB-2349   | NCAAB Team 2349                              | NCAAB
+ NCAAB-2305   | Kansas Jayhawks                              | NCAAB
+ NCAAF-221    | NCAAF Team 221                               | NCAAF
+ NCAAF-193    | NCAAF Team 193                               | NCAAF
+ NCAAF-2636   | NCAAF Team 2636                              | NCAAF
+ NCAAF-265    | NCAAF Team 265                               | NCAAF
+ NCAAF-201    | NCAAF Team 201                               | NCAAF
+ NCAAF-2623   | NCAAF Team 2623                              | NCAAF
+ NCAAF-264    | NCAAF Team 264                               | NCAAF
+ SOCCER-362   | SOCCER Team 362                              | SOCCER
+ NCAAF-2579   | NCAAF Team 2579                              | NCAAF
+ NCAAF-2050   | NCAAF Team 2050                              | NCAAF
+ NCAAB-232    | NCAAB Team 232                               | NCAAB
+ NCAAF-183    | NCAAF Team 183                               | NCAAF
+ NCAAF-275    | NCAAF Team 275                               | NCAAF
+ NCAAF-2440   | NCAAF Team 2440                              | NCAAF
+ NCAAF-2309   | NCAAF Team 2309                              | NCAAF
+ NCAAF-2199   | NCAAF Team 2199                              | NCAAF
+ NCAAB-2750   | NCAAB Team 2750                              | NCAAB
+ NCAAF-2006   | NCAAF Team 2006                              | NCAAF
+ NCAAF-2815   | NCAAF Team 2815                              | NCAAF
+ NCAAF-2681   | NCAAF Team 2681                              | NCAAF
+ NCAAB-2739   | NCAAB Team 2739                              | NCAAB
+ NCAAB-299    | NCAAB Team 299                               | NCAAB
+ NCAAF-2377   | NCAAF Team 2377                              | NCAAF
+ NCAAF-160    | NCAAF Team 160                               | NCAAF
+ NCAAB-2437   | NCAAB Team 2437                              | NCAAB
+ NCAAF-2916   | NCAAF Team 2916                              | NCAAF
+ NCAAB-228    | Clemson Tigers                               | NCAAB
+ NCAAB-325    | NCAAB Team 325                               | NCAAB
+ NCAAF-2405   | NCAAF Team 2405                              | NCAAF
+ NCAAB-3101   | NCAAB Team 3101                              | NCAAB
+ NCAAF-2502   | NCAAF Team 2502                              | NCAAF
+ NCAAF-2046   | NCAAF Team 2046                              | NCAAF
+ NCAAB-256    | NCAAB Team 256                               | NCAAB
+ NCAAF-304    | NCAAF Team 304                               | NCAAF
+ NCAAF-2296   | NCAAF Team 2296                              | NCAAF
+ NCAAF-2448   | NCAAF Team 2448                              | NCAAF
+ NCAAF-2692   | NCAAF Team 2692                              | NCAAF
+ NCAAB-2908   | NCAAB Team 2908                              | NCAAB
+ NCAAF-2464   | NCAAF Team 2464                              | NCAAF
+ NCAAF-2029   | NCAAF Team 2029                              | NCAAF
+ NCAAB-253    | NCAAB Team 253                               | NCAAB
+ NCAAF-2115   | NCAAF Team 2115                              | NCAAF
+ NCAAF-399    | NCAAF Team 399                               | NCAAF
+ NCAAF-2627   | NCAAF Team 2627                              | NCAAF
+ NCAAF-2617   | NCAAF Team 2617                              | NCAAF
+ NCAAB-2815   | NCAAB Team 2815                              | NCAAB
+ NCAAB-2378   | NBA Team 2378                                | NCAAB
+ NCAAB-2674   | NBA Team 2674                                | NCAAB
+ NCAAB-2506   | NBA Team 2506                                | NCAAB
+ NCAAB-2870   | NBA Team 2870                                | NCAAB
+ SOCCER-393   | Nottingham Forest                            | SOCCER
+ NCAAB-2565   | NCAAB Team 2565                              | NCAAB
+ SOCCER-349   | AFC Bournemouth                              | SOCCER
+ NCAAB-2385   | NBA Team 2385                                | NCAAB
+ NCAAB-2539   | NCAAB Team 2539                              | NCAAB
+ NCAAB-2405   | NBA Team 2405                                | NCAAB
+ NCAAB-2635   | NBA Team 2635                                | NCAAB
+ NCAAB-2502   | NBA Team 2502                                | NCAAB
+ NCAAB-2856   | NBA Team 2856                                | NCAAB
+ NCAAB-2681   | NCAAB Team 2681                              | NCAAB
+ NCAAB-2571   | NBA Team 2571                                | NCAAB
+ NCAAB-3084   | NBA Team 3084                                | NCAAB
+ NCAAB-300    | NBA Team 300                                 | NCAAB
+ SOCCER-384   | Crystal Palace                               | SOCCER
+ NCAAB-2628   | NBA Team 2628                                | NCAAB
+ NCAAB-2241   | NCAAB Team 2241                              | NCAAB
+ NCAAB-265    | NBA Team 265                                 | NCAAB
+ NCAAB-239    | NBA Team 239                                 | NCAAB
+ NCAAB-2325   | NBA Team 2325                                | NCAAB
+ NCAAB-2501   | NBA Team 2501                                | NCAAB
+ NCAAB-2084   | NBA Team 2084                                | NCAAB
+ NCAAB-2132   | NBA Team 2132                                | NCAAB
+ NCAAB-2168   | NBA Team 2168                                | NCAAB
+ NCAAB-2507   | NBA Team 2507                                | NCAAB
+ NCAAB-251    | NBA Team 251                                 | NCAAB
+ MLB-14       | MLB Team 14                                  | MLB
+ SOCCER-367   | SOCCER Team 367                              | SOCCER
+ NCAAB-331    | NCAAB Team 331                               | NCAAB
+ NCAAB-238    | NBA Team 238                                 | NCAAB
+ SOCCER-379   | NBA Team 379                                 | SOCCER
+ NBA-111124   | NBA Team 111124                              | NBA
+ NCAAF-326    | NCAAF Team 326                               | NCAAF
+ NCAAF-333    | NCAAF Team 333                               | NCAAF
+ NCAAF-238    | NCAAF Team 238                               | NCAAF
+ NCAAF-2348   | NCAAF Team 2348                              | NCAAF
+ NCAAF-252    | NCAAF Team 252                               | NCAAF
+ NCAAF-151    | NCAAF Team 151                               | NCAAF
+ NCAAF-278    | NCAAF Team 278                               | NCAAF
+ NCAAF-2649   | NCAAF Team 2649                              | NCAAF
+ NCAAF-328    | NCAAF Team 328                               | NCAAF
+ NCAAF-338    | NCAAF Team 338                               | NCAAF
+ NCAAF-2032   | NCAAF Team 2032                              | NCAAF
+ NCAAF-277    | NCAAF Team 277                               | NCAAF
+ NCAAF-239    | NCAAF Team 239                               | NCAAF
+ NCAAF-2638   | NCAAF Team 2638                              | NCAAF
+ NCAAF-2393   | NCAAF Team 2393                              | NCAAF
+ NCAAF-164    | NCAAF Team 164                               | NCAAF
+ NCAAF-2751   | NCAAF Team 2751                              | NCAAF
+ NCAAF-2459   | NCAAF Team 2459                              | NCAAF
+ NCAAF-2535   | NCAAF Team 2535                              | NCAAF
+ NCAAF-2635   | NCAAF Team 2635                              | NCAAF
+ NCAAF-227    | NCAAF Team 227                               | NCAAF
+ NCAAF-2241   | NCAAF Team 2241                              | NCAAF
+ NCAAF-2447   | NCAAF Team 2447                              | NCAAF
+ NCAAF-2450   | NCAAF Team 2450                              | NCAAF
+ NCAAF-2415   | NCAAF Team 2415                              | NCAAF
+ NCAAF-2504   | NCAAF Team 2504                              | NCAAF
+ NCAAF-282    | NCAAF Team 282                               | NCAAF
+ NCAAF-2065   | NCAAF Team 2065                              | NCAAF
+ NCAAF-2598   | NCAAF Team 2598                              | NCAAF
+ NCAAF-2803   | NCAAF Team 2803                              | NCAAF
+ NCAAF-2458   | NCAAF Team 2458                              | NCAAF
+ NCAAF-302    | NCAAF Team 302                               | NCAAF
+ NCAAF-155    | NCAAF Team 155                               | NCAAF
+ NCAAF-2678   | NCAAF Team 2678                              | NCAAF
+ NCAAF-2083   | NCAAF Team 2083                              | NCAAF
+ NCAAF-2453   | NCAAF Team 2453                              | NCAAF
+ NCAAF-2169   | NCAAF Team 2169                              | NCAAF
+ NCAAF-2011   | NCAAF Team 2011                              | NCAAF
+ NCAAB-2803   | NBA Team 2803                                | NCAAB
+ NCAAB-2368   | NBA Team 2368                                | NCAAB
+ NCAAB-2523   | NBA Team 2523                                | NCAAB
+ NCAAB-2115   | NBA Team 2115                                | NCAAB
+ NCAAB-2598   | NBA Team 2598                                | NCAAB
+ NCAAB-2729   | NBA Team 2729                                | NCAAB
+ NCAAB-339    | NBA Team 339                                 | NCAAB
+ NCAAB-2546   | NBA Team 2546                                | NCAAB
+ NCAAB-2348   | NBA Team 2348                                | NCAAB
+ NCAAB-2692   | NBA Team 2692                                | NCAAB
+ NCAAB-250    | NBA Team 250                                 | NCAAB
+ NCAAB-302    | NBA Team 302                                 | NCAAB
+ NCAAB-275    | NBA Team 275                                 | NCAAB
+ NCAAB-2250   | NBA Team 2250                                | NCAAB
+ NCAAB-277    | NBA Team 277                                 | NCAAB
+ NCAAB-344    | NBA Team 344                                 | NCAAB
+ NCAAB-2116   | NBA Team 2116                                | NCAAB
+ NCAAB-2306   | NBA Team 2306                                | NCAAB
+ NCAAB-2567   | NBA Team 2567                                | NCAAB
+ NCAAB-264    | NBA Team 264                                 | NCAAB
+ NCAAB-2226   | NBA Team 2226                                | NCAAB
+ NCAAB-2433   | NBA Team 2433                                | NCAAB
+ NCAAB-288    | NBA Team 288                                 | NCAAB
+ NCAAB-2046   | NBA Team 2046                                | NCAAB
+ NCAAB-2698   | NBA Team 2698                                | NCAAB
+ NCAAB-314    | NBA Team 314                                 | NCAAB
+ NCAAB-2514   | NBA Team 2514                                | NCAAB
+ NCAAB-2217   | NBA Team 2217                                | NCAAB
+ NCAAB-2529   | NBA Team 2529                                | NCAAB
+ NCAAB-2097   | NBA Team 2097                                | NCAAB
+ NCAAB-2448   | NBA Team 2448                                | NCAAB
+ SOCCER-363   | SOCCER Team 363                              | SOCCER
+ NCAAB-290    | NBA Team 290                                 | NCAAB
+ NCAAB-2198   | NBA Team 2198                                | NCAAB
+ NCAAB-294    | NBA Team 294                                 | NCAAB
+ NCAAB-2449   | NBA Team 2449                                | NCAAB
+ NCAAB-2492   | NBA Team 2492                                | NCAAB
+ NCAAB-2309   | NBA Team 2309                                | NCAAB
+ NCAAB-2520   | NBA Team 2520                                | NCAAB
+ NCAAB-2363   | NBA Team 2363                                | NCAAB
+ NCAAB-2670   | NBA Team 2670                                | NCAAB
+ NCAAB-2016   | NBA Team 2016                                | NCAAB
+ NCAAB-2377   | NBA Team 2377                                | NCAAB
+ NCAAB-2244   | NBA Team 2244                                | NCAAB
+ NCAAB-2011   | NBA Team 2011                                | NCAAB
+ NCAAB-2837   | NBA Team 2837                                | NCAAB
+ NCAAB-2065   | NBA Team 2065                                | NCAAB
+ NCAAB-2207   | NBA Team 2207                                | NCAAB
+ NCAAB-254    | NBA Team 254                                 | NCAAB
+ SOCCER-360   | NBA Team 360                                 | SOCCER
+ NCAAF-2390   | NCAAF Team 2390                              | NCAAF
+ NCAAF-2426   | NCAAF Team 2426                              | NCAAF
+ NCAAF-2641   | NCAAF Team 2641                              | NCAAF
+ NCAAF-158    | NCAAF Team 158                               | NCAAF
+ SOCCER-368   | SOCCER Team 368                              | SOCCER
+ NCAAF-2633   | NCAAF Team 2633                              | NCAAF
+ NCAAF-258    | NCAAF Team 258                               | NCAAF
+ NCAAF-213    | NCAAF Team 213                               | NCAAF
+ NCAAF-2117   | NCAAF Team 2117                              | NCAAF
+ NCAAF-2572   | NCAAF Team 2572                              | NCAAF
+ NCAAF-256    | NCAAF Team 256                               | NCAAF
+ NCAAF-2711   | NCAAF Team 2711                              | NCAAF
+ NCAAF-295    | NCAAF Team 295                               | NCAAF
+ NCAAF-2116   | NCAAF Team 2116                              | NCAAF
+ NCAAF-2306   | NCAAF Team 2306                              | NCAAF
+ NCAAF-2534   | NCAAF Team 2534                              | NCAAF
+ NCAAF-166    | NCAAF Team 166                               | NCAAF
+ NCAAF-2335   | NCAAF Team 2335                              | NCAAF
+ NCAAF-2509   | NCAAF Team 2509                              | NCAAF
+ NCAAF-2005   | NCAAF Team 2005                              | NCAAF
+ NCAAF-2197   | NCAAF Team 2197                              | NCAAF
+ NCAAF-2643   | NCAAF Team 2643                              | NCAAF
+ NCAAF-2545   | NCAAF Team 2545                              | NCAAF
+ NCAAF-2184   | NCAAF Team 2184                              | NCAAF
+ NCAAF-222    | NCAAF Team 222                               | NCAAF
+ NCAAF-2754   | NCAAF Team 2754                              | NCAAF
+ NCAAF-2016   | NCAAF Team 2016                              | NCAAF
+ NCAAF-2000   | NCAAF Team 2000                              | NCAAF
+ NCAAF-2142   | NCAAF Team 2142                              | NCAAF
+ NCAAF-2837   | NCAAF Team 2837                              | NCAAF
+ NCAAF-2460   | NCAAF Team 2460                              | NCAAF
+ NCAAF-2640   | NCAAF Team 2640                              | NCAAF
+ NCAAF-2341   | NCAAF Team 2341                              | NCAAF
+ NCAAF-2710   | NCAAF Team 2710                              | NCAAF
+ NCAAF-2287   | NCAAF Team 2287                              | NCAAF
+ NCAAF-2230   | NCAAF Team 2230                              | NCAAF
+ NCAAF-2010   | NCAAF Team 2010                              | NCAAF
+ NCAAF-2546   | NCAAF Team 2546                              | NCAAF
+ NCAAF-2110   | NCAAF Team 2110                              | NCAAF
+ NCAAF-2619   | NCAAF Team 2619                              | NCAAF
+ NCAAB-261    | NBA Team 261                                 | NCAAB
+ NCAAB-2737   | NBA Team 2737                                | NCAAB
+ NCAAB-2754   | NBA Team 2754                                | NCAAB
+ NCAAB-284    | NBA Team 284                                 | NCAAB
+ NCAAB-2619   | NBA Team 2619                                | NCAAB
+ NCAAB-2210   | NBA Team 2210                                | NCAAB
+ NCAAB-2900   | NBA Team 2900                                | NCAAB
+ NCAAB-2031   | NBA Team 2031                                | NCAAB
+ NCAAB-2460   | NBA Team 2460                                | NCAAB
+ NCAAB-304    | NBA Team 304                                 | NCAAB
+ NCAAB-2540   | NBA Team 2540                                | NCAAB
+ NCAAB-248    | NBA Team 248                                 | NCAAB
+ NCAAB-356    | NBA Team 356                                 | NCAAB
+ NCAAB-258    | NBA Team 258                                 | NCAAB
+ NCAAB-2483   | NBA Team 2483                                | NCAAB
+ NCAAB-276    | NBA Team 276                                 | NCAAB
+ NCAAB-2166   | NBA Team 2166                                | NCAAB
+ NCAAB-333    | NBA Team 333                                 | NCAAB
+ NCAAB-2459   | NBA Team 2459                                | NCAAB
+ NCAAB-2579   | NBA Team 2579                                | NCAAB
+ NCAAB-222    | NBA Team 222                                 | NCAAB
+ NCAAB-2026   | NBA Team 2026                                | NCAAB
+ NCAAB-526    | NBA Team 526                                 | NCAAB
+ NCAAB-2110   | NBA Team 2110                                | NCAAB
+ NCAAB-399    | NBA Team 399                                 | NCAAB
+ NCAAB-270    | NBA Team 270                                 | NCAAB
+ NCAAB-315    | NBA Team 315                                 | NCAAB
+ NCAAB-2099   | NBA Team 2099                                | NCAAB
+ NCAAB-2561   | NBA Team 2561                                | NCAAB
+ NCAAB-2261   | NBA Team 2261                                | NCAAB
+ NCAAB-2032   | NBA Team 2032                                | NCAAB
+ NCAAB-326    | NBA Team 326                                 | NCAAB
+ NCAAB-2454   | NBA Team 2454                                | NCAAB
+ NCAAB-2197   | NBA Team 2197                                | NCAAB
+ NCAAB-2638   | NBA Team 2638                                | NCAAB
+ NCAAB-2184   | NBA Team 2184                                | NCAAB
+ NCAAB-2612   | NBA Team 2612                                | NCAAB
+ NCAAB-225    | NBA Team 225                                 | NCAAB
+ NCAAB-2603   | NBA Team 2603                                | NCAAB
+ NCAAB-2504   | NBA Team 2504                                | NCAAB
+ NCAAB-60     | NBA Team 60                                  | NCAAB
+ NCAAB-357    | NBA Team 357                                 | NCAAB
+ NCAAB-2010   | NBA Team 2010                                | NCAAB
+ NCAAB-269    | NBA Team 269                                 | NCAAB
+ NCAAB-2916   | NBA Team 2916                                | NCAAB
+ NCAAB-2029   | NBA Team 2029                                | NCAAB
+ NCAAB-2450   | NBA Team 2450                                | NCAAB
+ MLB-12       | MLB Team 12                                  | MLB
+ NCAAB-2352   | NBA Team 2352                                | NCAAB
+ NCAAB-2329   | NBA Team 2329                                | NCAAB
+ NCAAB-2545   | NBA Team 2545                                | NCAAB
+ NCAAB-292    | NBA Team 292                                 | NCAAB
+ NCAAB-2617   | NBA Team 2617                                | NCAAB
+ NCAAB-2447   | NBA Team 2447                                | NCAAB
+ NCAAB-2400   | NBA Team 2400                                | NCAAB
+ NCAAB-2640   | NBA Team 2640                                | NCAAB
+ NCAAB-2296   | NBA Team 2296                                | NCAAB
+ NCAAB-2466   | NBA Team 2466                                | NCAAB
+ NCAAB-2277   | NBA Team 2277                                | NCAAB
+ NCAAB-2320   | NBA Team 2320                                | NCAAB
+ NCAAB-2443   | NBA Team 2443                                | NCAAB
+ NCAAB-2547   | NBA Team 2547                                | NCAAB
+ NCAAB-328    | NBA Team 328                                 | NCAAB
+ NCAAB-2253   | NBA Team 2253                                | NCAAB
+ NCAAB-2550   | NBA Team 2550                                | NCAAB
+ NCAAB-2649   | NBA Team 2649                                | NCAAB
+ NCAAB-2350   | NBA Team 2350                                | NCAAB
+ NCAAB-2050   | NBA Team 2050                                | NCAAB
+ NCAAB-2294   | NBA Team 2294                                | NCAAB
+ NCAAB-2440   | NBA Team 2440                                | NCAAB
+ NCAAB-2428   | NBA Team 2428                                | NCAAB
+ NCAAB-2415   | NBA Team 2415                                | NCAAB
+ NCAAB-2169   | NBA Team 2169                                | NCAAB
+ NCAAB-2755   | NBA Team 2755                                | NCAAB
+ NCAAB-2582   | NBA Team 2582                                | NCAAB
+ NCAAB-2379   | NBA Team 2379                                | NCAAB
+ NCAAB-2569   | NBA Team 2569                                | NCAAB
+ NCAAB-2154   | NBA Team 2154                                | NCAAB
+ NCAAB-2426   | NBA Team 2426                                | NCAAB
+ NCAAB-131761 | NBA Team 131761                              | NCAAB
+ NCAAB-2006   | NBA Team 2006                                | NCAAB
+ NCAAB-2439   | NBA Team 2439                                | NCAAB
+ NCAAB-2541   | NBA Team 2541                                | NCAAB
+ NCAAB-2351   | NBA Team 2351                                | NCAAB
+ NCAAB-111948 | NBA Team 111948                              | NCAAB
+ NCAAB-2535   | NBA Team 2535                                | NCAAB
+ NCAAB-2678   | NBA Team 2678                                | NCAAB
+ NCAAB-2453   | NBA Team 2453                                | NCAAB
+ NCAAB-236    | NBA Team 236                                 | NCAAB
+ NCAAB-2430   | NBA Team 2430                                | NCAAB
+ NCAAB-2463   | NBA Team 2463                                | NCAAB
+ NCAAB-2511   | NBA Team 2511                                | NCAAB
+ NCAAB-2627   | NBA Team 2627                                | NCAAB
+ NCAAB-301    | NBA Team 301                                 | NCAAB
+ NCAAB-130401 | NBA Team 130401                              | NCAAB
+ NCAAB-128438 | NBA Team 128438                              | NCAAB
+ NCAAB-349    | NBA Team 349                                 | NCAAB
+ NCAAB-2706   | NBA Team 2706                                | NCAAB
+ NCAAB-2142   | NBA Team 2142                                | NCAAB
+ NCAAB-2717   | NBA Team 2717                                | NCAAB
+ NCAAB-279    | NBA Team 279                                 | NCAAB
+ NCAAB-2193   | NBA Team 2193                                | NCAAB
+ NCAAB-2081   | NBA Team 2081                                | NCAAB
+ NCAAB-2013   | NBA Team 2013                                | NCAAB
+ NCAAB-3120   | NBA Team 3120                                | NCAAB
+ NCAAB-2747   | NBA Team 2747                                | NCAAB
+ NCAAB-2519   | NBA Team 2519                                | NCAAB
+ NCAAB-2098   | NBA Team 2098                                | NCAAB
+ NCAAB-2772   | NBA Team 2772                                | NCAAB
+ NCAAB-2751   | NBA Team 2751                                | NCAAB
+ NCAAB-2576   | NBA Team 2576                                | NCAAB
+ NCAAB-322    | NBA Team 322                                 | NCAAB
+ NCAAB-2636   | NBA Team 2636                                | NCAAB
+ NCAAB-278    | NBA Team 278                                 | NCAAB
+ NCAAB-130196 | NBA Team 130196                              | NCAAB
+ NCAAB-2643   | NBA Team 2643                                | NCAAB
+ NCAAB-2684   | NBA Team 2684                                | NCAAB
+ NCAAB-2615   | NBA Team 2615                                | NCAAB
+ NCAAB-2347   | NBA Team 2347                                | NCAAB
+ NCAAB-2119   | NBA Team 2119                                | NCAAB
+ NCAAB-3111   | NBA Team 3111                                | NCAAB
+ NCAAB-2653   | NBA Team 2653                                | NCAAB
+ NCAAB-2141   | NBA Team 2141                                | NCAAB
+ NCAAB-110418 | NBA Team 110418                              | NCAAB
+ NCAAB-2424   | NBA Team 2424                                | NCAAB
+ NCAAB-2199   | NBA Team 2199                                | NCAAB
+ NCAAB-2083   | NBA Team 2083                                | NCAAB
+ NCAAB-242    | NBA Team 242                                 | NCAAB
+ NCAAB-2515   | NBA Team 2515                                | NCAAB
+ NCAAB-2711   | NBA Team 2711                                | NCAAB
+ NCAAB-2382   | NBA Team 2382                                | NCAAB
+ NCAAB-2936   | NBA Team 2936                                | NCAAB
+ NCAAB-127162 | NBA Team 127162                              | NCAAB
+ NCAAB-233    | NBA Team 233                                 | NCAAB
+ NCAAB-2358   | NBA Team 2358                                | NCAAB
+ NCAAB-2474   | NBA Team 2474                                | NCAAB
+ NCAAB-2335   | NBA Team 2335                                | NCAAB
+ NCAAB-3077   | NBA Team 3077                                | NCAAB
+ NCAAB-2534   | NBA Team 2534                                | NCAAB
+ 2011         | Alabama State Hornets                        | NCAAB
+ 2272         | High Point Panthers                          | NCAAB
+ 112358       | Long Island University Sharks                | NCAAB
+ 2115         | Central Connecticut Blue Devils              | NCAAB
+ 2330         | Le Moyne Dolphins                            | NCAAB
+ 2130         | Chicago State Cougars                        | NCAAB
+ 161          | Fairleigh Dickinson Knights                  | NCAAB
+ 2885         | NJIT Highlanders                             | NCAAB
+ 399          | UAlbany Great Danes                          | NCAAB
+ 350          | UNC Wilmington Seahawks                      | NCAAB
+ 111          | Northeastern Huskies                         | NCAAB
+ 2182         | Drexel Dragons                               | NCAAB
+ 2097         | Campbell Fighting Camels                     | NCAAB
+ 2729         | William & Mary Tribe                         | NCAAB
+ 2448         | North Carolina A&T Aggies                    | NCAAB
+ 232          | Charleston Cougars                           | NCAAB
+ 2643         | The Citadel Bulldogs                         | NCAAB
+ 2535         | Samford Bulldogs                             | NCAAB
+ 2382         | Mercer Bears                                 | NCAAB
+ 236          | Chattanooga Mocs                             | NCAAB
+ 2454         | North Florida Ospreys                        | NCAAB
+ 2046         | Austin Peay Governors                        | NCAAB
+ 155          | North Dakota Fighting Hawks                  | NCAAB
+ 140          | Kansas City Roos                             | NCAAB
+ 2275         | Hofstra Pride                                | NCAAB
+ 2261         | Hampton Pirates                              | NCAAB
+ 2413         | Morehead State Eagles                        | NCAAB
+ 249          | North Texas Mean Green                       | NCAAB
+ 2655         | Tulane Green Wave                            | NCAAB
+ 2540         | UC Santa Barbara Gauchos                     | NCAAB
+ 2463         | Cal State Northridge Matadors                | NCAAB
+ 2172         | Denver Pioneers                              | NCAAB
+ 233          | South Dakota Coyotes                         | NCAAB
+ 2692         | Weber State Wildcats                         | NCAAB
+ 147          | Montana State Bobcats                        | NCAAB
+ 304          | Idaho State Bengals                          | NCAAB
+ 149          | Montana Grizzlies                            | NCAAB
+ 2502         | Portland State Vikings                       | NCAAB
+ 70           | Idaho Vandals                                | NCAAB
+ 2934         | Cal State Bakersfield Roadrunners            | NCAAB
+ 2239         | Cal State Fullerton Titans                   | NCAAB
+ 302          | UC Davis Aggies                              | NCAAB
+ 299          | Long Beach State Beach                       | NCAAB
+ 300          | UC Irvine Anteaters                          | NCAAB
+ 62           | Hawai'i Rainbow Warriors                     | NCAAB
+ 331          | Brighton & Hove Albion                       | EPL
+ 2670         | VCU Rams                                     | NCAAB
+ 189          | Bowling Green Falcons                        | NCAAB
+ NBA_30       | Charlotte Hornets                            | 
+ NBA_4        | Chicago Bulls                                | 
+ NBA_5        | Cleveland Cavaliers                          | 
+ NBA_6        | Dallas Mavericks                             | 
+ NBA_7        | Denver Nuggets                               | 
+ NBA_8        | Detroit Pistons                              | 
+ NBA_9        | Golden State Warriors                        | 
+ NBA_10       | Houston Rockets                              | 
+ NBA_11       | Indiana Pacers                               | 
+ NBA_12       | LA Clippers                                  | 
+ NBA_29       | Memphis Grizzlies                            | 
+ NBA_14       | Miami Heat                                   | 
+ NBA_15       | Milwaukee Bucks                              | 
+ NBA_3        | New Orleans Pelicans                         | 
+ NBA_18       | New York Knicks                              | 
+ NBA_25       | Oklahoma City Thunder                        | 
+ NBA_19       | Orlando Magic                                | 
+ NBA_20       | Philadelphia 76ers                           | 
+ NBA_21       | Phoenix Suns                                 | 
+ NBA_22       | Portland Trail Blazers                       | 
+ NBA_23       | Sacramento Kings                             | 
+ NBA_24       | San Antonio Spurs                            | 
+ NBA_28       | Toronto Raptors                              | 
+ NBA_26       | Utah Jazz                                    | 
+ NBA_27       | Washington Wizards                           | 
+ NFL_22       | Arizona Cardinals                            | 
+ NFL_1        | Atlanta Falcons                              | 
+ NFL_33       | Baltimore Ravens                             | 
+ NFL_2        | Buffalo Bills                                | 
+ NFL_29       | Carolina Panthers                            | 
+ NFL_3        | Chicago Bears                                | 
+ NFL_4        | Cincinnati Bengals                           | 
+ NFL_5        | Cleveland Browns                             | 
+ NFL_6        | Dallas Cowboys                               | 
+ NFL_7        | Denver Broncos                               | 
+ NFL_8        | Detroit Lions                                | 
+ NFL_9        | Green Bay Packers                            | 
+ NFL_34       | Houston Texans                               | 
+ NFL_11       | Indianapolis Colts                           | 
+ NFL_30       | Jacksonville Jaguars                         | 
+ NFL_12       | Kansas City Chiefs                           | 
+ NFL_13       | Las Vegas Raiders                            | 
+ NFL_24       | Los Angeles Chargers                         | 
+ NFL_14       | Los Angeles Rams                             | 
+ NFL_15       | Miami Dolphins                               | 
+ NFL_16       | Minnesota Vikings                            | 
+ NFL_17       | New England Patriots                         | 
+ MLB-8        | MLB Team 8                                   | MLB
+ MLB-16       | MLB Team 16                                  | MLB
+ MLB-6        | MLB Team 6                                   | MLB
+ MLB-22       | MLB Team 22                                  | MLB
+ MLB-10       | MLB Team 10                                  | MLB
+ MLB-5        | MLB Team 5                                   | MLB
+ MLB-25       | MLB Team 25                                  | MLB
+ MLB-2        | MLB Team 2                                   | MLB
+ MLB-17       | MLB Team 17                                  | MLB
+ MLB-1        | MLB Team 1                                   | MLB
+ MLB-4        | MLB Team 4                                   | MLB
+ MLB-20       | MLB Team 20                                  | MLB
+ MLB-9        | MLB Team 9                                   | MLB
+ MLB-27       | MLB Team 27                                  | MLB
+ MLB-26       | MLB Team 26                                  | MLB
+ MLB-7        | MLB Team 7                                   | MLB
+ MLB-11       | MLB Team 11                                  | MLB
+ MLB-30       | MLB Team 30                                  | MLB
+ MLB-18       | MLB Team 18                                  | MLB
+ MLB-3        | MLB Team 3                                   | MLB
+ MLB-21       | MLB Team 21                                  | MLB
+ MLB-28       | MLB Team 28                                  | MLB
+ MLB-13       | MLB Team 13                                  | MLB
+ MLB-29       | MLB Team 29                                  | MLB
+ MLB-23       | MLB Team 23                                  | MLB
+ MLB-15       | MLB Team 15                                  | MLB
+ MLB-24       | MLB Team 24                                  | MLB
+ MLB-31       | NBA Team 31                                  | MLB
+ MLB-32       | NBA Team 32                                  | MLB
+ 2350         | Loyola Chicago Ramblers                      | 
+ 195          | Ohio Bobcats                                 | 
+ 228          | Clemson Tigers                               | 
+ 77           | Northwestern Wildcats                        | 
+ 2507         | Providence Friars                            | 
+ 245          | Texas A&M Aggies                             | 
+ 221          | Pittsburgh Panthers                          | 
+ 96           | Kentucky Wildcats                            | 
+ 239          | Baylor Bears                                 | 
+ 46           | Georgetown Hoyas                             | 
+ 2541         | Santa Clara Broncos                          | 
+ 139          | Saint Louis Billikens                        | NCAAB
+ 2509         | Purdue Boilermakers                          | NCAAB
+ 84           | Indiana Hoosiers                             | NCAAB
+ 193          | Miami (OH) RedHawks                          | NCAAB
+ NFL_18       | New Orleans Saints                           | 
+ NFL_19       | New York Giants                              | 
+ NFL_20       | New York Jets                                | 
+ NFL_21       | Philadelphia Eagles                          | 
+ NFL_23       | Pittsburgh Steelers                          | 
+ NFL_25       | San Francisco 49ers                          | 
+ NFL_26       | Seattle Seahawks                             | 
+ NFL_27       | Tampa Bay Buccaneers                         | 
+ NFL_10       | Tennessee Titans                             | 
+ NFL_28       | Washington Commanders                        | 
+ NHL_25       | Anaheim Ducks                                | 
+ NHL_1        | Boston Bruins                                | 
+ 57           | Florida Gators                               | NCAAB
+ NHL_2        | Buffalo Sabres                               | 
+ NHL_3        | Calgary Flames                               | 
+ NHL_7        | Carolina Hurricanes                          | 
+ NHL_4        | Chicago Blackhawks                           | 
+ 183          | Syracuse Orange                              | NCAAB
+ NHL_9        | Dallas Stars                                 | 
+ 2065         | Bethune-Cookman Wildcats                     | NCAAB
+ NHL_5        | Detroit Red Wings                            | 
+ NHL_6        | Edmonton Oilers                              | 
+ NHL_26       | Florida Panthers                             | 
+ NHL_8        | Los Angeles Kings                            | 
+ NHL_30       | Minnesota Wild                               | 
+ NHL_10       | Montreal Canadiens                           | 
+ 132374       | Team Stars                                   | 
+ 111386       | World                                        | 
+ 132375       | Team Stripes                                 | 
+ NBA-111386   | NBA Team 111386                              | NBA
+ NBA-132374   | NBA Team 132374                              | NBA
+ NBA-132375   | NBA Team 132375                              | NBA
+ NHL_11       | New Jersey Devils                            | 
+ NHL_12       | New York Islanders                           | 
+ 2599         | St. John's Red Storm                         | NCAAB
+ NHL_13       | New York Rangers                             | 
+ NHL_14       | Ottawa Senators                              | 
+ NHL_15       | Philadelphia Flyers                          | 
+ NHL_16       | Pittsburgh Penguins                          | 
+ NHL_18       | San Jose Sharks                              | 
+ NHL_124292   | Seattle Kraken                               | 
+ 2579         | South Carolina Gamecocks                     | NCAAB
+ 152          | NC State Wolfpack                            | NCAAB
+ 227          | Rhode Island Rams                            | NCAAB
+ 2567         | SMU Mustangs                                 | NCAAB
+ 113          | Massachusetts Minutemen                      | NCAAB
+ NHL_19       | St. Louis Blues                              | 
+ NHL_20       | Tampa Bay Lightning                          | 
+ NHL_21       | Toronto Maple Leafs                          | 
+ NHL_129764   | Utah Mammoth                                 | 
+ NCAAB-227    | NCAAB Team 227                               | NCAAB
+ NHL_22       | Vancouver Canucks                            | 
+ NHL_37       | Vegas Golden Knights                         | 
+ NHL_23       | Washington Capitals                          | 
+ 197          | Oklahoma State Cowboys                       | NCAAB
+ 2132         | Cincinnati Bearcats                          | NCAAB
+ 269          | Marquette Golden Eagles                      | NCAAB
+ 158          | Nebraska Cornhuskers                         | NCAAB
+ 213          | Penn State Nittany Lions                     | NCAAB
+ NHL_28       | Winnipeg Jets                                | 
+ 2539         | San Francisco Dons                           | NCAAB
+ NCAAF_8      | Arkansas Razorbacks                          | 
+ NCAAF_2      | Auburn Tigers                                | 
+ NCAAF_252    | BYU Cougars                                  | 
+ NCAAF_239    | Baylor Bears                                 | 
+ NCAAF_228    | Clemson Tigers                               | 
+ NCAAF_150    | Duke Blue Devils                             | 
+ NCAAF_57     | Florida Gators                               | 
+ NCAAF_62     | Hawai'i Rainbow Warriors                     | 
+ NCAAF_248    | Houston Cougars                              | 
+ NCAAF_84     | Indiana Hoosiers                             | 
+ NCAAF_96     | Kentucky Wildcats                            | 
+ NCAAF_99     | LSU Tigers                                   | 
+ NCAAF_235    | Memphis Tigers                               | 
+ NCAAF_135    | Minnesota Golden Gophers                     | 
+ NCAAF_142    | Missouri Tigers                              | 
+ NCAAF_195    | Ohio Bobcats                                 | 
+ NCAAF_201    | Oklahoma Sooners                             | 
+ NCAAF_242    | Rice Owls                                    | 
+ NCAAF_164    | Rutgers Scarlet Knights                      | 
+ NCAAF_24     | Stanford Cardinal                            | 
+ NCAAF_218    | Temple Owls                                  | 
+ NCAAF_5      | UAB Blazers                                  | 
+ 145          | Ole Miss Rebels                              | NCAAB
+ NCAAF_26     | UCLA Bruins                                  | 
+ NCAAF_30     | USC Trojans                                  | 
+ NCAAF_238    | Vanderbilt Commodores                        | 
+ NCAAF_258    | Virginia Cavaliers                           | 
+ NCAAF_264    | Washington Huskies                           | 
+ NCAAF_275    | Wisconsin Badgers                            | 
+ MLB_29       | Arizona Diamondbacks                         | 
+ MLB_11       | Athletics                                    | 
+ MLB_15       | Atlanta Braves                               | 
+ MLB_1        | Baltimore Orioles                            | 
+ MLB_2        | Boston Red Sox                               | 
+ MLB_16       | Chicago Cubs                                 | 
+ MLB_4        | Chicago White Sox                            | 
+ MLB_17       | Cincinnati Reds                              | 
+ MLB_5        | Cleveland Guardians                          | 
+ MLB_27       | Colorado Rockies                             | 
+ MLB_6        | Detroit Tigers                               | 
+ MLB_18       | Houston Astros                               | 
+ MLB_7        | Kansas City Royals                           | 
+ MLB_3        | Los Angeles Angels                           | 
+ MLB_19       | Los Angeles Dodgers                          | 
+ MLB_28       | Miami Marlins                                | 
+ 156          | Creighton Bluejays                           | NCAAB
+ MLB_8        | Milwaukee Brewers                            | 
+ 2378         | UMBC Retrievers                              | NCAAB
+ 261          | Vermont Catamounts                           | NCAAB
+ 2349         | UMass Lowell River Hawks                     | NCAAB
+ 160          | New Hampshire Wildcats                       | NCAAB
+ 2803         | Bryant Bulldogs                              | NCAAB
+ 2066         | Binghamton Bearcats                          | NCAAB
+ 2335         | Liberty Flames                               | NCAAB
+ 2229         | Florida International Panthers               | NCAAB
+ 2737         | Winthrop Eagles                              | NCAAB
+ 2908         | South Carolina Upstate Spartans              | NCAAB
+ 2026         | App State Mountaineers                       | NCAAB
+ 276          | Marshall Thundering Herd                     | NCAAB
+ 58           | South Florida Bulls                          | NCAAB
+ MLB_9        | Minnesota Twins                              | 
+ MLB_21       | New York Mets                                | 
+ MLB_10       | New York Yankees                             | 
+ MLB_22       | Philadelphia Phillies                        | 
+ MLB_23       | Pittsburgh Pirates                           | 
+ MLB_25       | San Diego Padres                             | 
+ MLB_26       | San Francisco Giants                         | 
+ MLB_12       | Seattle Mariners                             | 
+ MLB_24       | St. Louis Cardinals                          | 
+ MLB_30       | Tampa Bay Rays                               | 
+ MLB_13       | Texas Rangers                                | 
+ MLB_14       | Toronto Blue Jays                            | 
+ MLB_20       | Washington Nationals                         | 
+ 2405         | Monmouth Hawks                               | NCAAB
+ 326          | Texas State Bobcats                          | NCAAB
+ 309          | Louisiana Ragin' Cajuns                      | NCAAB
+ 2032         | Arkansas State Red Wolves                    | NCAAB
+ 2247         | Georgia State Panthers                       | NCAAB
+ 290          | Georgia Southern Eagles                      | NCAAB
+ 56           | Stetson Hatters                              | NCAAB
+ 2110         | Central Arkansas Bears                       | NCAAB
+ 2031         | Little Rock Trojans                          | NCAAB
+ 2630         | UT Martin Skyhawks                           | NCAAB
+ 142          | Missouri Tigers                              | NCAAB
+ 2641         | Texas Tech Red Raiders                       | NCAAB
+ 2306         | Kansas State Wildcats                        | NCAAB
+ 258          | Virginia Cavaliers                           | NCAAB
+ 2390         | Miami Hurricanes                             | NCAAB
+ 238          | Vanderbilt Commodores                        | NCAAB
+ 2633         | Tennessee Volunteers                         | NCAAB
+ 59           | Georgia Tech Yellow Jackets                  | NCAAB
+ 222          | Villanova Wildcats                           | NCAAB
+ 41           | UConn Huskies                                | NCAAB
+ 99           | LSU Tigers                                   | NCAAB
+ 333          | Alabama Crimson Tide                         | NCAAB
+ 150          | Duke Blue Devils                             | NCAAB
+ 130          | Michigan Wolverines                          | NCAAB
+ 2427         | UNC Asheville Bulldogs                       | NCAAB
+ 2506         | Presbyterian Blue Hose                       | NCAAB
+ 2344         | Longwood Lancers                             | NCAAB
+ 2515         | Radford Highlanders                          | NCAAB
+ 2241         | Gardner-Webb Runnin' Bulldogs                | NCAAB
+ 2750         | Wright State Raiders                         | NCAAB
+ 85           | IU Indianapolis Jaguars                      | NCAAB
+ 2385         | Mercyhurst Lakers                            | NCAAB
+ 2681         | Wagner Seahawks                              | NCAAB
+ 2441         | New Haven Chargers                           | NCAAB
+ 284          | Stonehill Skyhawks                           | NCAAB
+ 2598         | Saint Francis Red Flash                      | NCAAB
+ 356          | Illinois Fighting Illini                     | NCAAB
+ 2250         | Gonzaga Bulldogs                             | NCAAB
+ 279          | Pacific Tigers                               | NCAAB
+ 252          | BYU Cougars                                  | NCAAB
+ 66           | Iowa State Cyclones                          | NCAAB
+ 362          | Aston Villa                                  | EPL
+ 357          | Leeds United                                 | EPL
+ 337          | Brentford                                    | EPL
+ 363          | Chelsea                                      | EPL
+ 379          | Burnley                                      | EPL
+ 371          | West Ham United                              | EPL
+ 349          | AFC Bournemouth                              | EPL
+ 382          | Manchester City                              | EPL
+ 361          | Newcastle United                             | EPL
+ NBA_16       | Minnesota Timberwolves                       | 
+ NBA_13       | Los Angeles Lakers                           | 
+ 3084         | Utah Valley Wolverines                       | NCAAB
+ 2856         | California Baptist Lancers                   | NCAAB
+ 250          | UT Arlington Mavericks                       | NCAAB
+ 3101         | Utah Tech Trailblazers                       | NCAAB
+ 2627         | Tarleton State Texans                        | NCAAB
+ 253          | Southern Utah Thunderbirds                   | NCAAB
+ 50           | Florida A&M Rattlers                         | NCAAB
+ 2010         | Alabama A&M Bulldogs                         | NCAAB
+ 2029         | Arkansas-Pine Bluff Golden Lions             | NCAAB
+ 2640         | Texas Southern Tigers                        | NCAAB
+ 2400         | Mississippi Valley State Delta Devils        | NCAAB
+ 2504         | Prairie View A&M Panthers                    | NCAAB
+ 2710         | Western Illinois Leathernecks                | NCAAB
+ 88           | Southern Indiana Screaming Eagles            | NCAAB
+ 2635         | Tennessee Tech Golden Eagles                 | NCAAB
+ 2565         | SIU Edwardsville Cougars                     | NCAAB
+ 2634         | Tennessee State Tigers                       | NCAAB
+ 2815         | Lindenwood Lions                             | NCAAB
+ 2197         | Eastern Illinois Panthers                    | NCAAB
+(1126 rows)
+

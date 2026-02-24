@@ -260,11 +260,13 @@ class BetGrader:
             return False
         status_lower = status.lower()
         return (
-            status_lower == "final" 
-            or "final" in status_lower 
+            status_lower == "final"
+            or "final" in status_lower
+            or status_lower == "ft"
+            or "ft" in status_lower
             or "full time" in status_lower
             or "full_time" in status_lower
-            or status in ("STATUS_FINAL", "STATUS_FULL_TIME")
+            or status in ("STATUS_FINAL", "STATUS_FULL_TIME", "FT", "ft")
         )
 
     def _calc_profit(self, bet) -> float:

@@ -1,0 +1,1206 @@
+   team_id    |                     name                     | sport_name |                             logo                             
+--------------+----------------------------------------------+------------+--------------------------------------------------------------
+ 331          | Brighton & Hove Albion                       | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/331.png
+ 337          | Brentford                                    | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/337.png
+ 349          | AFC Bournemouth                              | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/349.png
+ 357          | Leeds United                                 | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/357.png
+ 359          | Arsenal                                      | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/359.png
+ 360          | Manchester United                            | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/360.png
+ 361          | Newcastle United                             | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/361.png
+ 362          | Aston Villa                                  | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/362.png
+ 363          | Chelsea                                      | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/363.png
+ 364          | Liverpool                                    | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/364.png
+ 366          | Sunderland                                   | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/366.png
+ 367          | Tottenham Hotspur                            | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/367.png
+ 368          | Everton                                      | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/368.png
+ 370          | Fulham                                       | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/370.png
+ 371          | West Ham United                              | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/371.png
+ 379          | Burnley                                      | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/379.png
+ 380          | Wolverhampton Wanderers                      | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/380.png
+ 382          | Manchester City                              | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/382.png
+ 384          | Crystal Palace                               | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/384.png
+ 393          | Nottingham Forest                            | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/393.png
+ EPL-331      | Brighton & Hove Albion                       | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/331.png
+ EPL-337      | Brentford                                    | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/337.png
+ EPL-349      | AFC Bournemouth                              | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/349.png
+ EPL-357      | Leeds United                                 | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/357.png
+ EPL-359      | Arsenal                                      | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/359.png
+ EPL-360      | Manchester United                            | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/360.png
+ EPL-361      | Newcastle United                             | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/361.png
+ EPL-362      | Aston Villa                                  | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/362.png
+ EPL-363      | Chelsea                                      | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/363.png
+ EPL-364      | Liverpool                                    | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/364.png
+ EPL-366      | Sunderland                                   | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/366.png
+ EPL-367      | Tottenham Hotspur                            | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/367.png
+ EPL-368      | Everton                                      | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/368.png
+ EPL-370      | Fulham                                       | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/370.png
+ EPL-371      | West Ham United                              | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/371.png
+ EPL-379      | Burnley                                      | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/379.png
+ EPL-380      | Wolverhampton Wanderers                      | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/380.png
+ EPL-382      | Manchester City                              | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/382.png
+ EPL-384      | Crystal Palace                               | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/384.png
+ EPL-393      | Nottingham Forest                            | EPL        | https://a.espncdn.com/i/teamlogos/soccer/500/393.png
+ 1            | Baltimore Orioles                            | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/bal.png
+ 10           | New York Yankees                             | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/nyy.png
+ 11           | Athletics                                    | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/ath.png
+ 12           | Seattle Mariners                             | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/sea.png
+ 13           | Texas Rangers                                | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/tex.png
+ 14           | Toronto Blue Jays                            | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/tor.png
+ 15           | Atlanta Braves                               | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/atl.png
+ 16           | Chicago Cubs                                 | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/chc.png
+ 17           | Cincinnati Reds                              | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/cin.png
+ 18           | Houston Astros                               | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/hou.png
+ 19           | Los Angeles Dodgers                          | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/lad.png
+ 2            | Boston Red Sox                               | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/bos.png
+ 20           | Washington Nationals                         | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/wsh.png
+ 21           | New York Mets                                | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/nym.png
+ 22           | Philadelphia Phillies                        | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/phi.png
+ 23           | Pittsburgh Pirates                           | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/pit.png
+ 24           | St. Louis Cardinals                          | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/stl.png
+ 25           | San Diego Padres                             | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/sd.png
+ 26           | San Francisco Giants                         | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/sf.png
+ 27           | Colorado Rockies                             | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/col.png
+ 28           | Miami Marlins                                | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/mia.png
+ 29           | Arizona Diamondbacks                         | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/ari.png
+ 3            | Los Angeles Angels                           | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/laa.png
+ 30           | Tampa Bay Rays                               | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/tb.png
+ 4            | Chicago White Sox                            | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/chw.png
+ 5            | Cleveland Guardians                          | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/cle.png
+ 6            | Detroit Tigers                               | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/det.png
+ 7            | Kansas City Royals                           | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/kc.png
+ 8            | Milwaukee Brewers                            | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/mil.png
+ 9            | Minnesota Twins                              | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/min.png
+ MLB_1        | Baltimore Orioles                            | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_10       | New York Yankees                             | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_11       | Athletics                                    | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_12       | Seattle Mariners                             | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_13       | Texas Rangers                                | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_14       | Toronto Blue Jays                            | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_15       | Atlanta Braves                               | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_16       | Chicago Cubs                                 | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_17       | Cincinnati Reds                              | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_18       | Houston Astros                               | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_19       | Los Angeles Dodgers                          | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_2        | Boston Red Sox                               | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_20       | Washington Nationals                         | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_21       | New York Mets                                | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_22       | Philadelphia Phillies                        | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_23       | Pittsburgh Pirates                           | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_24       | St. Louis Cardinals                          | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_25       | San Diego Padres                             | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_26       | San Francisco Giants                         | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_27       | Colorado Rockies                             | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_28       | Miami Marlins                                | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_29       | Arizona Diamondbacks                         | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_3        | Los Angeles Angels                           | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_30       | Tampa Bay Rays                               | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_4        | Chicago White Sox                            | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_5        | Cleveland Guardians                          | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_6        | Detroit Tigers                               | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_7        | Kansas City Royals                           | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_8        | Milwaukee Brewers                            | MLB        | https://sportslogos.com/default_numeric.png
+ MLB_9        | Minnesota Twins                              | MLB        | https://sportslogos.com/default_numeric.png
+ MLB-1        | MLB Team 1                                   | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/1.png
+ MLB-10       | MLB Team 10                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/10.png
+ MLB-11       | MLB Team 11                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/11.png
+ MLB-12       | MLB Team 12                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/12.png
+ MLB-13       | MLB Team 13                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/13.png
+ MLB-14       | MLB Team 14                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/14.png
+ MLB-15       | MLB Team 15                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/15.png
+ MLB-16       | MLB Team 16                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/16.png
+ MLB-17       | MLB Team 17                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/17.png
+ MLB-18       | MLB Team 18                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/18.png
+ MLB-19       | MLB Team 19                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/19.png
+ MLB-2        | MLB Team 2                                   | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/2.png
+ MLB-20       | MLB Team 20                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/20.png
+ MLB-21       | MLB Team 21                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/21.png
+ MLB-22       | MLB Team 22                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/22.png
+ MLB-23       | MLB Team 23                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/23.png
+ MLB-24       | MLB Team 24                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/24.png
+ MLB-25       | MLB Team 25                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/25.png
+ MLB-26       | MLB Team 26                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/26.png
+ MLB-27       | MLB Team 27                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/27.png
+ MLB-28       | MLB Team 28                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/28.png
+ MLB-29       | MLB Team 29                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/29.png
+ MLB-3        | MLB Team 3                                   | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/3.png
+ MLB-30       | MLB Team 30                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/30.png
+ MLB-31       | NBA Team 31                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/31.png
+ MLB-32       | NBA Team 32                                  | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/32.png
+ MLB-4        | MLB Team 4                                   | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/4.png
+ MLB-5        | MLB Team 5                                   | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/5.png
+ MLB-6        | MLB Team 6                                   | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/6.png
+ MLB-7        | MLB Team 7                                   | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/7.png
+ MLB-8        | MLB Team 8                                   | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/8.png
+ MLB-9        | MLB Team 9                                   | MLB        | https://a.espncdn.com/i/teamlogos/mlb/500/9.png
+ 111386       | World                                        | NBA        | https://sportslogos.com/default_numeric.png
+ 132374       | Team Stars                                   | NBA        | https://sportslogos.com/default_numeric.png
+ 132375       | Team Stripes                                 | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_1        | Atlanta Hawks                                | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_10       | Houston Rockets                              | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_11       | Indiana Pacers                               | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_12       | LA Clippers                                  | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_13       | Los Angeles Lakers                           | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_14       | Miami Heat                                   | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_15       | Milwaukee Bucks                              | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_16       | Minnesota Timberwolves                       | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_18       | New York Knicks                              | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_19       | Orlando Magic                                | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_2        | Boston Celtics                               | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_20       | Philadelphia 76ers                           | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_21       | Phoenix Suns                                 | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_22       | Portland Trail Blazers                       | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_23       | Sacramento Kings                             | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_24       | San Antonio Spurs                            | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_25       | Oklahoma City Thunder                        | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_26       | Utah Jazz                                    | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_27       | Washington Wizards                           | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_28       | Toronto Raptors                              | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_29       | Memphis Grizzlies                            | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_3        | New Orleans Pelicans                         | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_30       | Charlotte Hornets                            | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_4        | Chicago Bulls                                | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_5        | Cleveland Cavaliers                          | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_6        | Dallas Mavericks                             | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_7        | Denver Nuggets                               | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_8        | Detroit Pistons                              | NBA        | https://sportslogos.com/default_numeric.png
+ NBA_9        | Golden State Warriors                        | NBA        | https://sportslogos.com/default_numeric.png
+ NBA-1        | Atlanta Hawks                                | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/atl.png
+ NBA-10       | Houston Rockets                              | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/hou.png
+ NBA-11       | Indiana Pacers                               | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/ind.png
+ NBA-111124   | NBA Team 111124                              | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/111124.png
+ NBA-111136   | NBA Team 111136                              | NBA        | https://sportslogos.com/nba/111136.png
+ NBA-111386   | NBA Team 111386                              | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/111386.png
+ NBA-12       | LA Clippers                                  | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/lac.png
+ NBA-126120   | NBA Team 126120                              | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/126120.png
+ NBA-13       | Los Angeles Lakers                           | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/lal.png
+ NBA-131570   | NBA Team 131570                              | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/131570.png
+ NBA-132374   | NBA Team 132374                              | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/132374.png
+ NBA-132375   | NBA Team 132375                              | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/132375.png
+ NBA-14       | Miami Heat                                   | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/mia.png
+ NBA-15       | Milwaukee Bucks                              | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/mil.png
+ NBA-16       | Minnesota Timberwolves                       | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/min.png
+ NBA-17       | Brooklyn Nets                                | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/bkn.png
+ NBA-18       | New York Knicks                              | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/ny.png
+ NBA-19       | Orlando Magic                                | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/orl.png
+ NBA-2        | Boston Celtics                               | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/bos.png
+ NBA-20       | Philadelphia 76ers                           | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/phi.png
+ NBA-21       | Phoenix Suns                                 | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/phx.png
+ NBA-22       | Portland Trail Blazers                       | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/por.png
+ NBA-23       | Sacramento Kings                             | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/sac.png
+ NBA-24       | San Antonio Spurs                            | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/sa.png
+ NBA-25       | Oklahoma City Thunder                        | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/okc.png
+ NBA-26       | Utah Jazz                                    | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/utah.png
+ NBA-27       | Washington Wizards                           | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/wsh.png
+ NBA-28       | Toronto Raptors                              | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/tor.png
+ NBA-29       | Memphis Grizzlies                            | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/mem.png
+ NBA-3        | New Orleans Pelicans                         | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/no.png
+ NBA-30       | Charlotte Hornets                            | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/cha.png
+ NBA-4        | Chicago Bulls                                | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/chi.png
+ NBA-5        | Cleveland Cavaliers                          | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/cle.png
+ NBA-6        | Dallas Mavericks                             | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/dal.png
+ NBA-7        | Denver Nuggets                               | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/den.png
+ NBA-8        | Detroit Pistons                              | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/det.png
+ NBA-9        | Golden State Warriors                        | NBA        | https://a.espncdn.com/i/teamlogos/nba/500/gs.png
+ NBA-99       | Test Team                                    | NBA        | https://sportslogos.com/nba/99.png
+ 111          | Northeastern Huskies                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/111.png
+ 112358       | Long Island University Sharks                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/112358.png
+ 113          | Massachusetts Minutemen                      | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/113.png
+ 127          | Michigan State Spartans                      | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/127.png
+ 130          | Michigan Wolverines                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/130.png
+ 139          | Saint Louis Billikens                        | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/139.png
+ 140          | Kansas City Roos                             | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/140.png
+ 142          | Missouri Tigers                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/142.png
+ 145          | Ole Miss Rebels                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/145.png
+ 147          | Montana State Bobcats                        | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/147.png
+ 149          | Montana Grizzlies                            | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/149.png
+ 150          | Duke Blue Devils                             | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/150.png
+ 152          | NC State Wolfpack                            | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/152.png
+ 153          | North Carolina Tar Heels                     | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/153.png
+ 155          | North Dakota Fighting Hawks                  | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/155.png
+ 156          | Creighton Bluejays                           | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/156.png
+ 158          | Nebraska Cornhuskers                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/158.png
+ 160          | New Hampshire Wildcats                       | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/160.png
+ 161          | Fairleigh Dickinson Knights                  | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/161.png
+ 183          | Syracuse Orange                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/183.png
+ 189          | Bowling Green Falcons                        | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/189.png
+ 193          | Miami (OH) RedHawks                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/193.png
+ 194          | Ohio State Buckeyes                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/194.png
+ 197          | Oklahoma State Cowboys                       | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/197.png
+ 2010         | Alabama A&M Bulldogs                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2010.png
+ 2011         | Alabama State Hornets                        | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2011.png
+ 2026         | App State Mountaineers                       | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2026.png
+ 2029         | Arkansas-Pine Bluff Golden Lions             | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2029.png
+ 2031         | Little Rock Trojans                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2031.png
+ 2032         | Arkansas State Red Wolves                    | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2032.png
+ 2046         | Austin Peay Governors                        | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2046.png
+ 2065         | Bethune-Cookman Wildcats                     | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2065.png
+ 2066         | Binghamton Bearcats                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2066.png
+ 2097         | Campbell Fighting Camels                     | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2097.png
+ 2110         | Central Arkansas Bears                       | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2110.png
+ 2115         | Central Connecticut Blue Devils              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2115.png
+ 213          | Penn State Nittany Lions                     | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/213.png
+ 2130         | Chicago State Cougars                        | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2130.png
+ 2132         | Cincinnati Bearcats                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2132.png
+ 2172         | Denver Pioneers                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2172.png
+ 2182         | Drexel Dragons                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2182.png
+ 2197         | Eastern Illinois Panthers                    | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2197.png
+ 222          | Villanova Wildcats                           | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/222.png
+ 2229         | Florida International Panthers               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2229.png
+ 2239         | Cal State Fullerton Titans                   | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2239.png
+ 2241         | Gardner-Webb Runnin' Bulldogs                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2241.png
+ 2247         | Georgia State Panthers                       | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2247.png
+ 2250         | Gonzaga Bulldogs                             | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2250.png
+ 2261         | Hampton Pirates                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2261.png
+ 227          | Rhode Island Rams                            | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/227.png
+ 2272         | High Point Panthers                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2272.png
+ 2275         | Hofstra Pride                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2275.png
+ 2294         | Iowa Hawkeyes                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2294.png
+ 2305         | Kansas Jayhawks                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2305.png
+ 2306         | Kansas State Wildcats                        | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2306.png
+ 232          | Charleston Cougars                           | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/232.png
+ 233          | South Dakota Coyotes                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/233.png
+ 2330         | Le Moyne Dolphins                            | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2330.png
+ 2335         | Liberty Flames                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2335.png
+ 2344         | Longwood Lancers                             | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2344.png
+ 2349         | UMass Lowell River Hawks                     | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2349.png
+ 235          | Memphis Tigers                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/235.png
+ 236          | Chattanooga Mocs                             | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/236.png
+ 2378         | UMBC Retrievers                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2378.png
+ 238          | Vanderbilt Commodores                        | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/238.png
+ 2382         | Mercer Bears                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2382.png
+ 2385         | Mercyhurst Lakers                            | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2385.png
+ 2390         | Miami Hurricanes                             | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2390.png
+ 2400         | Mississippi Valley State Delta Devils        | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2400.png
+ 2405         | Monmouth Hawks                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2405.png
+ 2413         | Morehead State Eagles                        | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2413.png
+ 2427         | UNC Asheville Bulldogs                       | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2427.png
+ 2441         | New Haven Chargers                           | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2441.png
+ 2448         | North Carolina A&T Aggies                    | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2448.png
+ 2454         | North Florida Ospreys                        | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2454.png
+ 2463         | Cal State Northridge Matadors                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2463.png
+ 248          | Houston Cougars                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/248.png
+ 249          | North Texas Mean Green                       | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/249.png
+ 250          | UT Arlington Mavericks                       | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/250.png
+ 2502         | Portland State Vikings                       | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2502.png
+ 2504         | Prairie View A&M Panthers                    | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2504.png
+ 2506         | Presbyterian Blue Hose                       | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2506.png
+ 2509         | Purdue Boilermakers                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2509.png
+ 2515         | Radford Highlanders                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2515.png
+ 252          | BYU Cougars                                  | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/252.png
+ 253          | Southern Utah Thunderbirds                   | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/253.png
+ 2535         | Samford Bulldogs                             | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2535.png
+ 2539         | San Francisco Dons                           | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2539.png
+ 2540         | UC Santa Barbara Gauchos                     | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2540.png
+ 2565         | SIU Edwardsville Cougars                     | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2565.png
+ 2567         | SMU Mustangs                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2567.png
+ 2579         | South Carolina Gamecocks                     | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2579.png
+ 258          | Virginia Cavaliers                           | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/258.png
+ 2598         | Saint Francis Red Flash                      | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2598.png
+ 2599         | St. John's Red Storm                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2599.png
+ 261          | Vermont Catamounts                           | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/261.png
+ 2627         | Tarleton State Texans                        | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2627.png
+ 2630         | UT Martin Skyhawks                           | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2630.png
+ 2633         | Tennessee Volunteers                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2633.png
+ 2634         | Tennessee State Tigers                       | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2634.png
+ 2635         | Tennessee Tech Golden Eagles                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2635.png
+ 2640         | Texas Southern Tigers                        | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2640.png
+ 2641         | Texas Tech Red Raiders                       | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2641.png
+ 2643         | The Citadel Bulldogs                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2643.png
+ 2655         | Tulane Green Wave                            | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2655.png
+ 2670         | VCU Rams                                     | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2670.png
+ 2681         | Wagner Seahawks                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2681.png
+ 269          | Marquette Golden Eagles                      | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/269.png
+ 2692         | Weber State Wildcats                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2692.png
+ 2710         | Western Illinois Leathernecks                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2710.png
+ 2729         | William & Mary Tribe                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2729.png
+ 2737         | Winthrop Eagles                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2737.png
+ 275          | Wisconsin Badgers                            | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/275.png
+ 2750         | Wright State Raiders                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2750.png
+ 276          | Marshall Thundering Herd                     | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/276.png
+ 279          | Pacific Tigers                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/279.png
+ 2803         | Bryant Bulldogs                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2803.png
+ 2815         | Lindenwood Lions                             | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2815.png
+ 284          | Stonehill Skyhawks                           | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/284.png
+ 2856         | California Baptist Lancers                   | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2856.png
+ 2885         | NJIT Highlanders                             | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2885.png
+ 290          | Georgia Southern Eagles                      | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/290.png
+ 2908         | South Carolina Upstate Spartans              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2908.png
+ 2934         | Cal State Bakersfield Roadrunners            | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2934.png
+ 299          | Long Beach State Beach                       | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/299.png
+ 300          | UC Irvine Anteaters                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/300.png
+ 302          | UC Davis Aggies                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/302.png
+ 304          | Idaho State Bengals                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/304.png
+ 3084         | Utah Valley Wolverines                       | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/3084.png
+ 309          | Louisiana Ragin' Cajuns                      | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/309.png
+ 3101         | Utah Tech Trailblazers                       | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/3101.png
+ 326          | Texas State Bobcats                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/326.png
+ 333          | Alabama Crimson Tide                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/333.png
+ 350          | UNC Wilmington Seahawks                      | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/350.png
+ 356          | Illinois Fighting Illini                     | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/356.png
+ 399          | UAlbany Great Danes                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/399.png
+ 41           | UConn Huskies                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/41.png
+ 50           | Florida A&M Rattlers                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/50.png
+ 56           | Stetson Hatters                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/56.png
+ 57           | Florida Gators                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/57.png
+ 58           | South Florida Bulls                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/58.png
+ 59           | Georgia Tech Yellow Jackets                  | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/59.png
+ 62           | Hawai'i Rainbow Warriors                     | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/62.png
+ 66           | Iowa State Cyclones                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/66.png
+ 70           | Idaho Vandals                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/70.png
+ 84           | Indiana Hoosiers                             | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/84.png
+ 85           | IU Indianapolis Jaguars                      | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/85.png
+ 88           | Southern Indiana Screaming Eagles            | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/88.png
+ 97           | Louisville Cardinals                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/97.png
+ 99           | LSU Tigers                                   | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/99.png
+ NCAAB-103    | Boston College Eagles                        | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/103.png
+ NCAAB-104    | Boston University Terriers                   | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/104.png
+ NCAAB-107    | Holy Cross Crusaders                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/107.png
+ NCAAB-108    | Harvard Crimson                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/108.png
+ NCAAB-110418 | NBA Team 110418                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/110418.png
+ NCAAB-111    | Northeastern Huskies                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/111.png
+ NCAAB-111948 | NBA Team 111948                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/111948.png
+ NCAAB-112358 | NBA Team 112358                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/112358.png
+ NCAAB-113    | Massachusetts Minutemen                      | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/113.png
+ NCAAB-116    | Mount St. Mary's Mountaineers                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/116.png
+ NCAAB-119    | Towson Tigers                                | NCAAB      | https://sportslogos.com/ncaab/119.png
+ NCAAB-12     | Arizona Wildcats                             | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/12.png
+ NCAAB-120    | Maryland Terrapins                           | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/120.png
+ NCAAB-127    | Michigan State Spartans                      | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/127.png
+ NCAAB-127162 | NBA Team 127162                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/127162.png
+ NCAAB-128438 | NBA Team 128438                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/128438.png
+ NCAAB-13     | Cal Poly Mustangs                            | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/13.png
+ NCAAB-130    | Michigan Wolverines                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/130.png
+ NCAAB-130196 | NBA Team 130196                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/130196.png
+ NCAAB-130401 | NBA Team 130401                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/130401.png
+ NCAAB-131761 | NBA Team 131761                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/131761.png
+ NCAAB-135    | Minnesota Golden Gophers                     | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/135.png
+ NCAAB-139    | Saint Louis Billikens                        | NCAAB      | https://sportslogos.com/ncaab/139.png
+ NCAAB-140    | Kansas City Roos                             | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/140.png
+ NCAAB-142    | Missouri Tigers                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/142.png
+ NCAAB-145    | Ole Miss Rebels                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/145.png
+ NCAAB-147    | Montana State Bobcats                        | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/147.png
+ NCAAB-149    | Montana Grizzlies                            | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/149.png
+ NCAAB-150    | Duke Blue Devils                             | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/150.png
+ NCAAB-151    | East Carolina Pirates                        | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/151.png
+ NCAAB-152    | NC State Wolfpack                            | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/152.png
+ NCAAB-153    | North Carolina Tar Heels                     | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/153.png
+ NCAAB-154    | Wake Forest Demon Deacons                    | NCAAB      | https://sportslogos.com/ncaab/154.png
+ NCAAB-155    | North Dakota Fighting Hawks                  | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/155.png
+ NCAAB-156    | Creighton Bluejays                           | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/156.png
+ NCAAB-158    | Nebraska Cornhuskers                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/158.png
+ NCAAB-159    | Dartmouth Big Green                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/159.png
+ NCAAB-16     | Sacramento State Hornets                     | NCAAB      | https://sportslogos.com/ncaab/16.png
+ NCAAB-160    | New Hampshire Wildcats                       | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/160.png
+ NCAAB-161    | Fairleigh Dickinson Knights                  | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/161.png
+ NCAAB-163    | Princeton Tigers                             | NCAAB      | https://sportslogos.com/ncaab/163.png
+ NCAAB-164    | Rutgers Scarlet Knights                      | NCAAB      | https://sportslogos.com/ncaab/164.png
+ NCAAB-166    | New Mexico State Aggies                      | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/166.png
+ NCAAB-167    | New Mexico Lobos                             | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/167.png
+ NCAAB-171    | Columbia Lions                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/171.png
+ NCAAB-172    | Cornell Big Red                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/172.png
+ NCAAB-179    | St. Bonaventure Bonnies                      | NCAAB      | https://sportslogos.com/ncaab/179.png
+ NCAAB-183    | Syracuse Orange                              | NCAAB      | https://sportslogos.com/ncaab/183.png
+ NCAAB-189    | Bowling Green Falcons                        | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/189.png
+ NCAAB-193    | Miami (OH) RedHawks                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/193.png
+ NCAAB-194    | Ohio State Buckeyes                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/194.png
+ NCAAB-195    | Ohio Bobcats                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/195.png
+ NCAAB-197    | Oklahoma State Cowboys                       | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/197.png
+ NCAAB-198    | Oral Roberts Golden Eagles                   | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/198.png
+ NCAAB-2      | Auburn Tigers                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2.png
+ NCAAB-2000   | NCAAB Team 2000                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2000.png
+ NCAAB-2006   | NBA Team 2006                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2006.png
+ NCAAB-201    | Oklahoma Sooners                             | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/201.png
+ NCAAB-2010   | NBA Team 2010                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2010.png
+ NCAAB-2011   | NBA Team 2011                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2011.png
+ NCAAB-2013   | NBA Team 2013                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2013.png
+ NCAAB-2016   | NBA Team 2016                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2016.png
+ NCAAB-202    | Tulsa Golden Hurricane                       | NCAAB      | https://sportslogos.com/ncaab/202.png
+ NCAAB-2026   | NBA Team 2026                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2026.png
+ NCAAB-2029   | NBA Team 2029                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2029.png
+ NCAAB-2031   | NBA Team 2031                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2031.png
+ NCAAB-2032   | NBA Team 2032                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2032.png
+ NCAAB-204    | Oregon State Beavers                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/204.png
+ NCAAB-2046   | NBA Team 2046                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2046.png
+ NCAAB-2050   | NBA Team 2050                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2050.png
+ NCAAB-2057   | NCAAB Team 2057                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2057.png
+ NCAAB-2065   | NBA Team 2065                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2065.png
+ NCAAB-2066   | NCAAB Team 2066                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2066.png
+ NCAAB-2081   | NBA Team 2081                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2081.png
+ NCAAB-2083   | NBA Team 2083                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2083.png
+ NCAAB-2084   | NBA Team 2084                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2084.png
+ NCAAB-2086   | Butler Bulldogs                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2086.png
+ NCAAB-2097   | NBA Team 2097                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2097.png
+ NCAAB-2098   | NBA Team 2098                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2098.png
+ NCAAB-2099   | NBA Team 2099                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2099.png
+ NCAAB-21     | San Diego State Aztecs                       | NCAAB      | https://sportslogos.com/ncaab/21.png
+ NCAAB-2110   | NBA Team 2110                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2110.png
+ NCAAB-2115   | NBA Team 2115                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2115.png
+ NCAAB-2116   | NBA Team 2116                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2116.png
+ NCAAB-2119   | NBA Team 2119                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2119.png
+ NCAAB-2127   | NCAAB Team 2127                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2127.png
+ NCAAB-213    | Penn State Nittany Lions                     | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/213.png
+ NCAAB-2130   | NCAAB Team 2130                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2130.png
+ NCAAB-2132   | NBA Team 2132                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2132.png
+ NCAAB-2141   | NBA Team 2141                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2141.png
+ NCAAB-2142   | NBA Team 2142                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2142.png
+ NCAAB-2154   | NBA Team 2154                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2154.png
+ NCAAB-2166   | NBA Team 2166                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2166.png
+ NCAAB-2168   | NBA Team 2168                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2168.png
+ NCAAB-2169   | NBA Team 2169                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2169.png
+ NCAAB-2172   | NCAAB Team 2172                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2172.png
+ NCAAB-2174   | NBA Team 2174                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2174.png
+ NCAAB-218    | Temple Owls                                  | NCAAB      | https://sportslogos.com/ncaab/218.png
+ NCAAB-2181   | NCAAB Team 2181                              | NCAAB      | https://sportslogos.com/ncaab/2181.png
+ NCAAB-2182   | NCAAB Team 2182                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2182.png
+ NCAAB-2184   | NBA Team 2184                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2184.png
+ NCAAB-219    | Pennsylvania Quakers                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/219.png
+ NCAAB-2193   | NBA Team 2193                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2193.png
+ NCAAB-2197   | NBA Team 2197                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2197.png
+ NCAAB-2198   | NBA Team 2198                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2198.png
+ NCAAB-2199   | NBA Team 2199                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2199.png
+ NCAAB-2207   | NBA Team 2207                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2207.png
+ NCAAB-221    | NBA Team 221                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/221.png
+ NCAAB-2210   | NBA Team 2210                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2210.png
+ NCAAB-2217   | NBA Team 2217                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2217.png
+ NCAAB-222    | NBA Team 222                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/222.png
+ NCAAB-2226   | NBA Team 2226                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2226.png
+ NCAAB-2229   | NCAAB Team 2229                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2229.png
+ NCAAB-2239   | NBA Team 2239                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2239.png
+ NCAAB-2241   | NCAAB Team 2241                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2241.png
+ NCAAB-2244   | NBA Team 2244                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2244.png
+ NCAAB-2247   | NBA Team 2247                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2247.png
+ NCAAB-225    | NBA Team 225                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/225.png
+ NCAAB-2250   | NBA Team 2250                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2250.png
+ NCAAB-2253   | NBA Team 2253                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2253.png
+ NCAAB-2261   | NBA Team 2261                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2261.png
+ NCAAB-227    | NCAAB Team 227                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/227.png
+ NCAAB-2272   | NCAAB Team 2272                              | NCAAB      | https://sportslogos.com/ncaab/2272.png
+ NCAAB-2275   | NBA Team 2275                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2275.png
+ NCAAB-2277   | NBA Team 2277                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2277.png
+ NCAAB-228    | Clemson Tigers                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/228.png
+ NCAAB-2287   | NCAAB Team 2287                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2287.png
+ NCAAB-2294   | NBA Team 2294                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2294.png
+ NCAAB-2296   | NBA Team 2296                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2296.png
+ NCAAB-23     | San José State Spartans                      | NCAAB      | https://sportslogos.com/ncaab/23.png
+ NCAAB-2305   | Kansas Jayhawks                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2305.png
+ NCAAB-2306   | NBA Team 2306                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2306.png
+ NCAAB-2309   | NBA Team 2309                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2309.png
+ NCAAB-232    | NCAAB Team 232                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/232.png
+ NCAAB-2320   | NBA Team 2320                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2320.png
+ NCAAB-2325   | NBA Team 2325                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2325.png
+ NCAAB-2329   | NBA Team 2329                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2329.png
+ NCAAB-233    | NBA Team 233                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/233.png
+ NCAAB-2330   | NCAAB Team 2330                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2330.png
+ NCAAB-2335   | NBA Team 2335                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2335.png
+ NCAAB-2344   | NCAAB Team 2344                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2344.png
+ NCAAB-2347   | NBA Team 2347                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2347.png
+ NCAAB-2348   | NBA Team 2348                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2348.png
+ NCAAB-2349   | NCAAB Team 2349                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2349.png
+ NCAAB-235    | NBA Team 235                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/235.png
+ NCAAB-2350   | NBA Team 2350                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2350.png
+ NCAAB-2351   | NBA Team 2351                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2351.png
+ NCAAB-2352   | NBA Team 2352                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2352.png
+ NCAAB-2358   | NBA Team 2358                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2358.png
+ NCAAB-236    | NBA Team 236                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/236.png
+ NCAAB-2363   | NBA Team 2363                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2363.png
+ NCAAB-2368   | NBA Team 2368                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2368.png
+ NCAAB-2377   | NBA Team 2377                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2377.png
+ NCAAB-2378   | NBA Team 2378                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2378.png
+ NCAAB-2379   | NBA Team 2379                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2379.png
+ NCAAB-238    | NBA Team 238                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/238.png
+ NCAAB-2382   | NBA Team 2382                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2382.png
+ NCAAB-2385   | NBA Team 2385                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2385.png
+ NCAAB-239    | NBA Team 239                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/239.png
+ NCAAB-2390   | NBA Team 2390                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2390.png
+ NCAAB-2393   | NBA Team 2393                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2393.png
+ NCAAB-24     | Stanford Cardinal                            | NCAAB      | https://sportslogos.com/ncaab/24.png
+ NCAAB-2400   | NBA Team 2400                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2400.png
+ NCAAB-2405   | NBA Team 2405                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2405.png
+ NCAAB-2413   | NCAAB Team 2413                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2413.png
+ NCAAB-2415   | NBA Team 2415                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2415.png
+ NCAAB-242    | NBA Team 242                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/242.png
+ NCAAB-2424   | NBA Team 2424                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2424.png
+ NCAAB-2426   | NBA Team 2426                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2426.png
+ NCAAB-2427   | NCAAB Team 2427                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2427.png
+ NCAAB-2428   | NBA Team 2428                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2428.png
+ NCAAB-2430   | NBA Team 2430                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2430.png
+ NCAAB-2433   | NBA Team 2433                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2433.png
+ NCAAB-2437   | NCAAB Team 2437                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2437.png
+ NCAAB-2439   | NBA Team 2439                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2439.png
+ NCAAB-2440   | NBA Team 2440                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2440.png
+ NCAAB-2441   | NCAAB Team 2441                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2441.png
+ NCAAB-2443   | NBA Team 2443                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2443.png
+ NCAAB-2447   | NBA Team 2447                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2447.png
+ NCAAB-2448   | NBA Team 2448                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2448.png
+ NCAAB-2449   | NBA Team 2449                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2449.png
+ NCAAB-245    | NBA Team 245                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/245.png
+ NCAAB-2450   | NBA Team 2450                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2450.png
+ NCAAB-2453   | NBA Team 2453                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2453.png
+ NCAAB-2454   | NBA Team 2454                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2454.png
+ NCAAB-2458   | NCAAB Team 2458                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2458.png
+ NCAAB-2459   | NBA Team 2459                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2459.png
+ NCAAB-2460   | NBA Team 2460                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2460.png
+ NCAAB-2463   | NBA Team 2463                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2463.png
+ NCAAB-2464   | NCAAB Team 2464                              | NCAAB      | https://sportslogos.com/ncaab/2464.png
+ NCAAB-2466   | NBA Team 2466                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2466.png
+ NCAAB-2473   | NCAAB Team 2473                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2473.png
+ NCAAB-2474   | NBA Team 2474                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2474.png
+ NCAAB-248    | NBA Team 248                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/248.png
+ NCAAB-2483   | NBA Team 2483                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2483.png
+ NCAAB-249    | NCAAB Team 249                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/249.png
+ NCAAB-2492   | NBA Team 2492                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2492.png
+ NCAAB-25     | California Golden Bears                      | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/25.png
+ NCAAB-250    | NBA Team 250                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/250.png
+ NCAAB-2501   | NBA Team 2501                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2501.png
+ NCAAB-2502   | NBA Team 2502                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2502.png
+ NCAAB-2504   | NBA Team 2504                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2504.png
+ NCAAB-2506   | NBA Team 2506                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2506.png
+ NCAAB-2507   | NBA Team 2507                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2507.png
+ NCAAB-2509   | NBA Team 2509                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2509.png
+ NCAAB-251    | NBA Team 251                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/251.png
+ NCAAB-2511   | NBA Team 2511                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2511.png
+ NCAAB-2514   | NBA Team 2514                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2514.png
+ NCAAB-2515   | NBA Team 2515                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2515.png
+ NCAAB-2519   | NBA Team 2519                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2519.png
+ NCAAB-252    | NBA Team 252                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/252.png
+ NCAAB-2520   | NBA Team 2520                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2520.png
+ NCAAB-2523   | NBA Team 2523                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2523.png
+ NCAAB-2529   | NBA Team 2529                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2529.png
+ NCAAB-253    | NCAAB Team 253                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/253.png
+ NCAAB-2534   | NBA Team 2534                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2534.png
+ NCAAB-2535   | NBA Team 2535                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2535.png
+ NCAAB-2539   | NCAAB Team 2539                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2539.png
+ NCAAB-254    | NBA Team 254                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/254.png
+ NCAAB-2540   | NBA Team 2540                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2540.png
+ NCAAB-2541   | NBA Team 2541                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2541.png
+ NCAAB-2545   | NBA Team 2545                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2545.png
+ NCAAB-2546   | NBA Team 2546                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2546.png
+ NCAAB-2547   | NBA Team 2547                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2547.png
+ NCAAB-2550   | NBA Team 2550                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2550.png
+ NCAAB-256    | NCAAB Team 256                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/256.png
+ NCAAB-2561   | NBA Team 2561                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2561.png
+ NCAAB-2565   | NCAAB Team 2565                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2565.png
+ NCAAB-2567   | NBA Team 2567                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2567.png
+ NCAAB-2569   | NBA Team 2569                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2569.png
+ NCAAB-2571   | NBA Team 2571                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2571.png
+ NCAAB-2572   | NCAAB Team 2572                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2572.png
+ NCAAB-2576   | NBA Team 2576                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2576.png
+ NCAAB-2579   | NBA Team 2579                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2579.png
+ NCAAB-258    | NBA Team 258                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/258.png
+ NCAAB-2582   | NBA Team 2582                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2582.png
+ NCAAB-259    | NBA Team 259                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/259.png
+ NCAAB-2598   | NBA Team 2598                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2598.png
+ NCAAB-2599   | St. John's Red Storm                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2599.png
+ NCAAB-26     | UCLA Bruins                                  | NCAAB      | https://sportslogos.com/ncaab/26.png
+ NCAAB-2603   | NBA Team 2603                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2603.png
+ NCAAB-2608   | NBA Team 2608                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2608.png
+ NCAAB-261    | NBA Team 261                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/261.png
+ NCAAB-2612   | NBA Team 2612                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2612.png
+ NCAAB-2615   | NBA Team 2615                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2615.png
+ NCAAB-2617   | NBA Team 2617                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2617.png
+ NCAAB-2619   | NBA Team 2619                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2619.png
+ NCAAB-2623   | NCAAB Team 2623                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2623.png
+ NCAAB-2627   | NBA Team 2627                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2627.png
+ NCAAB-2628   | NBA Team 2628                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2628.png
+ NCAAB-2630   | NBA Team 2630                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2630.png
+ NCAAB-2633   | NBA Team 2633                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2633.png
+ NCAAB-2634   | NBA Team 2634                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2634.png
+ NCAAB-2635   | NBA Team 2635                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2635.png
+ NCAAB-2636   | NBA Team 2636                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2636.png
+ NCAAB-2638   | NBA Team 2638                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2638.png
+ NCAAB-264    | NBA Team 264                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/264.png
+ NCAAB-2640   | NBA Team 2640                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2640.png
+ NCAAB-2641   | Texas Tech Red Raiders                       | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2641.png
+ NCAAB-2643   | NBA Team 2643                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2643.png
+ NCAAB-2649   | NBA Team 2649                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2649.png
+ NCAAB-265    | NBA Team 265                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/265.png
+ NCAAB-2653   | NBA Team 2653                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2653.png
+ NCAAB-2670   | NBA Team 2670                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2670.png
+ NCAAB-2674   | NBA Team 2674                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2674.png
+ NCAAB-2678   | NBA Team 2678                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2678.png
+ NCAAB-2681   | NCAAB Team 2681                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2681.png
+ NCAAB-2684   | NBA Team 2684                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2684.png
+ NCAAB-269    | NBA Team 269                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/269.png
+ NCAAB-2692   | NBA Team 2692                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2692.png
+ NCAAB-2698   | NBA Team 2698                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2698.png
+ NCAAB-27     | UC Riverside Highlanders                     | NCAAB      | https://sportslogos.com/ncaab/27.png
+ NCAAB-270    | NBA Team 270                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/270.png
+ NCAAB-2706   | NBA Team 2706                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2706.png
+ NCAAB-2710   | NCAAB Team 2710                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2710.png
+ NCAAB-2711   | NBA Team 2711                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2711.png
+ NCAAB-2717   | NBA Team 2717                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2717.png
+ NCAAB-2729   | NBA Team 2729                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2729.png
+ NCAAB-2737   | NBA Team 2737                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2737.png
+ NCAAB-2739   | NCAAB Team 2739                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2739.png
+ NCAAB-2747   | NBA Team 2747                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2747.png
+ NCAAB-275    | NBA Team 275                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/275.png
+ NCAAB-2750   | NCAAB Team 2750                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2750.png
+ NCAAB-2751   | NBA Team 2751                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2751.png
+ NCAAB-2752   | NBA Team 2752                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2752.png
+ NCAAB-2754   | NBA Team 2754                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2754.png
+ NCAAB-2755   | NBA Team 2755                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2755.png
+ NCAAB-276    | NBA Team 276                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/276.png
+ NCAAB-277    | NBA Team 277                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/277.png
+ NCAAB-2771   | NCAAB Team 2771                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2771.png
+ NCAAB-2772   | NBA Team 2772                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2772.png
+ NCAAB-278    | NBA Team 278                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/278.png
+ NCAAB-279    | NBA Team 279                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/279.png
+ NCAAB-28     | UC San Diego Tritons                         | NCAAB      | https://sportslogos.com/ncaab/28.png
+ NCAAB-2803   | NBA Team 2803                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2803.png
+ NCAAB-2815   | NCAAB Team 2815                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2815.png
+ NCAAB-282    | NCAAB Team 282                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/282.png
+ NCAAB-2837   | NBA Team 2837                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2837.png
+ NCAAB-284    | NBA Team 284                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/284.png
+ NCAAB-2856   | NBA Team 2856                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2856.png
+ NCAAB-2870   | NBA Team 2870                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2870.png
+ NCAAB-288    | NBA Team 288                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/288.png
+ NCAAB-2885   | NBA Team 2885                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2885.png
+ NCAAB-290    | NBA Team 290                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/290.png
+ NCAAB-2900   | NBA Team 2900                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2900.png
+ NCAAB-2908   | NCAAB Team 2908                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2908.png
+ NCAAB-2916   | NBA Team 2916                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2916.png
+ NCAAB-292    | NBA Team 292                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/292.png
+ NCAAB-2934   | NCAAB Team 2934                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2934.png
+ NCAAB-2936   | NBA Team 2936                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/2936.png
+ NCAAB-294    | NBA Team 294                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/294.png
+ NCAAB-299    | NCAAB Team 299                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/299.png
+ NCAAB-30     | USC Trojans                                  | NCAAB      | https://sportslogos.com/ncaab/30.png
+ NCAAB-300    | NBA Team 300                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/300.png
+ NCAAB-301    | NBA Team 301                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/301.png
+ NCAAB-302    | NBA Team 302                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/302.png
+ NCAAB-304    | NBA Team 304                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/304.png
+ NCAAB-305    | NBA Team 305                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/305.png
+ NCAAB-3077   | NBA Team 3077                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/3077.png
+ NCAAB-3084   | NBA Team 3084                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/3084.png
+ NCAAB-309    | NCAAB Team 309                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/309.png
+ NCAAB-3101   | NCAAB Team 3101                              | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/3101.png
+ NCAAB-311    | NCAAB Team 311                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/311.png
+ NCAAB-3111   | NBA Team 3111                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/3111.png
+ NCAAB-3120   | NBA Team 3120                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/3120.png
+ NCAAB-314    | NBA Team 314                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/314.png
+ NCAAB-315    | NBA Team 315                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/315.png
+ NCAAB-322    | NBA Team 322                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/322.png
+ NCAAB-324    | NBA Team 324                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/324.png
+ NCAAB-325    | NCAAB Team 325                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/325.png
+ NCAAB-326    | NBA Team 326                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/326.png
+ NCAAB-328    | NBA Team 328                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/328.png
+ NCAAB-331    | NCAAB Team 331                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/331.png
+ NCAAB-333    | NBA Team 333                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/333.png
+ NCAAB-338    | NCAAB Team 338                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/338.png
+ NCAAB-339    | NBA Team 339                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/339.png
+ NCAAB-344    | NBA Team 344                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/344.png
+ NCAAB-349    | NBA Team 349                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/349.png
+ NCAAB-350    | NCAAB Team 350                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/350.png
+ NCAAB-356    | NBA Team 356                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/356.png
+ NCAAB-357    | NBA Team 357                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/357.png
+ NCAAB-36     | Colorado State Rams                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/36.png
+ NCAAB-38     | Colorado Buffaloes                           | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/38.png
+ NCAAB-399    | NBA Team 399                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/399.png
+ NCAAB-41     | UConn Huskies                                | NCAAB      | https://sportslogos.com/ncaab/41.png
+ NCAAB-43     | Yale Bulldogs                                | NCAAB      | https://sportslogos.com/ncaab/43.png
+ NCAAB-44     | American University Eagles                   | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/44.png
+ NCAAB-45     | George Washington Revolutionaries            | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/45.png
+ NCAAB-46     | Georgetown Hoyas                             | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/46.png
+ NCAAB-47     | Howard Bison                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/47.png
+ NCAAB-48     | Delaware Blue Hens                           | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/48.png
+ NCAAB-5      | UAB Blazers                                  | NCAAB      | https://sportslogos.com/ncaab/5.png
+ NCAAB-50     | Florida A&M Rattlers                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/50.png
+ NCAAB-52     | Florida State Seminoles                      | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/52.png
+ NCAAB-526    | NBA Team 526                                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/526.png
+ NCAAB-55     | Jacksonville State Gamecocks                 | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/55.png
+ NCAAB-56     | Stetson Hatters                              | NCAAB      | https://sportslogos.com/ncaab/56.png
+ NCAAB-57     | Florida Gators                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/57.png
+ NCAAB-58     | South Florida Bulls                          | NCAAB      | https://sportslogos.com/ncaab/58.png
+ NCAAB-59     | Georgia Tech Yellow Jackets                  | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/59.png
+ NCAAB-6      | South Alabama Jaguars                        | NCAAB      | https://sportslogos.com/ncaab/6.png
+ NCAAB-60     | NBA Team 60                                  | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/60.png
+ NCAAB-61     | Georgia Bulldogs                             | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/61.png
+ NCAAB-62     | Hawai'i Rainbow Warriors                     | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/62.png
+ NCAAB-66     | Iowa State Cyclones                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/66.png
+ NCAAB-68     | Boise State Broncos                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/68.png
+ NCAAB-70     | Idaho Vandals                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/70.png
+ NCAAB-71     | Bradley Braves                               | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/71.png
+ NCAAB-77     | Northwestern Wildcats                        | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/77.png
+ NCAAB-79     | Southern Illinois Salukis                    | NCAAB      | https://sportslogos.com/ncaab/79.png
+ NCAAB-8      | Arkansas Razorbacks                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/8.png
+ NCAAB-82     | UIC Flames                                   | NCAAB      | https://sportslogos.com/ncaab/82.png
+ NCAAB-84     | Indiana Hoosiers                             | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/84.png
+ NCAAB-85     | IU Indianapolis Jaguars                      | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/85.png
+ NCAAB-87     | Notre Dame Fighting Irish                    | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/87.png
+ NCAAB-88     | NCAAB Team 88                                | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/88.png
+ NCAAB-9      | Arizona State Sun Devils                     | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/9.png
+ NCAAB-91     | Bellarmine Knights                           | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/91.png
+ NCAAB-93     | Murray State Racers                          | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/93.png
+ NCAAB-94     | Northern Kentucky Norse                      | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/94.png
+ NCAAB-96     | Kentucky Wildcats                            | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/96.png
+ NCAAB-97     | Louisville Cardinals                         | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/97.png
+ NCAAB-98     | Western Kentucky Hilltoppers                 | NCAAB      | https://sportslogos.com/ncaab/98.png
+ NCAAB-99     | LSU Tigers                                   | NCAAB      | https://a.espncdn.com/i/teamlogos/ncaa/500/99.png
+ NCAAF_135    | Minnesota Golden Gophers                     | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_142    | Missouri Tigers                              | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_150    | Duke Blue Devils                             | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_164    | Rutgers Scarlet Knights                      | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_195    | Ohio Bobcats                                 | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_2      | Auburn Tigers                                | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_201    | Oklahoma Sooners                             | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_218    | Temple Owls                                  | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_228    | Clemson Tigers                               | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_235    | Memphis Tigers                               | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_238    | Vanderbilt Commodores                        | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_239    | Baylor Bears                                 | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_24     | Stanford Cardinal                            | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_242    | Rice Owls                                    | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_248    | Houston Cougars                              | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_252    | BYU Cougars                                  | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_258    | Virginia Cavaliers                           | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_26     | UCLA Bruins                                  | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_264    | Washington Huskies                           | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_275    | Wisconsin Badgers                            | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_30     | USC Trojans                                  | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_5      | UAB Blazers                                  | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_57     | Florida Gators                               | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_62     | Hawai'i Rainbow Warriors                     | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_8      | Arkansas Razorbacks                          | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_84     | Indiana Hoosiers                             | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_96     | Kentucky Wildcats                            | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF_99     | LSU Tigers                                   | NCAAF      | https://sportslogos.com/default_numeric.png
+ NCAAF-101    | Eureka College Red Devils                    | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/101.png
+ NCAAF-103    | Boston College Eagles                        | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/103.png
+ NCAAF-107    | Holy Cross Crusaders                         | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/107.png
+ NCAAF-108    | Harvard Crimson                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/108.png
+ NCAAF-109    | MIT Engineers                                | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/109.png
+ NCAAF-11     | Colorado Mesa Mavericks                      | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/11.png
+ NCAAF-110    | Mass Maritime Buccaneers                     | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/110.png
+ NCAAF-112    | Tufts Jumbos                                 | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/112.png
+ NCAAF-113    | Massachusetts Minutemen                      | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/113.png
+ NCAAF-114    | Fitchburg State Falcons                      | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/114.png
+ NCAAF-118    | Johns Hopkins University Blue Jays           | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/118.png
+ NCAAF-119    | Towson Tigers                                | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/119.png
+ NCAAF-12     | Arizona Wildcats                             | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/12.png
+ NCAAF-120    | Maryland Terrapins                           | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/120.png
+ NCAAF-121    | Bates Bobcats                                | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/121.png
+ NCAAF-124    | Augsburg Auggies                             | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/124.png
+ NCAAF-125    | Grand Valley State University Lakers         | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/125.png
+ NCAAF-126    | Kalamazoo Hornets                            | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/126.png
+ NCAAF-127    | Michigan State Spartans                      | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/127.png
+ NCAAF-128    | Northern Michigan Wildcats                   | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/128.png
+ NCAAF-129    | Saginaw Valley State Cardinals               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/129.png
+ NCAAF-13     | Cal Poly Mustangs                            | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/13.png
+ NCAAF-130    | Michigan Wolverines                          | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/130.png
+ NCAAF-131    | Wayne State (MI) Warriors                    | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/131.png
+ NCAAF-132    | Bemidji State Beavers                        | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/132.png
+ NCAAF-133    | St. Olaf Oles                                | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/133.png
+ NCAAF-134    | Minnesota Duluth Bulldogs                    | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/134.png
+ NCAAF-135    | Minnesota Golden Gophers                     | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/135.png
+ NCAAF-137    | Missouri Western Griffons                    | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/137.png
+ NCAAF-138    | Northwest Missouri St Bearcats               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/138.png
+ NCAAF-142    | Missouri Tigers                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/142.png
+ NCAAF-143    | Washington University (St. Louis) Bears      | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/143.png
+ NCAAF-145    | Ole Miss Rebels                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/145.png
+ NCAAF-146    | Grove City College Wolverines                | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/146.png
+ NCAAF-147    | Montana State Bobcats                        | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/147.png
+ NCAAF-149    | Montana Grizzlies                            | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/149.png
+ NCAAF-15     | Anna Maria College Amcats                    | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/15.png
+ NCAAF-150    | Duke Blue Devils                             | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/150.png
+ NCAAF-151    | NCAAF Team 151                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/151.png
+ NCAAF-152    | NCAAF Team 152                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/152.png
+ NCAAF-153    | NCAAF Team 153                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/153.png
+ NCAAF-154    | NCAAF Team 154                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/154.png
+ NCAAF-155    | NCAAF Team 155                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/155.png
+ NCAAF-158    | NCAAF Team 158                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/158.png
+ NCAAF-16     | Sacramento State Hornets                     | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/16.png
+ NCAAF-160    | NCAAF Team 160                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/160.png
+ NCAAF-164    | NCAAF Team 164                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/164.png
+ NCAAF-166    | NCAAF Team 166                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/166.png
+ NCAAF-167    | NCAAF Team 167                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/167.png
+ NCAAF-17     | Claremont-Mudd-Scripps College Stags/Athenas | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/17.png
+ NCAAF-18     | Bridgewater State Bears                      | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/18.png
+ NCAAF-183    | NCAAF Team 183                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/183.png
+ NCAAF-189    | NCAAF Team 189                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/189.png
+ NCAAF-193    | NCAAF Team 193                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/193.png
+ NCAAF-194    | NCAAF Team 194                               | NCAAF      | https://sportslogos.com/ncaaf/194.png
+ NCAAF-195    | NCAAF Team 195                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/195.png
+ NCAAF-197    | NCAAF Team 197                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/197.png
+ NCAAF-2      | Auburn Tigers                                | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2.png
+ NCAAF-2000   | NCAAF Team 2000                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2000.png
+ NCAAF-2005   | NCAAF Team 2005                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2005.png
+ NCAAF-2006   | NCAAF Team 2006                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2006.png
+ NCAAF-201    | NCAAF Team 201                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/201.png
+ NCAAF-2010   | NCAAF Team 2010                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2010.png
+ NCAAF-2011   | NCAAF Team 2011                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2011.png
+ NCAAF-2016   | NCAAF Team 2016                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2016.png
+ NCAAF-202    | NCAAF Team 202                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/202.png
+ NCAAF-2026   | NCAAF Team 2026                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2026.png
+ NCAAF-2029   | NCAAF Team 2029                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2029.png
+ NCAAF-2032   | NCAAF Team 2032                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2032.png
+ NCAAF-204    | NCAAF Team 204                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/204.png
+ NCAAF-2046   | NCAAF Team 2046                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2046.png
+ NCAAF-2050   | NCAAF Team 2050                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2050.png
+ NCAAF-2065   | NCAAF Team 2065                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2065.png
+ NCAAF-2083   | NCAAF Team 2083                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2083.png
+ NCAAF-2084   | NCAAF Team 2084                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2084.png
+ NCAAF-2097   | NCAAF Team 2097                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2097.png
+ NCAAF-21     | San Diego State Aztecs                       | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/21.png
+ NCAAF-2110   | NCAAF Team 2110                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2110.png
+ NCAAF-2115   | NCAAF Team 2115                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2115.png
+ NCAAF-2116   | NCAAF Team 2116                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2116.png
+ NCAAF-2117   | NCAAF Team 2117                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2117.png
+ NCAAF-2127   | NCAAF Team 2127                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2127.png
+ NCAAF-213    | NCAAF Team 213                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/213.png
+ NCAAF-2132   | NCAAF Team 2132                              | NCAAF      | https://sportslogos.com/ncaaf/2132.png
+ NCAAF-2142   | NCAAF Team 2142                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2142.png
+ NCAAF-2169   | NCAAF Team 2169                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2169.png
+ NCAAF-218    | NCAAF Team 218                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/218.png
+ NCAAF-2184   | NCAAF Team 2184                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2184.png
+ NCAAF-2193   | NCAAF Team 2193                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2193.png
+ NCAAF-2197   | NCAAF Team 2197                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2197.png
+ NCAAF-2198   | NCAAF Team 2198                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2198.png
+ NCAAF-2199   | NCAAF Team 2199                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2199.png
+ NCAAF-221    | NCAAF Team 221                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/221.png
+ NCAAF-2210   | NCAAF Team 2210                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2210.png
+ NCAAF-222    | NCAAF Team 222                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/222.png
+ NCAAF-2226   | NCAAF Team 2226                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2226.png
+ NCAAF-2229   | NCAAF Team 2229                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2229.png
+ NCAAF-2230   | NCAAF Team 2230                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2230.png
+ NCAAF-2241   | NCAAF Team 2241                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2241.png
+ NCAAF-2247   | NCAAF Team 2247                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2247.png
+ NCAAF-227    | NCAAF Team 227                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/227.png
+ NCAAF-2277   | NCAAF Team 2277                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2277.png
+ NCAAF-228    | NCAAF Team 228                               | NCAAF      | https://sportslogos.com/ncaaf/228.png
+ NCAAF-2287   | NCAAF Team 2287                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2287.png
+ NCAAF-2294   | NCAAF Team 2294                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2294.png
+ NCAAF-2296   | NCAAF Team 2296                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2296.png
+ NCAAF-23     | San José State Spartans                      | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/23.png
+ NCAAF-2305   | NCAAF Team 2305                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2305.png
+ NCAAF-2306   | NCAAF Team 2306                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2306.png
+ NCAAF-2309   | NCAAF Team 2309                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2309.png
+ NCAAF-231    | NCAAF Team 231                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/231.png
+ NCAAF-2320   | NCAAF Team 2320                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2320.png
+ NCAAF-233    | NCAAF Team 233                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/233.png
+ NCAAF-2335   | NCAAF Team 2335                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2335.png
+ NCAAF-2341   | NCAAF Team 2341                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2341.png
+ NCAAF-2348   | NCAAF Team 2348                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2348.png
+ NCAAF-235    | NCAAF Team 235                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/235.png
+ NCAAF-236    | NCAAF Team 236                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/236.png
+ NCAAF-2377   | NCAAF Team 2377                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2377.png
+ NCAAF-238    | NCAAF Team 238                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/238.png
+ NCAAF-2382   | NCAAF Team 2382                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2382.png
+ NCAAF-239    | NCAAF Team 239                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/239.png
+ NCAAF-2390   | NCAAF Team 2390                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2390.png
+ NCAAF-2393   | NCAAF Team 2393                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2393.png
+ NCAAF-24     | Stanford Cardinal                            | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/24.png
+ NCAAF-2405   | NCAAF Team 2405                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2405.png
+ NCAAF-2415   | NCAAF Team 2415                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2415.png
+ NCAAF-242    | NCAAF Team 242                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/242.png
+ NCAAF-2426   | NCAAF Team 2426                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2426.png
+ NCAAF-2428   | NCAAF Team 2428                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2428.png
+ NCAAF-2429   | NCAAF Team 2429                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2429.png
+ NCAAF-2433   | NCAAF Team 2433                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2433.png
+ NCAAF-2439   | NCAAF Team 2439                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2439.png
+ NCAAF-2440   | NCAAF Team 2440                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2440.png
+ NCAAF-2447   | NCAAF Team 2447                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2447.png
+ NCAAF-2448   | NCAAF Team 2448                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2448.png
+ NCAAF-245    | NCAAF Team 245                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/245.png
+ NCAAF-2450   | NCAAF Team 2450                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2450.png
+ NCAAF-2453   | NCAAF Team 2453                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2453.png
+ NCAAF-2458   | NCAAF Team 2458                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2458.png
+ NCAAF-2459   | NCAAF Team 2459                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2459.png
+ NCAAF-2460   | NCAAF Team 2460                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2460.png
+ NCAAF-2464   | NCAAF Team 2464                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2464.png
+ NCAAF-2466   | NCAAF Team 2466                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2466.png
+ NCAAF-248    | NCAAF Team 248                               | NCAAF      | https://sportslogos.com/ncaaf/248.png
+ NCAAF-2483   | NCAAF Team 2483                              | NCAAF      | https://sportslogos.com/ncaaf/2483.png
+ NCAAF-249    | NCAAF Team 249                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/249.png
+ NCAAF-25     | California Golden Bears                      | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/25.png
+ NCAAF-2502   | NCAAF Team 2502                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2502.png
+ NCAAF-2504   | NCAAF Team 2504                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2504.png
+ NCAAF-2509   | NCAAF Team 2509                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2509.png
+ NCAAF-251    | NCAAF Team 251                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/251.png
+ NCAAF-252    | NCAAF Team 252                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/252.png
+ NCAAF-2523   | NCAAF Team 2523                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2523.png
+ NCAAF-2534   | NCAAF Team 2534                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2534.png
+ NCAAF-2535   | NCAAF Team 2535                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2535.png
+ NCAAF-254    | NCAAF Team 254                               | NCAAF      | https://sportslogos.com/ncaaf/254.png
+ NCAAF-2545   | NCAAF Team 2545                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2545.png
+ NCAAF-2546   | NCAAF Team 2546                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2546.png
+ NCAAF-256    | NCAAF Team 256                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/256.png
+ NCAAF-2567   | NCAAF Team 2567                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2567.png
+ NCAAF-2569   | NCAAF Team 2569                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2569.png
+ NCAAF-257    | NCAAF Team 257                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/257.png
+ NCAAF-2572   | NCAAF Team 2572                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2572.png
+ NCAAF-2579   | NCAAF Team 2579                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2579.png
+ NCAAF-258    | NCAAF Team 258                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/258.png
+ NCAAF-2582   | NCAAF Team 2582                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2582.png
+ NCAAF-259    | NCAAF Team 259                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/259.png
+ NCAAF-2598   | NCAAF Team 2598                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2598.png
+ NCAAF-26     | UCLA Bruins                                  | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/26.png
+ NCAAF-2617   | NCAAF Team 2617                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2617.png
+ NCAAF-2619   | NCAAF Team 2619                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2619.png
+ NCAAF-2623   | NCAAF Team 2623                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2623.png
+ NCAAF-2627   | NCAAF Team 2627                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2627.png
+ NCAAF-2628   | NCAAF Team 2628                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2628.png
+ NCAAF-2630   | NCAAF Team 2630                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2630.png
+ NCAAF-2633   | NCAAF Team 2633                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2633.png
+ NCAAF-2635   | NCAAF Team 2635                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2635.png
+ NCAAF-2636   | NCAAF Team 2636                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2636.png
+ NCAAF-2638   | NCAAF Team 2638                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2638.png
+ NCAAF-264    | NCAAF Team 264                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/264.png
+ NCAAF-2640   | NCAAF Team 2640                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2640.png
+ NCAAF-2641   | NCAAF Team 2641                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2641.png
+ NCAAF-2643   | NCAAF Team 2643                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2643.png
+ NCAAF-2649   | NCAAF Team 2649                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2649.png
+ NCAAF-265    | NCAAF Team 265                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/265.png
+ NCAAF-2653   | NCAAF Team 2653                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2653.png
+ NCAAF-2655   | NCAAF Team 2655                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2655.png
+ NCAAF-2678   | NCAAF Team 2678                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2678.png
+ NCAAF-2681   | NCAAF Team 2681                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2681.png
+ NCAAF-2692   | NCAAF Team 2692                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2692.png
+ NCAAF-2710   | NCAAF Team 2710                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2710.png
+ NCAAF-2711   | NCAAF Team 2711                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2711.png
+ NCAAF-2717   | NCAAF Team 2717                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2717.png
+ NCAAF-2729   | NCAAF Team 2729                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2729.png
+ NCAAF-2747   | NCAAF Team 2747                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2747.png
+ NCAAF-275    | NCAAF Team 275                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/275.png
+ NCAAF-2751   | NCAAF Team 2751                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2751.png
+ NCAAF-2754   | NCAAF Team 2754                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2754.png
+ NCAAF-2755   | NCAAF Team 2755                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2755.png
+ NCAAF-276    | NCAAF Team 276                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/276.png
+ NCAAF-277    | NCAAF Team 277                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/277.png
+ NCAAF-2771   | NCAAF Team 2771                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2771.png
+ NCAAF-278    | NCAAF Team 278                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/278.png
+ NCAAF-2803   | NCAAF Team 2803                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2803.png
+ NCAAF-2815   | NCAAF Team 2815                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2815.png
+ NCAAF-282    | NCAAF Team 282                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/282.png
+ NCAAF-2837   | NCAAF Team 2837                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2837.png
+ NCAAF-29     | Redlands Bulldogs                            | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/29.png
+ NCAAF-290    | NCAAF Team 290                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/290.png
+ NCAAF-2916   | NCAAF Team 2916                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/2916.png
+ NCAAF-295    | NCAAF Team 295                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/295.png
+ NCAAF-30     | USC Trojans                                  | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/30.png
+ NCAAF-302    | NCAAF Team 302                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/302.png
+ NCAAF-304    | NCAAF Team 304                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/304.png
+ NCAAF-309    | NCAAF Team 309                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/309.png
+ NCAAF-311    | NCAAF Team 311                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/311.png
+ NCAAF-32     | Carroll University (WI) Pioneers             | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/32.png
+ NCAAF-322    | NCAAF Team 322                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/322.png
+ NCAAF-324    | NCAAF Team 324                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/324.png
+ NCAAF-326    | NCAAF Team 326                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/326.png
+ NCAAF-328    | NCAAF Team 328                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/328.png
+ NCAAF-33     | Colby College White Mules                    | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/33.png
+ NCAAF-331    | NCAAF Team 331                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/331.png
+ NCAAF-333    | NCAAF Team 333                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/333.png
+ NCAAF-338    | NCAAF Team 338                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/338.png
+ NCAAF-344    | NCAAF Team 344                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/344.png
+ NCAAF-349    | NCAAF Team 349                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/349.png
+ NCAAF-356    | NCAAF Team 356                               | NCAAF      | https://sportslogos.com/ncaaf/356.png
+ NCAAF-36     | Colorado State Rams                          | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/36.png
+ NCAAF-38     | Colorado Buffaloes                           | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/38.png
+ NCAAF-399    | NCAAF Team 399                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/399.png
+ NCAAF-40     | Curry College Colonels                       | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/40.png
+ NCAAF-41     | UConn Huskies                                | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/41.png
+ NCAAF-43     | Yale Bulldogs                                | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/43.png
+ NCAAF-46     | Georgetown Hoyas                             | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/46.png
+ NCAAF-47     | Howard Bison                                 | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/47.png
+ NCAAF-48     | Delaware Blue Hens                           | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/48.png
+ NCAAF-49     | Dubuque Spartans                             | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/49.png
+ NCAAF-5      | UAB Blazers                                  | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/5.png
+ NCAAF-50     | Florida A&M Rattlers                         | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/50.png
+ NCAAF-52     | Florida State Seminoles                      | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/52.png
+ NCAAF-55     | Jacksonville State Gamecocks                 | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/55.png
+ NCAAF-56     | Stetson Hatters                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/56.png
+ NCAAF-57     | Florida Gators                               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/57.png
+ NCAAF-58     | South Florida Bulls                          | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/58.png
+ NCAAF-59     | Georgia Tech Yellow Jackets                  | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/59.png
+ NCAAF-6      | South Alabama Jaguars                        | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/6.png
+ NCAAF-60     | Morehouse College Maroon Tigers              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/60.png
+ NCAAF-61     | Georgia Bulldogs                             | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/61.png
+ NCAAF-62     | Hawai'i Rainbow Warriors                     | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/62.png
+ NCAAF-63     | Buena Vista Beavers                          | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/63.png
+ NCAAF-65     | Grinnell Pioneers                            | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/65.png
+ NCAAF-66     | Iowa State Cyclones                          | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/66.png
+ NCAAF-67     | Luther Norse                                 | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/67.png
+ NCAAF-68     | Boise State Broncos                          | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/68.png
+ NCAAF-7      | Amherst Mammoths                             | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/7.png
+ NCAAF-70     | Idaho Vandals                                | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/70.png
+ NCAAF-72     | Elmhurst Bluejays                            | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/72.png
+ NCAAF-74     | Millikin Big Blue                            | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/74.png
+ NCAAF-75     | North Park Vikings                           | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/75.png
+ NCAAF-77     | Northwestern Wildcats                        | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/77.png
+ NCAAF-79     | Southern Illinois Salukis                    | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/79.png
+ NCAAF-8      | Arkansas Razorbacks                          | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/8.png
+ NCAAF-80     | Chicago Maroons                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/80.png
+ NCAAF-81     | Springfield Pride                            | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/81.png
+ NCAAF-83     | Depauw Tigers                                | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/83.png
+ NCAAF-84     | Indiana Hoosiers                             | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/84.png
+ NCAAF-86     | Rose-Hulman Fightin' Engineers               | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/86.png
+ NCAAF-87     | Notre Dame Fighting Irish                    | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/87.png
+ NCAAF-89     | Wabash College Little Giants                 | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/89.png
+ NCAAF-9      | Arizona State Sun Devils                     | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/9.png
+ NCAAF-90     | Pittsburg St Gorillas                        | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/90.png
+ NCAAF-93     | Murray State Racers                          | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/93.png
+ NCAAF-95     | Pikeville Bears                              | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/95.png
+ NCAAF-96     | Kentucky Wildcats                            | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/96.png
+ NCAAF-97     | Louisville Cardinals                         | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/97.png
+ NCAAF-98     | Western Kentucky Hilltoppers                 | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/98.png
+ NCAAF-99     | LSU Tigers                                   | NCAAF      | https://a.espncdn.com/i/teamlogos/ncaa/500/99.png
+ NFL_1        | Atlanta Falcons                              | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_10       | Tennessee Titans                             | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_11       | Indianapolis Colts                           | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_12       | Kansas City Chiefs                           | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_13       | Las Vegas Raiders                            | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_14       | Los Angeles Rams                             | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_15       | Miami Dolphins                               | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_16       | Minnesota Vikings                            | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_17       | New England Patriots                         | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_18       | New Orleans Saints                           | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_19       | New York Giants                              | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_2        | Buffalo Bills                                | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_20       | New York Jets                                | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_21       | Philadelphia Eagles                          | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_22       | Arizona Cardinals                            | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_23       | Pittsburgh Steelers                          | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_24       | Los Angeles Chargers                         | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_25       | San Francisco 49ers                          | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_26       | Seattle Seahawks                             | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_27       | Tampa Bay Buccaneers                         | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_28       | Washington Commanders                        | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_29       | Carolina Panthers                            | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_3        | Chicago Bears                                | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_30       | Jacksonville Jaguars                         | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_33       | Baltimore Ravens                             | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_34       | Houston Texans                               | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_4        | Cincinnati Bengals                           | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_5        | Cleveland Browns                             | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_6        | Dallas Cowboys                               | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_7        | Denver Broncos                               | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_8        | Detroit Lions                                | NFL        | https://sportslogos.com/default_numeric.png
+ NFL_9        | Green Bay Packers                            | NFL        | https://sportslogos.com/default_numeric.png
+ NFL-1        | Atlanta Falcons                              | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/1.png
+ NFL-10       | Tennessee Titans                             | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/10.png
+ NFL-11       | Indianapolis Colts                           | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/11.png
+ NFL-12       | Kansas City Chiefs                           | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/12.png
+ NFL-13       | Las Vegas Raiders                            | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/13.png
+ NFL-14       | Los Angeles Rams                             | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/14.png
+ NFL-15       | Miami Dolphins                               | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/15.png
+ NFL-16       | Minnesota Vikings                            | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/16.png
+ NFL-17       | New England Patriots                         | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/17.png
+ NFL-18       | New Orleans Saints                           | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/18.png
+ NFL-19       | New York Giants                              | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/19.png
+ NFL-2        | Buffalo Bills                                | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/2.png
+ NFL-20       | New York Jets                                | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/20.png
+ NFL-21       | Philadelphia Eagles                          | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/21.png
+ NFL-22       | Arizona Cardinals                            | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/22.png
+ NFL-23       | Pittsburgh Steelers                          | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/23.png
+ NFL-24       | Los Angeles Chargers                         | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/24.png
+ NFL-25       | San Francisco 49ers                          | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/25.png
+ NFL-26       | Seattle Seahawks                             | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/26.png
+ NFL-27       | Tampa Bay Buccaneers                         | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/27.png
+ NFL-28       | Washington Commanders                        | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/28.png
+ NFL-29       | Carolina Panthers                            | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/29.png
+ NFL-3        | Chicago Bears                                | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/3.png
+ NFL-30       | Jacksonville Jaguars                         | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/30.png
+ NFL-33       | Baltimore Ravens                             | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/33.png
+ NFL-34       | Houston Texans                               | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/34.png
+ NFL-4        | Cincinnati Bengals                           | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/4.png
+ NFL-5        | Cleveland Browns                             | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/5.png
+ NFL-6        | Dallas Cowboys                               | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/6.png
+ NFL-7        | Denver Broncos                               | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/7.png
+ NFL-8        | Detroit Lions                                | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/8.png
+ NFL-9        | Green Bay Packers                            | NFL        | https://a.espncdn.com/i/teamlogos/nfl/500/9.png
+ NHL_1        | Boston Bruins                                | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_10       | Montreal Canadiens                           | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_11       | New Jersey Devils                            | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_12       | New York Islanders                           | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_124292   | Seattle Kraken                               | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_129764   | Utah Mammoth                                 | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_13       | New York Rangers                             | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_14       | Ottawa Senators                              | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_15       | Philadelphia Flyers                          | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_16       | Pittsburgh Penguins                          | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_18       | San Jose Sharks                              | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_19       | St. Louis Blues                              | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_2        | Buffalo Sabres                               | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_20       | Tampa Bay Lightning                          | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_21       | Toronto Maple Leafs                          | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_22       | Vancouver Canucks                            | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_23       | Washington Capitals                          | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_25       | Anaheim Ducks                                | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_26       | Florida Panthers                             | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_28       | Winnipeg Jets                                | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_3        | Calgary Flames                               | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_30       | Minnesota Wild                               | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_37       | Vegas Golden Knights                         | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_4        | Chicago Blackhawks                           | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_5        | Detroit Red Wings                            | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_6        | Edmonton Oilers                              | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_7        | Carolina Hurricanes                          | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_8        | Los Angeles Kings                            | NHL        | https://sportslogos.com/default_numeric.png
+ NHL_9        | Dallas Stars                                 | NHL        | https://sportslogos.com/default_numeric.png
+ NHL-1        | Boston Bruins                                | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/1.png
+ NHL-10       | Montreal Canadiens                           | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/10.png
+ NHL-11       | New Jersey Devils                            | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/11.png
+ NHL-12       | New York Islanders                           | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/12.png
+ NHL-124292   | Seattle Kraken                               | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/124292.png
+ NHL-129764   | Utah Mammoth                                 | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/129764.png
+ NHL-13       | New York Rangers                             | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/13.png
+ NHL-14       | Ottawa Senators                              | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/14.png
+ NHL-15       | Philadelphia Flyers                          | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/15.png
+ NHL-16       | Pittsburgh Penguins                          | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/16.png
+ NHL-17       | Colorado Avalanche                           | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/17.png
+ NHL-18       | San Jose Sharks                              | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/18.png
+ NHL-19       | St. Louis Blues                              | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/19.png
+ NHL-2        | Buffalo Sabres                               | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/2.png
+ NHL-20       | Tampa Bay Lightning                          | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/20.png
+ NHL-21       | Toronto Maple Leafs                          | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/21.png
+ NHL-22       | Vancouver Canucks                            | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/22.png
+ NHL-23       | Washington Capitals                          | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/23.png
+ NHL-25       | Anaheim Ducks                                | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/25.png
+ NHL-26       | Florida Panthers                             | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/26.png
+ NHL-27       | Nashville Predators                          | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/27.png
+ NHL-28       | Winnipeg Jets                                | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/28.png
+ NHL-29       | Columbus Blue Jackets                        | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/29.png
+ NHL-3        | Calgary Flames                               | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/3.png
+ NHL-30       | Minnesota Wild                               | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/30.png
+ NHL-37       | Vegas Golden Knights                         | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/37.png
+ NHL-4        | Chicago Blackhawks                           | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/4.png
+ NHL-5        | Detroit Red Wings                            | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/5.png
+ NHL-6        | Edmonton Oilers                              | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/6.png
+ NHL-7        | Carolina Hurricanes                          | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/7.png
+ NHL-8        | Los Angeles Kings                            | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/8.png
+ NHL-9        | Dallas Stars                                 | NHL        | https://a.espncdn.com/i/teamlogos/nhl/500/9.png
+ SOCCER-337   | Brentford                                    | SOCCER     | https://a.espncdn.com/i/teamlogos/soccer/500/337.png
+ SOCCER-349   | AFC Bournemouth                              | SOCCER     | https://a.espncdn.com/i/teamlogos/soccer/500/349.png
+ SOCCER-357   | Leeds United                                 | SOCCER     | https://a.espncdn.com/i/teamlogos/soccer/500/357.png
+ SOCCER-359   | NBA Team 359                                 | SOCCER     | https://a.espncdn.com/i/teamlogos/soccer/500/359.png
+ SOCCER-360   | NBA Team 360                                 | SOCCER     | https://a.espncdn.com/i/teamlogos/soccer/500/360.png
+ SOCCER-361   | NBA Team 361                                 | SOCCER     | https://a.espncdn.com/i/teamlogos/soccer/500/361.png
+ SOCCER-362   | SOCCER Team 362                              | SOCCER     | https://a.espncdn.com/i/teamlogos/soccer/500/362.png
+ SOCCER-363   | SOCCER Team 363                              | SOCCER     | https://a.espncdn.com/i/teamlogos/soccer/500/363.png
+ SOCCER-366   | SOCCER Team 366                              | SOCCER     | https://a.espncdn.com/i/teamlogos/soccer/500/366.png
+ SOCCER-367   | SOCCER Team 367                              | SOCCER     | https://a.espncdn.com/i/teamlogos/soccer/500/367.png
+ SOCCER-368   | SOCCER Team 368                              | SOCCER     | https://a.espncdn.com/i/teamlogos/soccer/500/368.png
+ SOCCER-370   | NBA Team 370                                 | SOCCER     | https://a.espncdn.com/i/teamlogos/soccer/500/370.png
+ SOCCER-371   | SOCCER Team 371                              | SOCCER     | https://a.espncdn.com/i/teamlogos/soccer/500/371.png
+ SOCCER-379   | NBA Team 379                                 | SOCCER     | https://a.espncdn.com/i/teamlogos/soccer/500/379.png
+ SOCCER-380   | NBA Team 380                                 | SOCCER     | https://a.espncdn.com/i/teamlogos/soccer/500/380.png
+ SOCCER-382   | Manchester City                              | SOCCER     | https://a.espncdn.com/i/teamlogos/soccer/500/382.png
+ SOCCER-384   | Crystal Palace                               | SOCCER     | https://a.espncdn.com/i/teamlogos/soccer/500/384.png
+ SOCCER-393   | Nottingham Forest                            | SOCCER     | https://a.espncdn.com/i/teamlogos/soccer/500/393.png
+ 195          | Ohio Bobcats                                 |            | https://sportslogos.com/default_numeric.png
+ 221          | Pittsburgh Panthers                          |            | https://sportslogos.com/default_numeric.png
+ 228          | Clemson Tigers                               |            | https://sportslogos.com/default_numeric.png
+ 2350         | Loyola Chicago Ramblers                      |            | https://sportslogos.com/default_numeric.png
+ 239          | Baylor Bears                                 |            | https://sportslogos.com/default_numeric.png
+ 245          | Texas A&M Aggies                             |            | https://sportslogos.com/default_numeric.png
+ 2507         | Providence Friars                            |            | https://sportslogos.com/default_numeric.png
+ 254          | Utah Utes                                    |            | https://sportslogos.com/default_numeric.png
+ 2541         | Santa Clara Broncos                          |            | https://sportslogos.com/default_numeric.png
+ 259          | Virginia Tech Hokies                         |            | https://sportslogos.com/default_numeric.png
+ 2752         | Xavier Musketeers                            |            | https://sportslogos.com/default_numeric.png
+ 38           | Colorado Buffaloes                           |            | https://sportslogos.com/default_numeric.png
+ 46           | Georgetown Hoyas                             |            | https://sportslogos.com/default_numeric.png
+ 77           | Northwestern Wildcats                        |            | https://sportslogos.com/default_numeric.png
+ 96           | Kentucky Wildcats                            |            | https://sportslogos.com/default_numeric.png
+ NBA_17       | Brooklyn Nets                                |            | https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/bkn.png
+(1202 rows)
+

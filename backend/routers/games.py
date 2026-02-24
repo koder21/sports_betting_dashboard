@@ -1,14 +1,13 @@
-import asyncio
+from sqlalchemy import update
+from backend.repositories.bet_repo import BetRepository
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
-
 import logging
 from fastapi import APIRouter, Depends
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from zoneinfo import ZoneInfo
-
 from ..db import get_db
 from ..services.aai.fresh_data_scraper import FreshDataScraper
 from ..services.metrics import metrics_collector
@@ -27,10 +26,25 @@ from ..models.bet import Bet
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["games"])
-
+@router.post("/grade_completed_bets")
 
 # ================= HELPERS =================
-
+async def grade_completed_bets(session: AsyncSession = Depends(get_db)):
+    """Grade all pending bets for games that are completed (status 'FT', 'completed', 'final')."""
+    completed_games_stmt = select(Game).where(Game.status.in_(["FT", "completed", "final"]))
+    completed_games_result = await session.execute(completed_games_stmt)
+    completed_game_ids = [g.game_id for g in completed_games_result.scalars()]
+    if not completed_game_ids:
+        return {"graded": 0, "message": "No completed games found."}
+    update_stmt = (
+        update(Bet)
+        .where(Bet.game_id.in_(completed_game_ids), Bet.status == "pending")
+        .values(status="graded", graded_at=datetime.utcnow())
+        .execution_options(synchronize_session="fetch")
+    )
+    result = await session.execute(update_stmt)
+    await session.commit()
+    return {"graded": result.rowcount, "message": f"Graded {result.rowcount} bets for completed games."}
 
 def classify_game_status(
     status_detail: Optional[str],
@@ -135,6 +149,7 @@ async def _build_ai_context(
 ) -> Dict[str, object]:
     now_utc = datetime.utcnow().replace(microsecond=0)
     next_24h_utc = now_utc + timedelta(hours=24)
+    logger.info(f"[AI] Filtering upcoming games: now_utc={now_utc}, next_24h_utc={next_24h_utc}")
     now_pst = datetime.now(pst_tz)
     today_pst = now_pst.date()
     yesterday_pst = today_pst - timedelta(days=1)
@@ -182,6 +197,8 @@ async def _build_ai_context(
     game_lookup: Dict[str, Game] = {}
 
     if game_ids_to_lookup:
+        import asyncio
+
         upcoming_result, game_result = await asyncio.gather(
             session.execute(
                 select(GameUpcoming).where(
@@ -253,12 +270,15 @@ async def _build_ai_context(
     upcoming: List[GameLive] = []
     for game_live, start_time in all_live_games_rows:
         if not start_time:
+            #logger.info(f"[AI] Skipping game {getattr(game_live, 'game_id', None)}: no start_time")
             continue
         start_time_naive = start_time.replace(microsecond=0)
         if not (now_utc <= start_time_naive < next_24h_utc):
+            #logger.info(f"[AI] Skipping game {getattr(game_live, 'game_id', None)}: start_time {start_time_naive} not in window {now_utc} - {next_24h_utc}")
             continue
         # Include all games in window, regardless of status
         upcoming.append(game_live)
+        #logger.info(f"[AI] Including upcoming game {getattr(game_live, 'game_id', None)}: start_time {start_time_naive}, status {getattr(game_live, 'status', None)}")
 
     # ===== Build game/team mapping for injuries =====
     game_id_list = [g.game_id for g in upcoming if g.game_id]
@@ -357,8 +377,17 @@ async def _build_ai_context(
     if team_ids:
         injury_team_ids = set(team_ids)
         for tid in list(team_ids):
-            if tid and "-" in tid:
-                injury_team_ids.add(tid.split("-")[-1])
+            if not tid:
+                continue
+            if "-" in tid:
+                bare = tid.split("-")[-1]
+                prefix = tid.split("-")[0]
+                injury_team_ids.add(bare)
+                injury_team_ids.add(f"{prefix}_{bare}")  # NBA-10 -> NBA_10 (injury table format)
+            elif "_" in tid:
+                prefix, bare = tid.split("_", 1)
+                injury_team_ids.add(bare)
+                injury_team_ids.add(f"{prefix}-{bare}")
 
         injuries_rows = await session.execute(
             select(Injury, Player)
@@ -384,6 +413,21 @@ async def _build_ai_context(
                     else None,
                 }
             )
+
+    # Build name-based lookup as fallback for when team_ids are missing
+    injuries_by_name: Dict[str, List] = {}
+    for tid, inj_list in injuries_by_team.items():
+        for inj in inj_list:
+            tname = (inj.get("team_name") or "").strip().lower()
+            if tname:
+                injuries_by_name.setdefault(tname, [])
+                # avoid dupes if multiple team_id keys map to same name
+                existing_player_names = {i["player_name"] for i in injuries_by_name[tname]}
+                for i in inj_list:
+                    if i["player_name"] not in existing_player_names:
+                        injuries_by_name[tname].append(i)
+                        existing_player_names.add(i["player_name"])
+                break  # one pass per tid is enough
 
     # ===== Format output =====
     output_lines: List[str] = []
@@ -487,34 +531,35 @@ async def _build_ai_context(
                 or game.away_team_name
                 or "Away"
             )
-            home_team_id = meta.get("home_team_id") or team_id_by_name.get(home_name)
-            away_team_id = meta.get("away_team_id") or team_id_by_name.get(away_name)
-            # Patch: Ensure home_team_id and away_team_id fallback to game object if missing
-            if not home_team_id:
-                home_team_id = getattr(game, "home_team_id", None)
-            if not away_team_id:
-                away_team_id = getattr(game, "away_team_id", None)
+            home_team_id = meta.get("home_team_id") or team_id_by_name.get(
+                home_name
+            )
+            away_team_id = meta.get("away_team_id") or team_id_by_name.get(
+                away_name
+            )
 
             home_key = home_team_id
             away_key = away_team_id
-            home_key_alt = (
-                home_key.split("-")[-1] if home_key and "-" in home_key else None
-            )
-            away_key_alt = (
-                away_key.split("-")[-1] if away_key and "-" in away_key else None
-            )
 
-            home_injuries = (
-                injuries_by_team.get(home_key, []) if home_key else []
-            )
-            if not home_injuries and home_key_alt:
-                home_injuries = injuries_by_team.get(home_key_alt, [])
+            def get_injuries_for_team(team_id, team_name=None):
+                # Try ID-based lookup first
+                if team_id:
+                    for key in [
+                        team_id,
+                        team_id.replace("-", "_") if "-" in team_id else None,
+                        team_id.replace("_", "-") if "_" in team_id else None,
+                        team_id.split("-")[-1] if "-" in team_id else None,
+                        team_id.split("_")[-1] if "_" in team_id else None,
+                    ]:
+                        if key and key in injuries_by_team:
+                            return injuries_by_team[key]
+                # Fall back to name-based lookup
+                if team_name:
+                    return injuries_by_name.get(team_name.strip().lower(), [])
+                return []
 
-            away_injuries = (
-                injuries_by_team.get(away_key, []) if away_key else []
-            )
-            if not away_injuries and away_key_alt:
-                away_injuries = injuries_by_team.get(away_key_alt, [])
+            home_injuries = get_injuries_for_team(home_key, home_name)
+            away_injuries = get_injuries_for_team(away_key, away_name)
 
             if not home_injuries and not away_injuries:
                 continue

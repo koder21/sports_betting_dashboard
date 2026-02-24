@@ -284,14 +284,14 @@ function LiveScoresPage() {
                     <td>
                       <div className="matchup-container">
                         <span className="team-name">
-                          {g.home_logo && <img src={g.home_logo} className="team-logo" alt="" />}
+                          {g.home_logo && <img src={g.home_logo} className="team-logo" alt="" onError={e => { e.target.style.display="none" }} />}
                           {g.home_team}
                           {homeMomentum === "FIRE" && <span className="momentum-badge fire">🔥</span>}
                           {homeMomentum === "FREEZING" && <span className="momentum-badge freezing">🧊</span>}
                         </span>
                         <span className="vs-text"> vs </span>
                         <span className="team-name">
-                          {g.away_logo && <img src={g.away_logo} className="team-logo" alt="" />}
+                          {g.away_logo && <img src={g.away_logo} className="team-logo" alt="" onError={e => { e.target.style.display="none" }} />}
                           {g.away_team}
                           {awayMomentum === "FIRE" && <span className="momentum-badge fire">🔥</span>}
                           {awayMomentum === "FREEZING" && <span className="momentum-badge freezing">🧊</span>}
@@ -392,14 +392,14 @@ function LiveScoresPage() {
                         <td>
                           <div className="matchup-container">
                             <span className="team-name">
-                              {g.home_logo && <img src={g.home_logo} className="team-logo" alt="" />}
+                              {g.home_logo && <img src={g.home_logo} className="team-logo" alt="" onError={e => { e.target.style.display="none" }} />}
                               {g.home_team}
                               {homeMomentum === "FIRE" && <span className="momentum-badge fire">🔥</span>}
                               {homeMomentum === "FREEZING" && <span className="momentum-badge freezing">🧊</span>}
                             </span>
                             <span className="vs-text"> vs </span>
                             <span className="team-name">
-                              {g.away_logo && <img src={g.away_logo} className="team-logo" alt="" />}
+                              {g.away_logo && <img src={g.away_logo} className="team-logo" alt="" onError={e => { e.target.style.display="none" }} />}
                               {g.away_team}
                               {awayMomentum === "FIRE" && <span className="momentum-badge fire">🔥</span>}
                               {awayMomentum === "FREEZING" && <span className="momentum-badge freezing">🧊</span>}
