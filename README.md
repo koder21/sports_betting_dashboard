@@ -261,7 +261,6 @@ MIT
 **No data showing**
 - Check scheduler running (backend logs)
 - ESPN API accessible (test in browser)
-- Database has records: `sqlite3 sports_intel.db ".tables"`
 
 ## 📞 Support
 
