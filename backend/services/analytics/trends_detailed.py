@@ -1,7 +1,5 @@
-from typing import Dict, Any, List
+from typing import Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
-from backend.db import get_session
 from sqlalchemy import text
 from collections import defaultdict
 
@@ -25,8 +23,8 @@ class PlayerTrendAnalytics:
         Compares last N games performance to season average
         """
         # Query player_stats directly from the database
-        from ...models.player_stats import PlayerStats
-        from ...models.player import Player
+        #from ...models.player_stats import PlayerStats
+        #from ...models.player import Player
         
         result = await session.execute(
             text("""

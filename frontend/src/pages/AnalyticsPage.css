@@ -16,7 +16,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: 
+  background-image:
     linear-gradient(rgba(78, 205, 196, 0.03) 2px, transparent 2px),
     linear-gradient(90deg, rgba(78, 205, 196, 0.03) 2px, transparent 2px);
   background-size: 50px 50px;
@@ -40,7 +40,7 @@
   color: white;
   margin-bottom: 32px;
   text-align: center;
-  background: linear-gradient(135deg, #4ECDC4 0%, #FFE66D 100%);
+  background: linear-gradient(135deg, #4ecdc4 0%, #ffe66d 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -49,7 +49,8 @@
   text-shadow: 0 0 30px rgba(78, 205, 196, 0.3);
 }
 
-.loading, .no-data {
+.loading,
+.no-data {
   text-align: center;
   padding: 60px 20px;
   color: rgba(78, 205, 196, 0.6);
@@ -58,7 +59,8 @@
   z-index: 1;
 }
 
-.no-chart-data, .no-table-data {
+.no-chart-data,
+.no-table-data {
   text-align: center;
   padding: 40px 20px;
   color: rgba(78, 205, 196, 0.4);
@@ -99,8 +101,12 @@
 }
 
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .kpi-card:hover {
@@ -205,7 +211,7 @@
 .chart-title {
   font-size: 20px;
   font-weight: 600;
-  color: #4ECDC4;
+  color: #4ecdc4;
   margin-bottom: 20px;
   padding-bottom: 12px;
   border-bottom: 2px solid rgba(78, 205, 196, 0.3);
@@ -241,7 +247,7 @@
 .table-title {
   font-size: 20px;
   font-weight: 600;
-  color: #4ECDC4;
+  color: #4ecdc4;
   margin-bottom: 20px;
   padding-bottom: 12px;
   border-bottom: 2px solid rgba(78, 205, 196, 0.3);
@@ -266,7 +272,7 @@
   text-align: left;
   font-size: 13px;
   font-weight: 600;
-  color: #4ECDC4;
+  color: #4ecdc4;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 2px solid rgba(78, 205, 196, 0.3);
@@ -287,13 +293,13 @@
 }
 
 .analytics-table td.positive {
-  color: #4ECDC4;
+  color: #4ecdc4;
   font-weight: 600;
   text-shadow: 0 0 5px rgba(78, 205, 196, 0.3);
 }
 
 .analytics-table td.negative {
-  color: #FF6B6B;
+  color: #ff6b6b;
   font-weight: 600;
   text-shadow: 0 0 5px rgba(255, 107, 107, 0.3);
 }
@@ -348,7 +354,8 @@
 }
 
 /* Insights & Patterns Sections */
-.insights-section, .patterns-grid {
+.insights-section,
+.patterns-grid {
   margin: 40px 0;
   position: relative;
   z-index: 1;
@@ -357,7 +364,7 @@
 .section-title {
   font-size: 24px;
   font-weight: 700;
-  color: #4ECDC4;
+  color: #4ecdc4;
   margin-bottom: 24px;
   border-bottom: 2px solid rgba(78, 205, 196, 0.5);
   padding-bottom: 12px;
@@ -389,7 +396,7 @@
 
 .insight-card h3 {
   margin: 0 0 16px 0;
-  color: #4ECDC4;
+  color: #4ecdc4;
   font-size: 16px;
   font-weight: 600;
 }
@@ -416,11 +423,11 @@
 }
 
 .insight-item.hot {
-  border-left-color: #4ECDC4;
+  border-left-color: #4ecdc4;
 }
 
 .insight-item.cold {
-  border-left-color: #FF6B6B;
+  border-left-color: #ff6b6b;
 }
 
 .insight-name {
@@ -445,13 +452,13 @@
 
 .badge.green {
   background: rgba(78, 205, 196, 0.2);
-  color: #4ECDC4;
+  color: #4ecdc4;
   box-shadow: 0 0 10px rgba(78, 205, 196, 0.2);
 }
 
 .badge.red {
   background: rgba(255, 107, 107, 0.2);
-  color: #FF6B6B;
+  color: #ff6b6b;
   box-shadow: 0 0 10px rgba(255, 107, 107, 0.2);
 }
 
@@ -484,7 +491,7 @@
 
 .pattern-card h3 {
   margin: 0 0 16px 0;
-  color: #4ECDC4;
+  color: #4ecdc4;
   font-size: 16px;
   font-weight: 600;
 }
@@ -517,14 +524,14 @@
 
 .bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4ECDC4 0%, #FFE66D 100%);
+  background: linear-gradient(90deg, #4ecdc4 0%, #ffe66d 100%);
   transition: width 0.3s ease;
   box-shadow: 0 0 10px rgba(78, 205, 196, 0.3);
 }
 
 .pattern-stats {
   font-size: 0.8rem;
-  color: #FFE66D;
+  color: #ffe66d;
   text-align: right;
   font-weight: 500;
 }

@@ -45,10 +45,10 @@ export function setOddsFormat(format) {
  */
 export function americanToDecimal(americanOdds) {
   if (!americanOdds || americanOdds === 0) return 2.0; // default
-  
+
   const odds = parseFloat(americanOdds);
   if (isNaN(odds)) return 2.0;
-  
+
   if (odds > 0) {
     return (odds / 100 + 1).toFixed(3);
   } else {
@@ -63,12 +63,12 @@ export function americanToDecimal(americanOdds) {
  */
 export function decimalToAmerican(decimalOdds) {
   if (!decimalOdds || decimalOdds === 0) return -110; // default
-  
+
   const odds = parseFloat(decimalOdds);
   if (isNaN(odds) || odds <= 1) return -110;
-  
+
   const profit = odds - 1;
-  
+
   if (profit >= 1) {
     return Math.round(profit * 100);
   } else {

@@ -1,8 +1,11 @@
 import React, { useEffect, useState, useCallback } from "react";
+import ErrorBoundary from '../components/ErrorBoundary.jsx';
+import AnalyticsService from '../services/analytics.js';
+import SuspenseFallback from '../components/SuspenseFallback.jsx';
 import api from "../services/api.js";
-import GameBoxscore from '../components/GameBoxscore';
-import BetWinCard from '../components/BetWinCard';
-import GameLiveCard from '../components/GameLiveCard';
+import GameBoxscore from '../components/GameBoxscore.jsx';
+import BetWinCard from '../components/BetWinCard.jsx';
+import GameLiveCard from '../components/GameLiveCard.jsx';
 import './AlertsPage.css';
 
 // Constants
@@ -12,6 +15,11 @@ function AlertsPage() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Track page view
+  useEffect(() => {
+    AnalyticsService.trackPageView('AlertsPage');
+  }, []);
 
   const loadAlerts = useCallback(() => {
     api.get("/api/alerts/")
@@ -28,41 +36,28 @@ function AlertsPage() {
 
   useEffect(() => {
     loadAlerts();
-    
     // Poll for new alerts every 5 minutes
     const interval = setInterval(loadAlerts, POLL_INTERVAL);
     return () => clearInterval(interval);
   }, [loadAlerts]);
 
   const handleMarkAllRead = useCallback(() => {
-    // Optimistic update - clear UI immediately
     setAlerts([]);
-    
-    // Notify Layout to refresh the badge
     window.dispatchEvent(new Event('alertDismissed'));
-    
-    // Make API call in background (non-blocking)
     api.post("/api/alerts/mark-all-read")
       .catch((err) => {
         console.error('Failed to mark all as read:', err);
-        // Could show error toast here
       });
-  }, []);
+  }, []); // No external dependencies
 
   const ack = useCallback((id) => {
-    // Optimistic update using functional setState to avoid stale closure
     setAlerts(prevAlerts => prevAlerts.filter(alert => alert.id !== id));
-    
-    // Notify Layout to refresh the badge
     window.dispatchEvent(new Event('alertDismissed'));
-    
-    // Make API call in background (non-blocking)
     api.post(`/api/alerts/${id}/ack`)
       .catch((err) => {
         console.error(`Failed to acknowledge alert ${id}:`, err);
-        // Could show error toast here
       });
-  }, []);
+  }, []); // No external dependencies
 
   const renderAlert = useCallback((alert) => {
     const category = alert.category?.toLowerCase() || '';
@@ -158,4 +153,12 @@ function AlertsPage() {
   );
 }
 
-export default AlertsPage;
+export default function AlertsPageWrapper(props) {
+  return (
+    <ErrorBoundary>
+      <React.Suspense fallback={<SuspenseFallback message="Loading alerts..." />}>
+        <AlertsPage {...props} />
+      </React.Suspense>
+    </ErrorBoundary>
+  );
+}

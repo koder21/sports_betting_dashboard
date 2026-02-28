@@ -1,5 +1,4 @@
 from sqlalchemy import update
-from backend.repositories.bet_repo import BetRepository
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 import logging
@@ -8,6 +7,7 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from zoneinfo import ZoneInfo
+from backend.utils.redis_cache import redis_cache
 from ..db import get_db
 from ..services.aai.fresh_data_scraper import FreshDataScraper
 from ..services.metrics import metrics_collector
@@ -31,9 +31,39 @@ router = APIRouter(tags=["games"])
 # ================= HELPERS =================
 async def grade_completed_bets(session: AsyncSession = Depends(get_db)):
     """Grade all pending bets for games that are completed (status 'FT', 'completed', 'final')."""
-    completed_games_stmt = select(Game).where(Game.status.in_(["FT", "completed", "final"]))
-    completed_games_result = await session.execute(completed_games_stmt)
-    completed_game_ids = [g.game_id for g in completed_games_result.scalars()]
+    # Use final_keywords for robust status matching
+    final_keywords = [
+        "final",
+        "ft",
+        "full time",
+        "full-time",
+        "ended",
+        "completed",
+        "concluded",
+        "game over",
+        "postgame",
+        "final/ot",
+        "final/so",
+        "final (ot)",
+        "final (so)",
+        "final (pen)",
+        "final (agg)",
+        "final (et)",
+        "final (aet)",
+        "final (pens)",
+        "final (extra time)",
+        "final (shootout)",
+        "final (penalties)",
+        "final (agg.)",
+    ]
+    # Fetch all games
+    all_games_stmt = select(Game)
+    all_games_result = await session.execute(all_games_stmt)
+    all_games = list(all_games_result.scalars())
+    completed_game_ids = [
+        g.game_id for g in all_games
+        if g.status and any(k in g.status.lower() for k in final_keywords)
+    ]
     if not completed_game_ids:
         return {"graded": 0, "message": "No completed games found."}
     update_stmt = (
@@ -44,7 +74,14 @@ async def grade_completed_bets(session: AsyncSession = Depends(get_db)):
     )
     result = await session.execute(update_stmt)
     await session.commit()
-    return {"graded": result.rowcount, "message": f"Graded {result.rowcount} bets for completed games."}
+    # Safely access rowcount, fallback to counting affected bets
+    graded_count = getattr(result, "rowcount", None)
+    if graded_count is None:
+        # Fallback: count pending bets for completed games
+        bet_count_stmt = select(Bet).where(Bet.game_id.in_(completed_game_ids), Bet.status == "graded")
+        bet_count_result = await session.execute(bet_count_stmt)
+        graded_count = len(list(bet_count_result.scalars()))
+    return {"graded": graded_count, "message": f"Graded {graded_count} bets for completed games."}
 
 def classify_game_status(
     status_detail: Optional[str],
@@ -180,7 +217,8 @@ async def _build_ai_context(
         )
         .order_by(GameResult.start_time)
     )
-    results: List[GameResult] = list(yesterday_from_results.scalars().all())
+    from typing import Union
+    results: List[Union[GameResult, GameLive]] = list(yesterday_from_results.scalars().all())
 
     # Also include GameLive entries that are final and started yesterday
     all_live_result = await session.execute(select(GameLive))
@@ -476,10 +514,16 @@ async def _build_ai_context(
             output_lines.append(f"{away_name} @ {home_name}")
             if getattr(game, "game_id", None):
                 output_lines.append(f"Game ID: {game.game_id}")
-            if getattr(game, "start_time", None):
+            # Use start_time from joined Game object if available
+            start_time = None
+            if "start_time" in locals():
+                start_time = start_time
+            elif hasattr(game, "start_time"):
+                start_time = getattr(game, "start_time", None)
+            if start_time:
                 try:
                     game_time_pst = (
-                        game.start_time.replace(tzinfo=ZoneInfo("UTC"))
+                        start_time.replace(tzinfo=ZoneInfo("UTC"))
                         .astimezone(pst_tz)
                     )
                     output_lines.append(
@@ -488,7 +532,7 @@ async def _build_ai_context(
                     )
                 except Exception:
                     output_lines.append(
-                        f"Start Time: {game.start_time}"
+                        f"Start Time: {start_time}"
                     )
             if getattr(game, "home_odds", None):
                 away_odds = getattr(game, "away_odds", "N/A")
@@ -610,6 +654,7 @@ async def _build_ai_context(
 
 
 @router.get("/ai-context")
+@redis_cache(ttl=60)
 async def get_ai_context(session: AsyncSession = Depends(get_db)):
     """
     Get yesterday's results and today's upcoming games (plus injuries)
@@ -621,6 +666,7 @@ async def get_ai_context(session: AsyncSession = Depends(get_db)):
 
 
 @router.get("/ai-context-fresh")
+@redis_cache(ttl=60)
 async def get_ai_context_fresh(session: AsyncSession = Depends(get_db)):
     """
     Scrape fresh data, then return the same AI context format.
@@ -666,11 +712,6 @@ async def get_game_details(
     if not game:
         return {"error": f"Game {game_id} not found"}
 
-    game_upcoming_result = await session.execute(
-        select(GameUpcoming).where(GameUpcoming.game_id == game_id)
-    )
-    game_upcoming = game_upcoming_result.scalar()
-
     game_live_result = await session.execute(
         select(GameLive).where(GameLive.game_id == game_id)
     )
@@ -689,7 +730,6 @@ async def get_game_details(
             current_status = "final"
         else:
             current_status = "live"
-        status_obj = game_result_obj
     elif game_live:
         status_str = (game_live.status or "").lower()
         if (
@@ -710,10 +750,8 @@ async def get_game_details(
             current_status = "final"
         else:
             current_status = "live"
-        status_obj = game_live
     else:
         current_status = "upcoming"
-        status_obj = game_upcoming
 
     home_team = game.home_team
     away_team = game.away_team
@@ -953,6 +991,7 @@ async def get_game_details(
 
 
 @router.get("/metrics/scraper-performance")
+@redis_cache(ttl=60)
 async def get_scraper_metrics():
     """
     Get performance metrics for all scraping operations.

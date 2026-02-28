@@ -18,7 +18,9 @@
   background: white;
   border-radius: 6px;
   border-left: 4px solid #e5e7eb;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .stat-item:hover {

@@ -96,7 +96,7 @@ async def build_custom_single(
         pick=request.pick,
         stake=request.stake,
         odds=request.odds,
-        notes=request.notes,
+        notes=request.notes or "",
     )
 
     if not result.get("success"):
@@ -119,7 +119,7 @@ async def build_custom_parlay(
         for leg in request.legs
     ]
 
-    result = await service.build_custom_parlay(legs=legs, stake=request.stake, notes=request.notes)
+    result = await service.build_custom_parlay(legs=legs, stake=request.stake, notes=request.notes or "")
 
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error", "Failed to build parlay"))

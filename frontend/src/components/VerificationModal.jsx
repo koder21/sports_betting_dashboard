@@ -29,13 +29,19 @@ const VerificationModal = React.memo(({ results, onClose, onApply }) => {
       <div className="modal-content verification-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>⚠️ Bet Verification Results</h2>
-          <button className="modal-close" onClick={onClose} aria-label="Close modal">×</button>
+          <button className="modal-close" onClick={onClose} aria-label="Close modal">
+            ×
+          </button>
         </div>
 
         <div className="modal-body">
           <div className="verification-summary">
-            <p><strong>Total Graded Bets:</strong> {results.total_graded}</p>
-            <p><strong>Discrepancies Found:</strong> {results.discrepancies_found}</p>
+            <p>
+              <strong>Total Graded Bets:</strong> {results.total_graded}
+            </p>
+            <p>
+              <strong>Discrepancies Found:</strong> {results.discrepancies_found}
+            </p>
           </div>
 
           {results.discrepancies.length === 0 ? (
@@ -58,7 +64,7 @@ const VerificationModal = React.memo(({ results, onClose, onApply }) => {
                       aria-label={`Select correction ${idx + 1}`}
                     />
                     <div className="discrepancy-details">
-                      {disc.type === "parlay" ? (
+                      {disc.type === 'parlay' ? (
                         <>
                           <div className="disc-header">
                             <strong>Parlay</strong> ({disc.legs?.length || 0} legs)
@@ -68,7 +74,10 @@ const VerificationModal = React.memo(({ results, onClose, onApply }) => {
                           </div>
                           <div className="disc-info">
                             <div>Stake: ${disc.original_stake?.toFixed(2) || 0}</div>
-                            <div>Odds: {disc.parlay_odds > 0 ? '+' : ''}{disc.parlay_odds?.toFixed(0) || 0}</div>
+                            <div>
+                              Odds: {disc.parlay_odds > 0 ? '+' : ''}
+                              {disc.parlay_odds?.toFixed(0) || 0}
+                            </div>
                           </div>
                           {disc.leg_discrepancies && disc.leg_discrepancies.length > 0 && (
                             <div className="leg-discrepancies">
@@ -93,7 +102,10 @@ const VerificationModal = React.memo(({ results, onClose, onApply }) => {
                           </div>
                           <div className="disc-info">
                             <div>Stake: ${disc.stake?.toFixed(2) || 0}</div>
-                            <div>Odds: {disc.odds > 0 ? '+' : ''}{disc.odds?.toFixed(0) || 0}</div>
+                            <div>
+                              Odds: {disc.odds > 0 ? '+' : ''}
+                              {disc.odds?.toFixed(0) || 0}
+                            </div>
                           </div>
                           {disc.reason && (
                             <div className="disc-reason">
@@ -119,7 +131,8 @@ const VerificationModal = React.memo(({ results, onClose, onApply }) => {
             onClick={handleApply}
             disabled={selectedCorrections.length === 0}
           >
-            Apply {selectedCorrections.length} Correction{selectedCorrections.length !== 1 ? 's' : ''}
+            Apply {selectedCorrections.length} Correction
+            {selectedCorrections.length !== 1 ? 's' : ''}
           </button>
         </div>
       </div>

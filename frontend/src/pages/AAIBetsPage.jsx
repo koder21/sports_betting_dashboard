@@ -1,13 +1,19 @@
-import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import React, { useRef, useCallback, useMemo, useEffect } from "react";
 import api from "../services/api.js";
 import { convertToUserTimezone } from "../services/timezoneService.js";
-import { getOddsFormat, formatOdds } from "../services/oddsService.js";
+import { formatOdds } from "../services/oddsService.js";
 import BetPlacementModal from "../components/BetPlacementModal.jsx";
 import CustomBetBuilder from "../components/CustomBetBuilder.jsx";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
+import SkeletonLoader from "../components/SkeletonLoader.jsx";
 import ErrorMessage from "../components/ErrorMessage.jsx";
 import ErrorBoundary from "../components/ErrorBoundary.jsx";
+import SuspenseFallback from "../components/SuspenseFallback.jsx";
 import "./AAIBetsPage.css";
+import { useOddsFormat } from "../hooks/useOddsFormat";
+import { useLoading } from "../hooks/useLoading";
+import { useError } from "../hooks/useError";
+import { useMetrics } from "../hooks/useMetrics";
 
 // Constants
 const API_TIMEOUT = 240000; // 4 minutes
@@ -19,8 +25,7 @@ const DEFAULT_MIN_CONFIDENCE = 60;
 /**
  * Enhanced BetCard with new backend data
  */
-const BetCard = React.memo(({ pick, onPlaceBet }) => {
-  const oddsFormat = getOddsFormat();
+const BetCard = React.memo(({ pick, onPlaceBet, oddsFormat }) => {
   
   const renderValueBadge = (edge, evPercent) => {
     if (!edge || edge < 2) return null;
@@ -230,17 +235,19 @@ ParlayCard.displayName = 'ParlayCard';
  * Main Component
  */
 function AAIBetsPage() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [hasCalculated, setHasCalculated] = useState(false);
-  const [selectedBet, setSelectedBet] = useState(null);
-  const [showPlacementModal, setShowPlacementModal] = useState(false);
-  const [showCustomBuilder, setShowCustomBuilder] = useState(false);
-  const [bankroll, setBankroll] = useState(DEFAULT_BANKROLL);
-  const [minConfidence, setMinConfidence] = useState(DEFAULT_MIN_CONFIDENCE);
-  const [selectedSports, setSelectedSports] = useState([]);
-  
+  useMetrics("AAIBetsPage");
+  const { error, setErrorMsg, clearError: clearError } = useError();
+  const setError = (msg) => msg === null ? clearError() : setErrorMsg(msg);
+  const { loading, startLoading, stopLoading } = useLoading();
+  const [oddsFormat] = useOddsFormat();
+  const [data, setData] = React.useState(null);
+  const [hasCalculated, setHasCalculated] = React.useState(false);
+  const [selectedBet, setSelectedBet] = React.useState(null);
+  const [showPlacementModal, setShowPlacementModal] = React.useState(false);
+  const [showCustomBuilder, setShowCustomBuilder] = React.useState(false);
+  const [bankroll, setBankroll] = React.useState(DEFAULT_BANKROLL);
+  const [minConfidence, setMinConfidence] = React.useState(DEFAULT_MIN_CONFIDENCE);
+  const [selectedSports, setSelectedSports] = React.useState([]);
   const canvasRef = useRef(null);
   const animationFrameRef = useRef(null);
 
@@ -282,8 +289,8 @@ function AAIBetsPage() {
 
   const calculateOdds = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
+      startLoading();
+      clearError();
       
       const params = new URLSearchParams({
         min_confidence: minConfidence,
@@ -302,17 +309,17 @@ function AAIBetsPage() {
       setData(res.data || null);
       setHasCalculated(true);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Failed to load");
+      setErrorMsg(err.response?.data?.message || err.message || "Failed to load");
       console.error('Error:', err);
     } finally {
-      setLoading(false);
+      stopLoading();
     }
-  }, [minConfidence, bankroll, selectedSports]);
+  }, [minConfidence, bankroll, selectedSports, startLoading, stopLoading, clearError, setErrorMsg]);
 
   const getQuickRecommendations = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
+      startLoading();
+      clearError();
       
       const params = new URLSearchParams({
         min_confidence: minConfidence,
@@ -330,34 +337,33 @@ function AAIBetsPage() {
       setData(res.data || null);
       setHasCalculated(true);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Failed");
+      setErrorMsg(err.response?.data?.message || err.message || "Failed");
       console.error('Error:', err);
     } finally {
-      setLoading(false);
+      stopLoading();
     }
-  }, [minConfidence, bankroll, selectedSports]);
+  }, [minConfidence, bankroll, selectedSports, startLoading, stopLoading, clearError, setErrorMsg]);
 
   const toggleSport = useCallback((sport) => {
     setSelectedSports(prev => 
       prev.includes(sport) ? prev.filter(s => s !== sport) : [...prev, sport]
     );
-  }, []);
+  }, []); // No external dependencies
 
   const openBetPlacementModal = useCallback((bet) => {
     setSelectedBet(bet);
     setShowPlacementModal(true);
-  }, []);
+  }, []); // No external dependencies
 
   const closeBetPlacementModal = useCallback(() => {
     setShowPlacementModal(false);
     setSelectedBet(null);
-  }, []);
+  }, []); // No external dependencies
 
-  const openCustomBuilder = useCallback(() => setShowCustomBuilder(true), []);
-  const closeCustomBuilder = useCallback(() => setShowCustomBuilder(false), []);
+  const openCustomBuilder = useCallback(() => setShowCustomBuilder(true), []); // No external dependencies
+  const closeCustomBuilder = useCallback(() => setShowCustomBuilder(false), []); // No external dependencies
 
   const singles = useMemo(() => data?.singles || [], [data?.singles]);
-  const parlays = useMemo(() => data?.parlays || [], [data?.parlays]);
   const freshData = useMemo(() => data?.fresh_data || {}, [data?.fresh_data]);
 
   const stats = useMemo(() => {
@@ -457,7 +463,7 @@ function AAIBetsPage() {
   }
 
   return (
-    <div className="aai-bets-page">
+    <div className="aai-bets-page" role="main" aria-label="AAI Bets Page">
       <div className="aai-results">
         <div className="page-header">
           <h1>🤖 AAI Recommendations</h1>
@@ -530,14 +536,18 @@ function AAIBetsPage() {
                   <h2>Singles</h2>
                   <span className="aai-section-subtitle">{singles.length} picks</span>
                 </div>
-                {singles.length > 0 ? (
+                {loading ? (
+                  <div role="status" aria-live="polite">
+                    <SkeletonLoader rows={6} columns={2} type="grid" width="100%" height="2em" />
+                  </div>
+                ) : singles.length > 0 ? (
                   <div className="aai-grid">
                     {singles.map((pick, idx) => (
-                      <BetCard key={pick.game_id || idx} pick={pick} onPlaceBet={openBetPlacementModal} />
+                      <BetCard key={pick.game_id || idx} pick={pick} oddsFormat={oddsFormat} onPlaceBet={openBetPlacementModal} />
                     ))}
                   </div>
                 ) : (
-                  <div className="aai-empty">No picks. Try lower confidence.</div>
+                  <div className="aai-empty" role="status" aria-live="polite">No picks. Try lower confidence.</div>
                 )}
               </div>
 
@@ -592,4 +602,12 @@ function AAIBetsPage() {
   );
 }
 
-export default AAIBetsPage;
+export default function AAIBetsPageWrapper(props) {
+  return (
+    <ErrorBoundary>
+      <React.Suspense fallback={<SuspenseFallback message="Loading AAI bets..." />}>
+        <AAIBetsPage {...props} />
+      </React.Suspense>
+    </ErrorBoundary>
+  );
+}

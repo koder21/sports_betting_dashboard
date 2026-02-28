@@ -92,7 +92,9 @@ class TeamRepository(BaseRepository[Team]):
                 updated = True
             if updated:
                 await self.session.flush()
-        return team
+            return team
+        else:
+            raise ValueError(f"Team with espn_id={espn_id} and sport_id={sport_id} not found after upsert.")
 
     async def get_or_create_sport(
         self,

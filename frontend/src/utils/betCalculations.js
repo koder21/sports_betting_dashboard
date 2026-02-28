@@ -34,12 +34,12 @@ export const calcDecimalProfit = (stake, decimalOdds) => {
  */
 export const calcParlayProfit = (stake, parlayOdds) => {
   if (!parlayOdds || stake === 0) return 0;
-  
+
   // Detect if odds are American (>= 100 or <= -100) or Decimal
   if (parlayOdds >= 100 || parlayOdds <= -100) {
     return calcAmericanProfit(stake, parlayOdds);
   }
-  
+
   // Otherwise use decimal odds logic
   return calcDecimalProfit(stake, parlayOdds);
 };
@@ -51,19 +51,19 @@ export const calcParlayProfit = (stake, parlayOdds) => {
  */
 export const getGroupStatus = (bets) => {
   if (!bets || bets.length === 0) return 'pending';
-  
+
   const anyVoided = bets.some((b) => b.status === 'void');
   if (anyVoided) return 'void';
-  
+
   const allPending = bets.every((b) => b.status === 'pending');
   if (allPending) return 'pending';
-  
+
   const anyLost = bets.some((b) => b.status === 'lost');
   if (anyLost) return 'lost';
-  
+
   const allWon = bets.every((b) => b.status === 'won');
   if (allWon) return 'won';
-  
+
   return 'pending';
 };
 
@@ -89,8 +89,8 @@ export const computeGroupPnlAndStake = (groupBets) => {
   if (isParlay) {
     // Total stake = first leg's original_stake (which equals the full parlay wager)
     // Fall back to summing stakes if original_stake not set
-    stake = groupBets[0].original_stake ||
-            groupBets.reduce((sum, b) => sum + (b.stake || 0), 0) || 0;
+    stake =
+      groupBets[0].original_stake || groupBets.reduce((sum, b) => sum + (b.stake || 0), 0) || 0;
 
     if (status === 'won') {
       // parlay_odds is the combined decimal multiplier (e.g. 1.5291 × 1.6494 = 2.5217)
@@ -104,8 +104,8 @@ export const computeGroupPnlAndStake = (groupBets) => {
           const legOdds = b.odds || 0;
           // handle decimal odds (1.01-20 range) vs american
           if (legOdds >= 1.01 && legOdds < 100) return product * legOdds;
-          if (legOdds > 0) return product * ((legOdds / 100) + 1);
-          if (legOdds < 0) return product * ((100 / Math.abs(legOdds)) + 1);
+          if (legOdds > 0) return product * (legOdds / 100 + 1);
+          if (legOdds < 0) return product * (100 / Math.abs(legOdds) + 1);
           return product;
         }, 1.0);
         pnl = stake * (combinedOdds - 1);
@@ -118,7 +118,7 @@ export const computeGroupPnlAndStake = (groupBets) => {
     groupBets.forEach((b) => {
       const s = b.original_stake || b.stake || 0;
       stake += s;
-      
+
       if (b.status === 'won') {
         pnl += calcDecimalProfit(s, b.odds || 0);
       } else if (b.status === 'lost') {
@@ -130,7 +130,7 @@ export const computeGroupPnlAndStake = (groupBets) => {
   // Safety check for infinite values
   if (!isFinite(pnl)) pnl = 0;
   if (!isFinite(stake)) stake = 0;
-  
+
   return { stake, pnl };
 };
 
@@ -141,11 +141,11 @@ export const computeGroupPnlAndStake = (groupBets) => {
  */
 export const calculateWinRate = (groups) => {
   if (!groups || groups.length === 0) return 0;
-  
-  const finished = groups.filter(g => ['won', 'lost'].includes(g.status));
+
+  const finished = groups.filter((g) => ['won', 'lost'].includes(g.status));
   if (finished.length === 0) return 0;
-  
-  const wins = finished.filter(g => g.status === 'won').length;
+
+  const wins = finished.filter((g) => g.status === 'won').length;
   return Math.round((wins / finished.length) * 100);
 };
 
@@ -167,7 +167,7 @@ export const calculateROI = (totalPnl, totalStake) => {
  */
 export const groupBetsByParlay = (bets) => {
   if (!bets || bets.length === 0) return [];
-  
+
   const parlayMap = new Map();
   const singles = [];
 
@@ -184,12 +184,12 @@ export const groupBetsByParlay = (bets) => {
 
   // Combine parlays and singles
   const groups = [...parlayMap.values(), ...singles];
-  
+
   // Add computed properties to each group
   return groups.map((group) => {
     const { stake, pnl } = computeGroupPnlAndStake(group);
     const status = getGroupStatus(group);
-    
+
     return {
       bets: group,
       status,
@@ -210,7 +210,7 @@ export const groupBetsByParlay = (bets) => {
  */
 export const filterGroupsByStatus = (groups, status) => {
   if (!groups || !status) return groups;
-  return groups.filter(g => g.status === status);
+  return groups.filter((g) => g.status === status);
 };
 
 /**
@@ -221,7 +221,7 @@ export const filterGroupsByStatus = (groups, status) => {
  */
 export const sortGroupsByDate = (groups, direction = 'desc') => {
   if (!groups) return [];
-  
+
   return [...groups].sort((a, b) => {
     const dateA = new Date(a.placed_at);
     const dateB = new Date(b.placed_at);

@@ -4,23 +4,34 @@
   padding: 20px;
   margin-bottom: 16px;
   border: 2px solid #ff4444;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 68, 68, 0.3);
-  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(255, 68, 68, 0.3);
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
   animation: live-glow 3s ease-in-out infinite;
 }
 
 @keyframes live-glow {
-  0%, 100% {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 68, 68, 0.3);
+  0%,
+  100% {
+    box-shadow:
+      0 4px 6px rgba(0, 0, 0, 0.3),
+      0 0 20px rgba(255, 68, 68, 0.3);
   }
   50% {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3), 0 0 30px rgba(255, 68, 68, 0.6);
+    box-shadow:
+      0 4px 6px rgba(0, 0, 0, 0.3),
+      0 0 30px rgba(255, 68, 68, 0.6);
   }
 }
 
 .game-live-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4), 0 0 30px rgba(255, 68, 68, 0.5);
+  box-shadow:
+    0 6px 12px rgba(0, 0, 0, 0.4),
+    0 0 30px rgba(255, 68, 68, 0.5);
 }
 
 .live-header {
@@ -61,7 +72,8 @@
 }
 
 @keyframes pulse-live {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
@@ -78,7 +90,8 @@
 }
 
 @keyframes blink-live {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {

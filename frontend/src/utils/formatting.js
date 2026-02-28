@@ -14,17 +14,17 @@ export const formatCurrency = (value, showSign = false, round = true) => {
   if (value === null || value === undefined || isNaN(value)) {
     return '$0';
   }
-  
+
   const amount = round ? Math.round(value) : value;
-    let sign = '';
-    if (showSign) {
-      if (amount > 0) {
-        sign = '+';
-      } else if (amount < 0) {
-        sign = '-';
-      }
+  let sign = '';
+  if (showSign) {
+    if (amount > 0) {
+      sign = '+';
+    } else if (amount < 0) {
+      sign = '-';
     }
-  
+  }
+
   return `${sign}$${Math.abs(amount).toLocaleString('en-US', {
     minimumFractionDigits: round ? 0 : 2,
     maximumFractionDigits: round ? 0 : 2,
@@ -40,10 +40,10 @@ export const formatPnL = (value) => {
   if (value === null || value === undefined || isNaN(value)) {
     return { text: '$0', className: 'neutral', color: '#999' };
   }
-  
+
   const isProfit = value > 0;
   const isLoss = value < 0;
-  
+
   return {
     text: formatCurrency(value, true, true),
     className: isProfit ? 'profit' : isLoss ? 'loss' : 'neutral',
@@ -61,7 +61,7 @@ export const formatPercentage = (value, decimals = 0) => {
   if (value === null || value === undefined || isNaN(value)) {
     return '0%';
   }
-  
+
   return `${value.toFixed(decimals)}%`;
 };
 
@@ -75,15 +75,15 @@ export const formatWinRate = (wins, total) => {
   if (!total || total === 0) {
     return { percentage: '0%', className: 'neutral' };
   }
-  
+
   const rate = (wins / total) * 100;
   let className = 'neutral';
-  
+
   if (rate >= 60) className = 'excellent';
   else if (rate >= 50) className = 'good';
   else if (rate >= 40) className = 'average';
   else className = 'poor';
-  
+
   return {
     percentage: formatPercentage(rate, 1),
     className,
@@ -99,7 +99,7 @@ export const formatLargeNumber = (value) => {
   if (value === null || value === undefined || isNaN(value)) {
     return '0';
   }
-  
+
   if (value >= 1000000000) {
     return `${(value / 1000000000).toFixed(1)}B`;
   }
@@ -109,7 +109,7 @@ export const formatLargeNumber = (value) => {
   if (value >= 1000) {
     return `${(value / 1000).toFixed(1)}K`;
   }
-  
+
   return value.toFixed(0);
 };
 
@@ -123,13 +123,13 @@ export const formatROI = (profit, stake) => {
   if (!stake || stake === 0) {
     return { percentage: '0%', className: 'neutral' };
   }
-  
+
   const roi = (profit / stake) * 100;
   let className = 'neutral';
-  
+
   if (roi > 0) className = 'profit';
   else if (roi < 0) className = 'loss';
-  
+
   return {
     percentage: `${roi > 0 ? '+' : ''}${roi.toFixed(1)}%`,
     className,
@@ -145,7 +145,7 @@ export const formatROI = (profit, stake) => {
 export const truncateText = (text, maxLength = 50) => {
   if (!text) return '';
   if (text.length <= maxLength) return text;
-  
+
   return `${text.substring(0, maxLength)}...`;
 };
 
@@ -158,7 +158,7 @@ export const truncateText = (text, maxLength = 50) => {
 export const formatScore = (homeScore, awayScore) => {
   if (homeScore === null || homeScore === undefined) return '-';
   if (awayScore === null || awayScore === undefined) return '-';
-  
+
   return `${homeScore} - ${awayScore}`;
 };
 
@@ -171,7 +171,7 @@ export const formatScore = (homeScore, awayScore) => {
 export const formatRecord = (wins, losses) => {
   if (wins === null || wins === undefined) return '-';
   if (losses === null || losses === undefined) return '-';
-  
+
   return `${wins}-${losses}`;
 };
 
@@ -190,8 +190,10 @@ export const getStatusBadge = (status) => {
     live: { className: 'status-live', label: 'Live' },
     scheduled: { className: 'status-scheduled', label: 'Scheduled' },
   };
-  
-  return badges[status?.toLowerCase()] || { className: 'status-unknown', label: status || 'Unknown' };
+
+  return (
+    badges[status?.toLowerCase()] || { className: 'status-unknown', label: status || 'Unknown' }
+  );
 };
 
 /**

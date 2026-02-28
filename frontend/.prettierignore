@@ -1,0 +1,7 @@
+# Prettier ignore file
+node_modules/
+dist/
+build/
+public/
+*.min.js
+*.min.css

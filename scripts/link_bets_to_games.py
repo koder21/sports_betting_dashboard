@@ -1,174 +1,263 @@
 """
-Script to link unpaired bets to games and fetch odds from ESPN API
+link_bets_to_games.py
+
+Links unpaired bets from raw text to ESPN game IDs and updates the database.
 """
+
 import asyncio
-import sqlite3
+import logging
 import re
-from datetime import datetime
-import httpx
-from difflib import SequenceMatcher
+import sqlite3
 import sys
-sys.path.insert(0, '/Users/dakotanicol/sports_betting_dashboard')
+from dataclasses import dataclass
+from difflib import SequenceMatcher
+from pathlib import Path
+from typing import Optional
 
-from backend.services.espn_client import ESPNClient
+# ── Path setup ────────────────────────────────────────────────────────────────
+PROJECT_ROOT = Path("/Users/dakotanicol/sports_betting_dashboard")
+DB_PATH = PROJECT_ROOT / "sports_intel.db"
+sys.path.insert(0, str(PROJECT_ROOT))
 
-def similarity(a, b):
-    """Calculate string similarity ratio"""
-    return SequenceMatcher(None, a, b).ratio()
+from backend.services.espn_client import ESPNClient  # noqa: E402
 
-async def find_game_by_teams(sport: str, team1: str, team2: str, date: str) -> dict:
-    """Find game by team names and date"""
-    client = ESPNClient()
-    
-    # Get games for the sport
-    games = await client.get_games(sport, date)
-    
-    if not games:
-        return None
-    
-    # Normalize team names
-    team1_lower = team1.lower().strip()
-    team2_lower = team2.lower().strip()
-    
-    for game in games:
-        home = game.get('home_team', '').lower().strip()
-        away = game.get('away_team', '').lower().strip()
-        
-        # Check if teams match (either ordering)
-        match1 = (similarity(team1_lower, home) > 0.7 and similarity(team2_lower, away) > 0.7)
-        match2 = (similarity(team1_lower, away) > 0.7 and similarity(team2_lower, home) > 0.7)
-        
-        if match1 or match2:
-            return game
-    
-    return None
+# ── Logging ───────────────────────────────────────────────────────────────────
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s  %(levelname)-8s  %(message)s",
+    datefmt="%H:%M:%S",
+)
+log = logging.getLogger(__name__)
 
+# ── Constants ─────────────────────────────────────────────────────────────────
+DEFAULT_ODDS = -110
+SIMILARITY_THRESHOLD = 0.70
+
+SPORT_KEYWORDS: dict[str, list[str]] = {
+    "nba": [
+        "celtics", "heat", "bucks", "pacers", "timberwolves",
+        "pelicans", "kings", "clippers", "lakers", "nets",
+    ],
+    "college-basketball": [
+        "uconn", "st. john's", "duke", "kansas", "kentucky",
+    ],
+    "soccer": [
+        "leeds", "nottingham", "arsenal", "man city", "liverpool",
+        "chelsea", "tottenham",
+    ],
+    "nfl": [
+        "chiefs", "patriots", "cowboys", "packers", "eagles",
+    ],
+}
+
+
+# ── Data model ────────────────────────────────────────────────────────────────
+@dataclass
+class Bet:
+    type: str
+    selection: str
+    game: str
+    date: str
+    stake: int
+    sport: str
+    odds: int = DEFAULT_ODDS
+    reason: str = ""
+    game_id: Optional[str] = None
+
+    @property
+    def game_key(self) -> tuple[str, str, str]:
+        return (self.sport, self.game, self.date)
+
+    @property
+    def teams(self) -> Optional[tuple[str, str]]:
+        parts = [t.strip() for t in self.game.split(" vs ")]
+        return (parts[0], parts[1]) if len(parts) == 2 else None
+
+
+# ── Sport detection ───────────────────────────────────────────────────────────
 def detect_sport(game_info: str) -> str:
-    """Detect sport from game info text"""
-    game_lower = game_info.lower()
-    
-    if any(team in game_lower for team in ['celtics', 'heat', 'bucks', 'pacers', 'timberwolves', 'pelicans', 'kings', 'clippers']):
-        return 'nba'
-    elif any(team in game_lower for team in ['uconn', "st. john's"]):
-        return 'college-basketball'
-    elif any(team in game_lower for team in ['leeds', 'nottingham', 'arsenal', 'man city', 'liverpool']):
-        return 'soccer'
-    elif any(team in game_lower for team in ['chiefs', 'patriots', 'cowboys', 'packers']):
-        return 'nfl'
-    
-    return 'nba'  # default
+    """Infer sport from team names in game_info. Defaults to 'nba'."""
+    lower = game_info.lower()
+    for sport, keywords in SPORT_KEYWORDS.items():
+        if any(kw in lower for kw in keywords):
+            return sport
+    return "nba"
 
-def parse_bets_from_text(text: str) -> list:
-    """Parse bets from raw text format"""
-    bets = []
-    
-    # Split by Type: to find individual bets
-    bet_blocks = re.split(r'(?=Type:)', text.strip())
-    
-    for block in bet_blocks:
-        if not block.strip():
+
+# ── Parsing ───────────────────────────────────────────────────────────────────
+_FIELD_PATTERNS: dict[str, re.Pattern] = {
+    "type":      re.compile(r"Type:\s*(\w+)", re.I),
+    "selection": re.compile(r"Selection:\s*([^,]+)", re.I),
+    "game":      re.compile(r"Game:\s*([^,]+)", re.I),
+    "date":      re.compile(r"Date:\s*(\d{4}-\d{2}-\d{2})", re.I),
+    "odds":      re.compile(r"Odds:\s*([-+]?\d+)", re.I),
+    "stake":     re.compile(r"Stake:\s*(\d+)", re.I),
+    "reason":    re.compile(r"Reason:\s*([^.\n]+)", re.I),
+}
+
+REQUIRED_FIELDS = {"type", "selection", "game", "date", "stake"}
+
+
+def parse_bets(text: str) -> list[Bet]:
+    """Parse one or more bets from raw text blocks."""
+    bets: list[Bet] = []
+    blocks = re.split(r"(?=Type:)", text.strip())
+
+    for block in filter(str.strip, blocks):
+        raw: dict[str, str] = {}
+        for key, pattern in _FIELD_PATTERNS.items():
+            m = pattern.search(block)
+            if m:
+                raw[key] = m.group(1).strip()
+
+        missing = REQUIRED_FIELDS - raw.keys()
+        if missing:
+            log.warning("Skipping block — missing fields %s:\n  %s", missing, block[:80])
             continue
-        
-        bet = {}
-        
-        # Extract fields
-        type_match = re.search(r'Type:\s*(\w+)', block)
-        selection_match = re.search(r'Selection:\s*([^,]+)', block)
-        game_match = re.search(r'Game:\s*([^,]+)', block)
-        date_match = re.search(r'Date:\s*(\d{4}-\d{2}-\d{2})', block)
-        odds_match = re.search(r'Odds:\s*([-+]?\d+)', block)
-        stake_match = re.search(r'Stake:\s*(\d+)', block)
-        reason_match = re.search(r'Reason:\s*([^.]+)', block)
-        
-        if all([type_match, selection_match, game_match, date_match, stake_match]):
-            bet['type'] = type_match.group(1).lower()
-            bet['selection'] = selection_match.group(1).strip()
-            bet['game'] = game_match.group(1).strip()
-            bet['date'] = date_match.group(1)
-            bet['odds'] = int(odds_match.group(1)) if odds_match else -110
-            bet['stake'] = int(stake_match.group(1))
-            bet['reason'] = reason_match.group(1).strip() if reason_match else ''
-            bet['sport'] = detect_sport(bet['game'])
-            
-            bets.append(bet)
-    
+
+        game = raw["game"]
+        bets.append(
+            Bet(
+                type=raw["type"].lower(),
+                selection=raw["selection"],
+                game=game,
+                date=raw["date"],
+                stake=int(raw["stake"]),
+                odds=int(raw.get("odds", DEFAULT_ODDS)),
+                reason=raw.get("reason", ""),
+                sport=detect_sport(game),
+            )
+        )
+
     return bets
 
+
+# ── ESPN lookup ───────────────────────────────────────────────────────────────
+def _similarity(a: str, b: str) -> float:
+    return SequenceMatcher(None, a, b).ratio()
+
+
+async def _fetch_games(client: ESPNClient, sport: str, date: str) -> list[dict]:
+    """Call whichever fetch method the client exposes."""
+    for method_name in ("fetch_games", "get_games"):
+        method = getattr(client, method_name, None)
+        if method:
+            return await method(sport, date) or []
+    raise AttributeError(
+        f"ESPNClient has neither 'fetch_games' nor 'get_games'. "
+        f"Available: {[m for m in dir(client) if not m.startswith('_')]}"
+    )
+
+
+async def find_game(sport: str, team1: str, team2: str, date: str) -> Optional[dict]:
+    """Return the ESPN game dict matching the two teams on a given date."""
+    client = ESPNClient()
+    games = await _fetch_games(client, sport, date)
+
+    t1, t2 = team1.lower().strip(), team2.lower().strip()
+
+    for game in games:
+        home = game.get("home_team", "").lower().strip()
+        away = game.get("away_team", "").lower().strip()
+
+        home_t1 = _similarity(t1, home) > SIMILARITY_THRESHOLD
+        away_t2 = _similarity(t2, away) > SIMILARITY_THRESHOLD
+        home_t2 = _similarity(t2, home) > SIMILARITY_THRESHOLD
+        away_t1 = _similarity(t1, away) > SIMILARITY_THRESHOLD
+
+        if (home_t1 and away_t2) or (home_t2 and away_t1):
+            return game
+
+    return None
+
+
+# ── Database ──────────────────────────────────────────────────────────────────
+_UPDATE_SQL = """
+    UPDATE bets
+    SET    game_id = ?
+    WHERE  game_id IS NULL
+      AND  DATE(placed_at) = ?
+      AND  (
+               LOWER(raw_text)  LIKE LOWER(?)
+            OR LOWER(selection) LIKE LOWER(?)
+           )
+"""
+
+
+def update_bets_in_db(
+    cursor: sqlite3.Cursor,
+    game_id: str,
+    date: str,
+    team1: str,
+    selection: str,
+) -> int:
+    """Attach a game_id to matching unlinked rows. Returns the number updated."""
+    cursor.execute(_UPDATE_SQL, (game_id, date, f"%{team1}%", f"%{selection}%"))
+    return cursor.rowcount
+
+
+# ── Orchestration ─────────────────────────────────────────────────────────────
 async def link_bets_to_games(bet_text: str) -> None:
-    """
-    Link bets from raw text to games and update database
-    """
-    # Parse bets
-    bets = parse_bets_from_text(bet_text)
-    print(f"📋 Parsed {len(bets)} bets from text\n")
-    
-    # Group bets by game
-    games_to_find = {}
+    """Parse bets, resolve ESPN game IDs, and persist to the database."""
+    bets = parse_bets(bet_text)
+    if not bets:
+        log.error("No valid bets found in input.")
+        return
+
+    log.info("Parsed %d bet(s) from text.", len(bets))
+
+    # Group by unique game so we only hit ESPN once per game
+    games_to_bets: dict[tuple, list[Bet]] = {}
     for bet in bets:
-        game_key = (bet['sport'], bet['game'], bet['date'])
-        if game_key not in games_to_find:
-            games_to_find[game_key] = []
-        games_to_find[game_key].append(bet)
-    
-    conn = sqlite3.connect('/Users/dakotanicol/sports_betting_dashboard/sports_intel.db')
+        games_to_bets.setdefault(bet.game_key, []).append(bet)
+
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    
-    game_mapping = {}  # Map game_key to game_id
-    
-    # Find each game
-    for (sport, game_info, date), sport_bets in games_to_find.items():
-        print(f"🔍 Searching for: {sport.upper()}: {game_info} ({date})")
-        
-        # Parse team names from game info
-        teams = game_info.split(' vs ')
-        if len(teams) != 2:
-            print(f"  ❌ Could not parse teams from '{game_info}'")
-            continue
-        
-        team1, team2 = teams[0].strip(), teams[1].strip()
-        
-        # Find the game
-        game = await find_game_by_teams(sport, team1, team2, date)
-        
-        if not game:
-            print(f"  ❌ Game not found in ESPN database")
-            continue
-        
-        game_id = game.get('id')
-        game_mapping[(sport, game_info, date)] = game_id
-        
-        print(f"  ✅ Found: {game['away_team']} @ {game['home_team']}")
-        print(f"     Game ID: {game_id}")
-        
-        # Update bets with game_id
-        updated_count = 0
-        for bet in sport_bets:
-            cursor.execute("""
-                UPDATE bets 
-                SET game_id = ?
-                WHERE game_id IS NULL 
-                AND DATE(placed_at) = ?
-                AND (
-                    LOWER(raw_text) LIKE LOWER(?)
-                    OR LOWER(selection) LIKE LOWER(?)
-                )
-            """, (game_id, date, f"%{team1}%", f"%{bet['selection']}%"))
-            
-            updated_count += cursor.rowcount
-        
-        if updated_count > 0:
-            conn.commit()
-            print(f"  ✅ Updated {updated_count} bets with game_id")
-        
-        print()
-    
-    conn.close()
-    print("✅ Linking complete!")
 
-if __name__ == "__main__":
-    # User provides bet text here
-    bet_text = """
+    total_updated = 0
+
+    try:
+        for (sport, game_info, date), group in games_to_bets.items():
+            log.info("Searching ESPN — %s: %s (%s)", sport.upper(), game_info, date)
+
+            bet = group[0]  # representative bet; all share the same game
+            teams = bet.teams
+            if teams is None:
+                log.warning("  Could not parse teams from '%s' — skipping.", game_info)
+                continue
+
+            team1, team2 = teams
+            game = await find_game(sport, team1, team2, date)
+
+            if game is None:
+                log.warning("  No ESPN match found for %s vs %s.", team1, team2)
+                continue
+
+            game_id = str(game["id"])
+            log.info(
+                "  Matched: %s @ %s  (id=%s)",
+                game["away_team"],
+                game["home_team"],
+                game_id,
+            )
+
+            updated = 0
+            for b in group:
+                updated += update_bets_in_db(cursor, game_id, date, team1, b.selection)
+
+            conn.commit()
+            total_updated += updated
+            log.info("  Updated %d row(s) in the database.", updated)
+
+    finally:
+        conn.close()
+
+    log.info("Done. %d total bet row(s) linked to games.", total_updated)
+
+
+# ── Entry point ───────────────────────────────────────────────────────────────
+SAMPLE_BETS = """\
 Type: moneyline, Selection: Celtics ML, Game: Celtics vs Heat, Date: 2026-02-06, Odds: -150, Stake: 300, Reason: Matchup edge.
 Type: moneyline, Selection: Bucks ML, Game: Bucks vs Pacers, Date: 2026-02-06, Odds: -140, Stake: 300, Reason: Efficiency advantage.
 Type: prop, Selection: Anthony Edwards over 27.5 pts, Game: Timberwolves vs Pelicans, Date: 2026-02-06, Odds: -110, Stake: 300, Reason: High usage.
@@ -179,5 +268,6 @@ Type: prop, Selection: Stephon Castle over 15.5 pts, Game: St. John's vs UConn, 
 Type: moneyline, Selection: Leeds ML, Game: Leeds vs Nottingham Forest, Date: 2026-02-06, Odds: -120, Stake: 100, Reason: Home form advantage.
 Type: prop, Selection: Derrick White over 5.5 assists, Game: Celtics vs Heat, Date: 2026-02-06, Odds: -110, Stake: 100, Reason: Increased playmaking role.
 """
-    
-    asyncio.run(link_bets_to_games(bet_text))
+
+if __name__ == "__main__":
+    asyncio.run(link_bets_to_games(SAMPLE_BETS))

@@ -8,7 +8,7 @@ const GameBoxscore = ({ gameData }) => {
   if (typeof gameData.metadata === 'string') {
     try {
       metadata = JSON.parse(gameData.metadata);
-    } catch (e) {
+    } catch {
       parseError = true;
       metadata = {};
     }
@@ -40,7 +40,7 @@ const GameBoxscore = ({ gameData }) => {
         <span className="sport-badge">{sport?.toUpperCase() || 'GAME'}</span>
         <span className="status-badge">{status || 'FINAL'}</span>
       </div>
-      
+
       <div className="boxscore-content">
         <div className="team-row">
           <div className="team-info">
@@ -56,7 +56,7 @@ const GameBoxscore = ({ gameData }) => {
           <div className="team-score">{home_score || 0}</div>
         </div>
       </div>
-      
+
       <div className="boxscore-footer">
         <span className="game-time">
           {new Date(gameData.created_at).toLocaleString('en-US', {
@@ -64,7 +64,7 @@ const GameBoxscore = ({ gameData }) => {
             day: 'numeric',
             hour: 'numeric',
             minute: '2-digit',
-            hour12: true
+            hour12: true,
           })}
         </span>
       </div>

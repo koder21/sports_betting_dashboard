@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
-import api from "../services/api.js";
-import "./AlertToasts.css";
+import React, { useEffect, useRef, useState } from 'react';
+import api from '../services/api.js';
+import './AlertToasts.css';
 
 const POLL_INTERVAL_MS = 15000;
 
@@ -9,34 +9,32 @@ function AlertToasts() {
   const seenIds = useRef(new Set());
   const initialized = useRef(false);
 
-  const dismissToast = async (id) => {
-    // Optimistic update - remove from UI immediately
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-    
-    // Make API call in background to acknowledge the alert (non-blocking)
-    api.post(`/api/alerts/${id}/ack`)
-      .catch((err) => {
+  const dismissToast = React.useCallback(
+    async (id) => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+      api.post(`/api/alerts/${id}/ack`).catch((err) => {
         console.error(`Failed to acknowledge alert ${id} (background):`, err);
-        // Note: Not reverting UI since alerts are time-sensitive
       });
-  };
+    },
+    []
+  );
 
-  const dismissAllToasts = () => {
+  const dismissAllToasts = React.useCallback(() => {
     toasts.forEach((toast) => {
       dismissToast(toast.id);
     });
-  };
+  }, [toasts, dismissToast]);
 
-  const enqueueToast = (alert) => {
+  const enqueueToast = React.useCallback((alert) => {
     setToasts((prev) => {
       if (prev.some((t) => t.id === alert.id)) return prev;
       return [alert, ...prev].slice(0, 5);
     });
-  };
+  }, []);
 
-  const fetchAlerts = async () => {
+  const fetchAlerts = React.useCallback(async () => {
     try {
-      const res = await api.get("/api/alerts/");
+      const res = await api.get('/api/alerts/');
       const alerts = res.data || [];
 
       if (!initialized.current) {
@@ -52,14 +50,14 @@ function AlertToasts() {
         }
       });
     } catch (err) {
-      console.error("Failed to fetch alerts:", err);
+      console.error('Failed to fetch alerts:', err);
     }
-  };
+  }, [enqueueToast]);
 
   useEffect(() => {
     fetchAlerts();
     const interval = setInterval(fetchAlerts, POLL_INTERVAL_MS);
-    
+
     // Add click handler to dismiss toasts when clicking anywhere on the page
     const handlePageClick = (e) => {
       // Don't dismiss if clicking on the toast itself or the close button
@@ -72,19 +70,19 @@ function AlertToasts() {
     };
 
     document.addEventListener('click', handlePageClick);
-    
+
     return () => {
       clearInterval(interval);
       document.removeEventListener('click', handlePageClick);
     };
-  }, [toasts]);
+  }, [dismissAllToasts, fetchAlerts, toasts]);
 
   if (toasts.length === 0) return null;
 
   return (
     <div className="alert-toast-container">
       {toasts.map((alert) => (
-        <div key={alert.id} className={`alert-toast ${alert.severity || "info"}`}>
+        <div key={alert.id} className={`alert-toast ${alert.severity || 'info'}`}>
           <div className="alert-toast-header">
             <div className="alert-toast-title">
               <span className="alert-toast-severity">{alert.severity}</span>

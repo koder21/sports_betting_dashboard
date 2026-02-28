@@ -5,6 +5,7 @@ from sqlalchemy.orm import selectinload
 
 from ..db import get_db
 from ..services.intelligence.prop_intel import PropIntelligenceService
+from backend.utils.redis_cache import redis_cache
 from ..models.player import Player
 from ..models.player_stats import PlayerStats
 from ..models.team import Team
@@ -13,6 +14,7 @@ router = APIRouter()
 
 
 @router.get("/players")
+@redis_cache(ttl=60)
 async def get_all_players(session: AsyncSession = Depends(get_db)):
     """Get all players with basic info - team matched by both team_id and sport.
     
@@ -99,6 +101,7 @@ async def get_all_players(session: AsyncSession = Depends(get_db)):
 
 
 @router.get("/players/{player_id}/stats")
+@redis_cache(ttl=60)
 async def get_player_stats(player_id: str, session: AsyncSession = Depends(get_db)):
     """Get all stats for a specific player"""
     result = await session.execute(

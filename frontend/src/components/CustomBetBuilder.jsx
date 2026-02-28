@@ -1,36 +1,25 @@
-import React, { useState, useEffect } from "react";
-import api from "../services/api.js";
-import { getOddsFormat, calculateParlayOdds } from "../services/oddsService.js";
-import "../styles/CustomBetBuilder.css";
+import React, { useState, useEffect } from 'react';
+import api from '../services/api.js';
+import { calculateParlayOdds } from '../services/oddsService.js';
+import '../styles/CustomBetBuilder.css';
 
 function CustomBetBuilder({ games, isOpen, onClose }) {
-  const [betType, setBetType] = useState("single"); // "single" or "parlay"
+  const [betType, setBetType] = useState('single'); // "single" or "parlay"
   const [selectedGames, setSelectedGames] = useState([]);
   const [stake, setStake] = useState(50);
-  const [notes, setNotes] = useState("AAI Custom Bet");
+  const [notes, setNotes] = useState('AAI Custom Bet');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [gameLegs, setGameLegs] = useState([]); // For parlay
-  const [oddsFormat, setOddsFormat] = useState(getOddsFormat()); // Track odds format
-
   // Handle body overflow when modal is open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden';
       return () => {
-        document.body.style.overflow = "";
+        document.body.style.overflow = '';
       };
     }
   }, [isOpen]);
-
-  // Listen for odds format changes
-  useEffect(() => {
-    const handleOddsFormatChange = (e) => {
-      setOddsFormat(e.detail.format);
-    };
-    window.addEventListener('oddsFormatChanged', handleOddsFormatChange);
-    return () => window.removeEventListener('oddsFormatChanged', handleOddsFormatChange);
-  }, []);
 
   // Convert selected games to legs format
   useEffect(() => {
@@ -38,7 +27,7 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
       game_id: game.game_id,
       pick: game.selectedPick,
       odds: game.selectedOdds || 2.0,
-      confidence: typeof game.selectedConfidence === "number" ? game.selectedConfidence : 0,
+      confidence: typeof game.selectedConfidence === 'number' ? game.selectedConfidence : 0,
     }));
     setGameLegs(legs);
   }, [selectedGames]);
@@ -46,17 +35,13 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
   // Early return AFTER all hooks
   if (!isOpen) return null;
   // Ensure games is an array
-  const gamesList = Array.isArray(games) ? games : [];
 
   const getHomeTeamName = (game) => {
-    const name = game.home_team_name || game.home || "Home";
+    const name = game.home_team_name || game.home || 'Home';
     return `${name} ML`;
   };
 
-  const getAwayTeamName = (game) => {
-    const name = game.away_team_name || game.away || "Away";
-    return `${name} ML`;
-  };
+   // Removed getAwayTeamName function as it is not used
 
   const toggleGameSelection = (game) => {
     setSelectedGames((prev) => {
@@ -64,19 +49,14 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
       if (exists) {
         return prev.filter((g) => g.game_id !== game.game_id);
       }
-      return [
-        ...prev,
-        { ...game, selectedPick: getHomeTeamName(game), selectedOdds: 2.0 },
-      ];
+      return [...prev, { ...game, selectedPick: getHomeTeamName(game), selectedOdds: 2.0 }];
     });
   };
 
   const updateGamePick = (gameId, pick, odds) => {
     setSelectedGames((prev) =>
       prev.map((g) =>
-        g.game_id === gameId
-          ? { ...g, selectedPick: pick, selectedOdds: parseFloat(odds) }
-          : g
+        g.game_id === gameId ? { ...g, selectedPick: pick, selectedOdds: parseFloat(odds) } : g
       )
     );
   };
@@ -86,9 +66,9 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
       setLoading(true);
       setError(null);
 
-      if (betType === "single") {
+      if (betType === 'single') {
         if (selectedGames.length !== 1) {
-          setError("Select exactly 1 game for a single bet");
+          setError('Select exactly 1 game for a single bet');
           setLoading(false);
           return;
         }
@@ -102,16 +82,16 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
           notes: notes,
         };
 
-        const response = await api.post("/bets/build-custom-single", payload);
+        const response = await api.post('/bets/build-custom-single', payload);
         if (response.data.success) {
-          onClose?.({ type: "single", ...response.data });
+          onClose?.({ type: 'single', ...response.data });
         } else {
-          setError(response.data.error || "Failed to place bet");
+          setError(response.data.error || 'Failed to place bet');
         }
       } else {
         // Parlay
         if (selectedGames.length < 2) {
-          setError("Select at least 2 games for a parlay");
+          setError('Select at least 2 games for a parlay');
           setLoading(false);
           return;
         }
@@ -120,22 +100,22 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
           legs: gameLegs.map(({ game_id, pick, odds, confidence }) => ({
             game_id,
             pick,
-            odds: typeof odds === "number" ? odds : parseFloat(odds),
-            confidence: typeof confidence === "number" ? confidence : 0,
+            odds: typeof odds === 'number' ? odds : parseFloat(odds),
+            confidence: typeof confidence === 'number' ? confidence : 0,
           })),
           stake: parseFloat(stake),
           notes: notes,
         };
 
-        const response = await api.post("/bets/build-custom-parlay", payload);
+        const response = await api.post('/bets/build-custom-parlay', payload);
         if (response.data.success) {
-          onClose?.({ type: "parlay", ...response.data });
+          onClose?.({ type: 'parlay', ...response.data });
         } else {
-          setError(response.data.error || "Failed to build parlay");
+          setError(response.data.error || 'Failed to build parlay');
         }
       }
     } catch (err) {
-      setError(err.response?.data?.error || "Error placing bet");
+      setError(err.response?.data?.error || 'Error placing bet');
       console.error(err);
     } finally {
       setLoading(false);
@@ -143,32 +123,34 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
   };
 
   // Calculate parlay odds using utility (handles American/decimal)
-  const parlayOdds = calculateParlayOdds(gameLegs.map(leg => leg.odds), 'decimal');
+  const parlayOdds = calculateParlayOdds(
+    gameLegs.map((leg) => leg.odds),
+    'decimal'
+  );
   const parlayProfit = (stake * (parlayOdds - 1)).toFixed(2);
 
   return (
     <div className="custom-bet-builder-overlay" onClick={onClose}>
-      <div
-        className="custom-bet-builder-modal"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="custom-bet-builder-modal" onClick={(e) => e.stopPropagation()}>
         <div className="builder-header">
           <h2>Build Custom Bet</h2>
-          <button className="close-btn" onClick={onClose}>✕</button>
+          <button className="close-btn" onClick={onClose}>
+            ✕
+          </button>
         </div>
 
         <div className="builder-content">
           {/* Bet Type Selector */}
           <div className="bet-type-selector">
             <button
-              className={`type-btn ${betType === "single" ? "active" : ""}`}
-              onClick={() => setBetType("single")}
+              className={`type-btn ${betType === 'single' ? 'active' : ''}`}
+              onClick={() => setBetType('single')}
             >
               Single
             </button>
             <button
-              className={`type-btn ${betType === "parlay" ? "active" : ""}`}
-              onClick={() => setBetType("parlay")}
+              className={`type-btn ${betType === 'parlay' ? 'active' : ''}`}
+              onClick={() => setBetType('parlay')}
             >
               Parlay
             </button>
@@ -176,20 +158,16 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
 
           {/* Games List */}
           <div className="games-selection">
-            <h3>Select Games {betType === "parlay" && `(${selectedGames.length})`}</h3>
+            <h3>Select Games {betType === 'parlay' && `(${selectedGames.length})`}</h3>
             <div className="games-list">
               {Array.isArray(games) && games?.length ? (
                 games.map((game) => {
-                  const selected = selectedGames.some(
-                    (g) => g.game_id === game.game_id
-                  );
-                  const selectedGame = selectedGames.find(
-                    (g) => g.game_id === game.game_id
-                  );
+                  const selected = selectedGames.some((g) => g.game_id === game.game_id);
+                  const selectedGame = selectedGames.find((g) => g.game_id === game.game_id);
 
                   // Use home_team_name/away_team_name for clarity
-                  const homeName = game.home_team_name || game.home || "Home";
-                  const awayName = game.away_team_name || game.away || "Away";
+                  const homeName = game.home_team_name || game.home || 'Home';
+                  const awayName = game.away_team_name || game.away || 'Away';
                   // Try to use logo fields if present
                   const homeLogo = game.home_team_logo || game.home_logo || null;
                   const awayLogo = game.away_team_logo || game.away_logo || null;
@@ -197,7 +175,7 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
                   return (
                     <div
                       key={game.game_id}
-                      className={`game-card ${selected ? "selected" : ""}`}
+                      className={`game-card ${selected ? 'selected' : ''}`}
                       onClick={() => toggleGameSelection(game)}
                     >
                       <div className="game-matchup">
@@ -216,10 +194,7 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
                       <div className="game-time">{game.start_time}</div>
 
                       {selected && (
-                        <div
-                          className="game-leg-editor"
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                        <div className="game-leg-editor" onClick={(e) => e.stopPropagation()}>
                           <div className="leg-input">
                             <label>Pick</label>
                             <select
@@ -290,7 +265,7 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
           </div>
 
           {/* Calculation Summary */}
-          {betType === "parlay" && selectedGames.length >= 2 && (
+          {betType === 'parlay' && selectedGames.length >= 2 && (
             <div className="parlay-summary">
               <div className="summary-row">
                 <span>Legs:</span>
@@ -310,11 +285,7 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
           {error && <div className="builder-error">{error}</div>}
 
           <div className="builder-actions">
-            <button
-              className="builder-cancel-btn"
-              onClick={onClose}
-              disabled={loading}
-            >
+            <button className="builder-cancel-btn" onClick={onClose} disabled={loading}>
               Cancel
             </button>
             <button
@@ -322,11 +293,11 @@ function CustomBetBuilder({ games, isOpen, onClose }) {
               onClick={handlePlaceBet}
               disabled={
                 loading ||
-                (betType === "single" && selectedGames.length !== 1) ||
-                (betType === "parlay" && selectedGames.length < 2)
+                (betType === 'single' && selectedGames.length !== 1) ||
+                (betType === 'parlay' && selectedGames.length < 2)
               }
             >
-              {loading ? "Building..." : "Build & Place Bet"}
+              {loading ? 'Building...' : 'Build & Place Bet'}
             </button>
           </div>
         </div>

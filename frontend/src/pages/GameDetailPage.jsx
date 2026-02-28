@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import ErrorBoundary from '../components/ErrorBoundary.jsx';
+import AnalyticsService from '../services/analytics.js';
+import SuspenseFallback from '../components/SuspenseFallback.jsx';
 import { useParams } from 'react-router-dom';
 import api from '../services/api';
 import './GameDetailPage.css';
@@ -12,11 +15,13 @@ function GameDetailPage() {
   const [statsTab, setStatsTab] = useState('home');
   const [refreshing, setRefreshing] = useState(false);
   const [refreshMessage, setRefreshMessage] = useState(null);
-    const [aiContext, setAiContext] = useState(null);
-    const [aiContextLoading, setAiContextLoading] = useState(false);
-    const [aiContextError, setAiContextError] = useState(null);
 
-  const fetchGameDetails = async () => {
+  // Track page view
+  useEffect(() => {
+    AnalyticsService.trackPageView('GameDetailPage');
+  }, []);
+
+  const fetchGameDetails = useCallback(async () => {
     try {
       setLoading(true);
       const response = await api.get(`/api/games/${gameId}/detailed`);
@@ -28,13 +33,13 @@ function GameDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [gameId]);
 
   useEffect(() => {
     if (gameId) {
       fetchGameDetails();
     }
-  }, [gameId]);
+  }, [gameId, fetchGameDetails]);
 
   const handleRefreshStats = async () => {
     try {
@@ -57,28 +62,11 @@ function GameDetailPage() {
       setRefreshing(false);
     }
   };
-  
-    const handleCopyForAI = async () => {
-      setAiContextLoading(true);
-      setAiContextError(null);
-      setAiContext(null);
-      try {
-        const response = await api.get('/api/games/ai-context-fresh');
-        setAiContext(response.data);
-      } catch (err) {
-        setAiContextError(err.message || 'Failed to fetch AI context');
-      } finally {
-        setAiContextLoading(false);
-      }
-    };
 
   if (loading) {
     return (
       <div className="game-detail-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading game details...</p>
-        </div>
+        <div className="loading-state">Loading game details...</div>
       </div>
     );
   }
@@ -242,21 +230,6 @@ function GameDetailPage() {
             {refreshMessage}
           </div>
         )}
-          {/* AI Context Debug Output */}
-          {aiContextError && (
-            <div className="ai-context-error" style={{ color: 'red', marginTop: '8px' }}>
-              <strong>Error:</strong> {aiContextError}
-              <br />
-              <strong>Debug:</strong> {JSON.stringify(aiContextError, null, 2)}
-            </div>
-          )}
-          {aiContext && (
-            <div className="ai-context-output" style={{ marginTop: '8px', background: '#f6f6f6', padding: '8px', borderRadius: '4px', maxHeight: '400px', overflow: 'auto' }}>
-              <pre>{typeof aiContext === 'string' ? aiContext : JSON.stringify(aiContext, null, 2)}</pre>
-              <hr />
-              <strong>Debug:</strong> {JSON.stringify(aiContext)}
-            </div>
-          )}
       </div>
 
       {/* Content Sections */}
@@ -537,4 +510,12 @@ function BetCard({ bet }) {
   );
 }
 
-export default GameDetailPage;
+export default function GameDetailPageWrapper(props) {
+  return (
+    <ErrorBoundary>
+      <React.Suspense fallback={<SuspenseFallback message="Loading game details..." />}>
+        <GameDetailPage {...props} />
+      </React.Suspense>
+    </ErrorBoundary>
+  );
+}

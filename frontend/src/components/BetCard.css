@@ -15,7 +15,7 @@
 }
 
 .bet-card.won {
-  border-left: 4px solid #4CAF50;
+  border-left: 4px solid #4caf50;
 }
 
 .bet-card.lost {
@@ -23,7 +23,7 @@
 }
 
 .bet-card.pending {
-  border-left: 4px solid #FF9800;
+  border-left: 4px solid #ff9800;
 }
 
 .bet-card.void {
@@ -166,7 +166,7 @@
 }
 
 .stat-value.result-won {
-  color: #4CAF50;
+  color: #4caf50;
 }
 
 .stat-value.result-lost {
@@ -174,7 +174,7 @@
 }
 
 .stat-value.profit-positive {
-  color: #4CAF50;
+  color: #4caf50;
 }
 
 .stat-value.profit-negative {

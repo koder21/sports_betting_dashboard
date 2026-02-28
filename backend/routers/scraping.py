@@ -109,8 +109,8 @@ async def fix_orphaned_players(session: AsyncSession = Depends(get_db)):
         }
 
 
-@router.post("/fill-player-names")
-async def fill_player_names(limit: int = 100, session: AsyncSession = Depends(get_db)):
+@router.post("/fill-player-names-direct")
+async def fill_player_names_direct(limit: int = 100, session: AsyncSession = Depends(get_db)):
     """
     Fill placeholder player names ("Player ####") using ESPN athlete data.
     """

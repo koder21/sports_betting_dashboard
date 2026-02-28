@@ -4,10 +4,9 @@ from typing import Optional, Dict, Any, List, Sequence
 import json
 import re
 import uuid
-
+import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-
 from .parser import BetParser
 from .grader import BetGrader
 from ...repositories.bet_repo import BetRepository
@@ -29,142 +28,151 @@ class BettingEngine:
         self.grader = BetGrader(session)
 
     async def place_bets_from_text(self, raw_text: str) -> Dict[str, Any]:
-        """Parse and place multiple bets from text format"""
-        parsed_bets = await self.parser.parse_multiple(raw_text)
-        if not parsed_bets:
-            return {"status": "error", "message": "Unable to parse bets"}
+        """Parse and place multiple bets from text format with robust error handling"""
+        logger = logging.getLogger("backend.services.betting.engine")
+        try:
+            parsed_bets = await self.parser.parse_multiple(raw_text)
+            if not parsed_bets:
+                return {"status": "error", "message": "Unable to parse bets"}
 
-        from ...models.bet import Bet
+            from ...models.bet import Bet
 
-        # Validate that all bets have valid game IDs (moneyline/spread) or player IDs (props)
-        invalid_bets = []
-        for bet_data in parsed_bets:
-            bet_type = bet_data.get("bet_type", "").lower()
-            game_id = bet_data.get("game_id")
-            player_id = bet_data.get("player_id")
-            selection = bet_data.get("selection", "")
-            sport_id = bet_data.get("sport_id")
-            
-            # Moneyline and spread bets MUST have a game_id AND it must exist in the database
-            if bet_type in ["moneyline", "spread"]:
-                if not game_id:
-                    invalid_bets.append({
-                        "selection": selection,
-                        "reason": f"Could not find game matching '{bet_data.get('game_str', 'unknown')}' on the date specified"
+            # Validate that all bets have valid game IDs (moneyline/spread) or player IDs (props)
+            invalid_bets = []
+            for bet_data in parsed_bets:
+                bet_type = bet_data.get("bet_type", "").lower()
+                game_id = bet_data.get("game_id")
+                player_id = bet_data.get("player_id")
+                selection = bet_data.get("selection", "")
+                sport_id = bet_data.get("sport_id")
+
+                # Moneyline and spread bets MUST have a game_id AND it must exist in the database
+                if bet_type in ["moneyline", "spread"]:
+                    if not game_id:
+                        invalid_bets.append({
+                            "selection": selection,
+                            "reason": f"Could not find game matching '{bet_data.get('game_str', 'unknown')}' on the date specified"
+                        })
+                    else:
+                        # Check if game actually exists in the database (check games first, then games_live)
+                        game = await self.games.get_by_espn(str(game_id))
+
+                        # If not in games table, check games_live table
+                        if not game:
+                            result = await self.session.execute(
+                                select(GameLive).where(GameLive.game_id == str(game_id))
+                            )
+                            game_live = result.scalar()
+                            if not game_live:
+                                invalid_bets.append({
+                                    "selection": selection,
+                                    "reason": f"Game ID {game_id} not found in database. Game may not have been scraped yet."
+                                })
+                # Prop bets should have either player_id or player_name
+                elif bet_type == "prop":
+                    if not player_id and not bet_data.get("player_name"):
+                        invalid_bets.append({
+                            "selection": selection,
+                            "reason": "Could not identify player for this prop bet"
+                        })
+
+            if invalid_bets:
+                return {
+                    "status": "error",
+                    "message": "Could not match the following bets to real games/players",
+                    "invalid_bets": invalid_bets
+                }
+
+            created_bets = []
+            parlay_ids = {}
+            parlay_legs = {}  # Track legs for each parlay to calculate odds
+
+            # First pass: group bets by parlay and count legs
+            parlay_groups = {}
+            for bet_data in parsed_bets:
+                parlay_name = bet_data.get('parlay_name', 'Single')
+                if parlay_name not in parlay_groups:
+                    parlay_groups[parlay_name] = []
+                parlay_groups[parlay_name].append(bet_data)
+
+            # Second pass: create bets with divided stakes for parlays
+            # Batch bet creation
+            bet_objects = []
+            for parlay_name, group_bets in parlay_groups.items():
+                parlay_id = str(uuid.uuid4())
+                parlay_ids[parlay_name] = parlay_id
+                is_parlay = len(group_bets) > 1
+                # ENFORCE: All parlay legs must have original_stake set
+                if is_parlay:
+                    for bet_data in group_bets:
+                        original_stake = bet_data.get("stake")
+                        if original_stake is None:
+                            return {
+                                "status": "error",
+                                "message": f"Parlay '{parlay_name}' cannot be placed: original_stake missing for at least one leg. All parlay legs must have original_stake set."
+                            }
+                # For parlays, original_stake = total wager; stake = per-leg share
+                parlay_total_stake = group_bets[0].get("stake", 100) if is_parlay else None
+                for bet_data in group_bets:
+                    if is_parlay:
+                        original_stake = parlay_total_stake if parlay_total_stake is not None else 100
+                        stake = original_stake / len(group_bets)
+                    else:
+                        original_stake = bet_data.get("stake", 100)
+                        stake = original_stake
+                    odds = bet_data.get("odds", -110)
+                    parlay_legs.setdefault(parlay_name, []).append(odds)
+                    bet = Bet(
+                        placed_at=datetime.utcnow(),
+                        sport_id=bet_data["sport_id"],
+                        game_id=bet_data.get("game_id"),
+                        player_id=bet_data.get("player_id"),
+                        parlay_id=parlay_id,
+                        raw_text=bet_data.get("raw_text", raw_text),
+                        original_stake=original_stake,
+                        stake=stake,
+                        odds=odds,
+                        bet_type=bet_data.get("bet_type"),
+                        market=bet_data.get("market"),
+                        selection=bet_data.get("selection"),
+                        stat_type=bet_data.get("stat_type"),
+                        player_name=bet_data.get("player_name"),
+                        reason=bet_data.get("reason"),
+                        status="pending",
+                    )
+                    bet_objects.append(bet)
+                    created_bets.append({
+                        "id": bet.id,
+                        "selection": bet.selection,
+                        "odds": bet.odds,
+                        "stake": stake,
+                        "game_id": bet.game_id,
+                        "parlay_id": bet.parlay_id
                     })
-                else:
-                    # Check if game actually exists in the database (check games first, then games_live)
-                    game = await self.games.get_by_espn(str(game_id))
-                    
-                    # If not in games table, check games_live table
-                    if not game:
-                        result = await self.session.execute(
-                            select(GameLive).where(GameLive.game_id == str(game_id))
-                        )
-                        game_live = result.scalar()
-                        if not game_live:
-                            invalid_bets.append({
-                                "selection": selection,
-                                "reason": f"Game ID {game_id} not found in database. Game may not have been scraped yet."
-                            })
-            # Prop bets should have either player_id or player_name
-            elif bet_type == "prop":
-                if not player_id and not bet_data.get("player_name"):
-                    invalid_bets.append({
-                        "selection": selection,
-                        "reason": "Could not identify player for this prop bet"
-                    })
-        
-        if invalid_bets:
+            # Bulk add bets
+            for bet in bet_objects:
+                await self.bets.add(bet)
+            await self.session.commit()
+            # Update parlay odds sequentially - concurrent updates on the same session
+            # cause silent commit failures leaving parlay_odds null in the DB
+            for parlay_name, leg_odds in parlay_legs.items():
+                if len(leg_odds) > 1:  # Only calculate for actual parlays
+                    parlay_odds = self._calculate_parlay_odds(leg_odds)
+                    parlay_id = parlay_ids[parlay_name]
+                    await self.bets.update_parlay_odds(parlay_id, parlay_odds)
+            await self.session.commit()
+
+            return {
+                "status": "ok",
+                "bets_created": len(created_bets),
+                "bets": created_bets
+            }
+        except Exception as e:
+            logger.error(f"Error in place_bets_from_text: {e}", exc_info=True)
             return {
                 "status": "error",
-                "message": "Could not match the following bets to real games/players",
-                "invalid_bets": invalid_bets
+                "message": f"Exception occurred while placing bets: {str(e)}"
             }
-
-        created_bets = []
-        parlay_ids = {}
-        parlay_legs = {}  # Track legs for each parlay to calculate odds
-        
-        # First pass: group bets by parlay and count legs
-        parlay_groups = {}
-        for bet_data in parsed_bets:
-            parlay_name = bet_data.get('parlay_name', 'Single')
-            if parlay_name not in parlay_groups:
-                parlay_groups[parlay_name] = []
-            parlay_groups[parlay_name].append(bet_data)
-        
-        # Second pass: create bets with divided stakes for parlays
-        # Batch bet creation
-        bet_objects = []
-        for parlay_name, group_bets in parlay_groups.items():
-            parlay_id = str(uuid.uuid4())
-            parlay_ids[parlay_name] = parlay_id
-            is_parlay = len(group_bets) > 1
-            # ENFORCE: All parlay legs must have original_stake set
-            if is_parlay:
-                for bet_data in group_bets:
-                    original_stake = bet_data.get("stake")
-                    if original_stake is None:
-                        return {
-                            "status": "error",
-                            "message": f"Parlay '{parlay_name}' cannot be placed: original_stake missing for at least one leg. All parlay legs must have original_stake set."
-                        }
-            # For parlays, original_stake = total wager; stake = per-leg share
-            parlay_total_stake = group_bets[0].get("stake", 100) if is_parlay else None
-            for bet_data in group_bets:
-                if is_parlay:
-                    original_stake = parlay_total_stake
-                    stake = original_stake / len(group_bets)
-                else:
-                    original_stake = bet_data.get("stake", 100)
-                    stake = original_stake
-                odds = bet_data.get("odds", -110)
-                parlay_legs.setdefault(parlay_name, []).append(odds)
-                bet = Bet(
-                    placed_at=datetime.utcnow(),
-                    sport_id=bet_data["sport_id"],
-                    game_id=bet_data.get("game_id"),
-                    player_id=bet_data.get("player_id"),
-                    parlay_id=parlay_id,
-                    raw_text=bet_data.get("raw_text", raw_text),
-                    original_stake=original_stake,
-                    stake=stake,
-                    odds=odds,
-                    bet_type=bet_data.get("bet_type"),
-                    market=bet_data.get("market"),
-                    selection=bet_data.get("selection"),
-                    stat_type=bet_data.get("stat_type"),
-                    player_name=bet_data.get("player_name"),
-                    reason=bet_data.get("reason"),
-                    status="pending",
-                )
-                bet_objects.append(bet)
-                created_bets.append({
-                    "id": bet.id,
-                    "selection": bet.selection,
-                    "odds": bet.odds,
-                    "stake": stake,
-                    "game_id": bet.game_id,
-                    "parlay_id": bet.parlay_id
-                })
-        # Bulk add bets
-        await self.bets.bulk_add(bet_objects)
-        await self.session.commit()
-        # Update parlay odds sequentially - concurrent updates on the same session
-        # cause silent commit failures leaving parlay_odds null in the DB
-        for parlay_name, leg_odds in parlay_legs.items():
-            if len(leg_odds) > 1:  # Only calculate for actual parlays
-                parlay_odds = self._calculate_parlay_odds(leg_odds)
-                parlay_id = parlay_ids[parlay_name]
-                await self.bets.update_parlay_odds(parlay_id, parlay_odds)
-        await self.session.commit()
-
-        return {
-            "status": "ok",
-            "bets_created": len(created_bets),
-            "bets": created_bets
-        }
 
     async def place_bet(self, raw_text: str, stake: float, odds: float) -> Dict[str, Any]:
         """Legacy single-bet placement"""

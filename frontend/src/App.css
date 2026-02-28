@@ -1,11 +1,12 @@
-# Prevent white flashes in dark mode
-html, body {
+# Prevent white flashes in dark mode html,
+body {
   background-color: #18181b !important;
   color-scheme: dark;
 }
 
 @media (prefers-color-scheme: dark) {
-  html, body {
+  html,
+  body {
     background-color: #18181b !important;
   }
 }

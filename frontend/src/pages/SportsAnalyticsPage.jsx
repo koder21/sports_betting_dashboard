@@ -1,16 +1,32 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import ErrorBoundary from '../components/ErrorBoundary.jsx';
+import AnalyticsService from '../services/analytics.js';
+import SuspenseFallback from '../components/SuspenseFallback.jsx';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   AreaChart, Area, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from "recharts";
 import api from "../services/api.js";
+import { useApi } from "../hooks/useApi";
 import "./SportsAnalyticsPage.css";
 
 function SportsAnalyticsPage() {
   const [activeSport, setActiveSport] = useState("ALL");
-  const [sportData, setSportData] = useState(null);
-  const [loading, setLoading] = useState(true);
+
+  const fetchSportData = useCallback(() => {
+    const endpoint = activeSport === "ALL"
+      ? "/api/sports-analytics/overview"
+      : `/api/sports-analytics/stats/${activeSport}`;
+    return api.get(endpoint).then(res => res.data);
+  }, [activeSport]);
+
+  const { data: sportData, loading, error, refetch } = useApi(fetchSportData, null);
+
+  // Track page view
+  useEffect(() => {
+    AnalyticsService.trackPageView('SportsAnalyticsPage');
+  }, []);
 
   const sports = [
     { code: "ALL", name: "All Sports", icon: "🌐" },
@@ -23,25 +39,7 @@ function SportsAnalyticsPage() {
     { code: "EPL", name: "EPL", icon: "⚽" },
   ];
 
-  useEffect(() => {
-    const fetchSportData = async () => {
-      setLoading(true);
-      try {
-        const endpoint = activeSport === "ALL" 
-          ? "/api/sports-analytics/overview" 
-          : `/api/sports-analytics/stats/${activeSport}`;
-        const res = await api.get(endpoint);
-        setSportData(res.data);
-      } catch (err) {
-        console.error("Failed to fetch sport data:", err);
-        setSportData(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSportData();
-  }, [activeSport]);
+  // ...existing code...
 
   const COLORS = ['#00C49F', '#FF6B6B', '#4ECDC4', '#FFE66D', '#A8E6CF'];
   const CHART_COLORS = {
@@ -71,20 +69,19 @@ function SportsAnalyticsPage() {
         <div className="header-content">
           <h1 className="sports-analytics-title">
             <span className="title-icon">📊</span>
-            Sports Analytics Dashboard
+            Sports Analytics
           </h1>
-          <div className="header-subtitle">Real-time insights and performance metrics</div>
+          <p className="header-subtitle">Performance insights by sport</p>
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Sport Tabs */}
       <div className="sport-tabs">
         {sports.map((sport) => (
           <button
             key={sport.code}
             className={`sport-tab ${activeSport === sport.code ? "active" : ""}`}
-            onClick={() => setActiveSport(sport.code)}
-          >
+            onClick={() => setActiveSport(sport.code)}>
             <span className="sport-icon">{sport.icon}</span>
             <span className="sport-name">{sport.name}</span>
           </button>
@@ -611,4 +608,12 @@ function SportsAnalyticsPage() {
   );
 }
 
-export default SportsAnalyticsPage;
+export default function SportsAnalyticsPageWrapper(props) {
+  return (
+    <ErrorBoundary>
+      <React.Suspense fallback={<SuspenseFallback message="Loading sports analytics..." />}>
+        <SportsAnalyticsPage {...props} />
+      </React.Suspense>
+    </ErrorBoundary>
+  );
+}

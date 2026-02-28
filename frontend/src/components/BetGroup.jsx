@@ -1,16 +1,10 @@
 import React from 'react';
-import BetCard from './BetCard';
+import BetCard from './BetCard.jsx';
 import { formatCurrency, getStatusBadge } from '../utils/formatting';
 import { formatOdds } from '../services/oddsService';
 import './BetGroup.css';
 
-const BetGroup = React.memo(({
-  group,
-  oddsFormat,
-  isExpanded,
-  onToggleExpansion,
-  onDelete,
-}) => {
+const BetGroup = React.memo(({ group, oddsFormat, isExpanded, onToggleExpansion, onDelete }) => {
   const { bets, isParlay, status, stake, pnl } = group;
   const statusBadge = getStatusBadge(status);
 
@@ -21,7 +15,7 @@ const BetGroup = React.memo(({
       const parlayInfo = {
         parlay_id: bets[0]?.parlay_id,
         bet_count: bets.length,
-        legs: bets.map(bet => ({
+        legs: bets.map((bet) => ({
           id: bet.id,
           selection: bet.selection,
           odds: bet.odds,
@@ -41,11 +35,11 @@ const BetGroup = React.memo(({
       <div className={`bet-group bet-group-parlay bet-group-${status}`}>
         <div className="bet-group-header">
           <div className="group-title">
-            <span className="parlay-icon" aria-hidden="true">📊</span>
-            <span className="parlay-label">{bets.length}-Leg Parlay</span>
-            <span className={`status-badge ${statusBadge.className}`}>
-              {statusBadge.label}
+            <span className="parlay-icon" aria-hidden="true">
+              📊
             </span>
+            <span className="parlay-label">{bets.length}-Leg Parlay</span>
+            <span className={`status-badge ${statusBadge.className}`}>{statusBadge.label}</span>
           </div>
           <div className="group-actions">
             <button
@@ -60,11 +54,7 @@ const BetGroup = React.memo(({
             >
               🐞
             </button>
-            <button
-              className="delete-group-btn"
-              onClick={onDelete}
-              aria-label="Delete parlay"
-            >
+            <button className="delete-group-btn" onClick={onDelete} aria-label="Delete parlay">
               🗑️
             </button>
           </div>
@@ -96,12 +86,20 @@ const BetGroup = React.memo(({
               <span className="leg-number">{index + 1}</span>
               <span className="leg-selection">{bet.selection || bet.pick}</span>
               {/* Show result for each leg: final score for moneyline/spread, stat for prop */}
-              {bet.bet_type === "moneyline" || bet.bet_type === "spread" ? (
+              {bet.bet_type === 'moneyline' || bet.bet_type === 'spread' ? (
                 bet.final_score ? (
-                  <span className="leg-result"> — Final: {bet.final_score.replace('Final:', '').trim()}</span>
+                  <span className="leg-result">
+                    {' '}
+                    — Final: {bet.final_score.replace('Final:', '').trim()}
+                  </span>
                 ) : null
-              ) : bet.bet_type === "prop" && bet.result_value !== undefined && bet.result_value !== null ? (
-                <span className="leg-result"> — Result: {bet.result_value} {bet.stat_type ? bet.stat_type : ''}</span>
+              ) : bet.bet_type === 'prop' &&
+                bet.result_value !== undefined &&
+                bet.result_value !== null ? (
+                <span className="leg-result">
+                  {' '}
+                  — Result: {bet.result_value} {bet.stat_type ? bet.stat_type : ''}
+                </span>
               ) : null}
               <span className="leg-odds">{formatOdds(bet.odds, oddsFormat)}</span>
               <span className={`leg-status status-${bet.status}`}>{bet.status}</span>

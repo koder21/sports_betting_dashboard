@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import uuid
-
+import re
 from ..models.bet import Bet
 from ..models.game import Game
 from ..models.sport import Sport
@@ -104,6 +104,22 @@ class BetPlacementService:
         
         created_bets = []
         for leg in legs:
+            pick = leg["pick"]
+            pick_lower = pick.lower()
+            team_total_pattern = re.match(r"^[a-zA-Z\s]+/[a-zA-Z\s]+\s+(over|under)\s+\d+", pick)
+            player_prop_pattern = re.match(r"^[a-zA-Z\s\.'-]+\s+(over|under)\s+\d+", pick)
+
+            if " ml" in pick_lower or "moneyline" in pick_lower:
+                bet_type = "moneyline"
+            elif team_total_pattern:
+                bet_type = "total"
+            elif player_prop_pattern:
+                bet_type = "prop"
+            elif "over" in pick_lower or "under" in pick_lower:
+                bet_type = "total"
+            else:
+                bet_type = "moneyline"
+
             bet = Bet(
                 placed_at=datetime.utcnow(),
                 sport_id=sport_id,
@@ -113,8 +129,8 @@ class BetPlacementService:
                 stake=stake_per_leg,
                 odds=leg["odds"],
                 parlay_id=parlay_id,
-                bet_type="moneyline",
-                selection=leg["pick"],
+                bet_type=bet_type,
+                selection=pick,
                 reason=f"{reason_prefix} | {leg.get('confidence', '')}% | {leg.get('reason', '')}".strip(),
                 status="pending"
             )

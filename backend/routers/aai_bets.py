@@ -19,6 +19,7 @@ from ..db import get_db
 from ..services.aai.fresh_data_scraper import FreshDataScraper
 from ..services.aai.pre_bet_verifier import PreBetVerifier
 from ..services.betting import RecommendationsEngine  # ← NEW: Modern betting engine
+from backend.utils.redis_cache import redis_cache
 from ..services.scraper_stats import ESPNClient, PlayerStatsScraper
 
 router = APIRouter()
@@ -31,6 +32,7 @@ DEFAULT_BANKROLL = 1000
 
 
 @router.get("/refresh-and-calculate")
+@redis_cache(ttl=60)
 async def refresh_and_calculate(
     models: str = Query(default="all", description="Comma-separated model list (e.g., 'elo,vegas,ml')"),
     min_confidence: float = Query(default=60, ge=0, le=100, description="Minimum confidence threshold"),
@@ -162,6 +164,7 @@ async def refresh_and_calculate(
 
 
 @router.get("/recommendations")
+@redis_cache(ttl=60)
 async def get_recommendations(
     models: str = Query(default="all", description="Model selection (legacy param, uses all models)"),
     min_confidence: float = Query(default=60, ge=0, le=100, description="Minimum confidence threshold"),

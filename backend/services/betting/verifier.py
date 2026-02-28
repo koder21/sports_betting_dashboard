@@ -2,13 +2,9 @@
 import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+import re
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-
-from ...repositories.bet_repo import BetRepository
-from ...repositories.game_repo import GameRepository
-from ...repositories.player_stat_repo import PlayerStatRepository
 from ...models.games_results import GameResult
 from ...models.bet import Bet
 
@@ -16,23 +12,49 @@ logger = logging.getLogger(__name__)
 
 
 class BetVerifier:
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session):
         self.session = session
+        from ...repositories.bet_repo import BetRepository
+        from ...repositories.game_repo import GameRepository
+        from ...repositories.player_stat_repo import PlayerStatRepository
+        from ...repositories.injury_repo import InjuryRepository  # Add this import
         self.bets = BetRepository(session)
         self.games = GameRepository(session)
         self.stats = PlayerStatRepository(session)
+        self.injuries = InjuryRepository(session)  # Initialize injuries repository
 
     async def _verify_single_bet(self, bet: Bet) -> Optional[Dict[str, Any]]:
         """Verify a single bet and return discrepancy if found."""
         expected_status = await self._calculate_expected_status(bet)
+        if expected_status is None:
+            return None
         profit = None
+        # For prop bets, regrade if result_value is missing
+        if bet.bet_type in ("prop", "total") and (bet.result_value is None):
+            # Force regrade as void
+            bet.status = "void"
+            bet.profit = 0
+            bet.graded_at = datetime.utcnow()
+            await self.session.flush()
+            return {
+                "type": "single",
+                "bet_id": bet.id,
+                "selection": bet.selection or "",
+                "current_status": bet.status,
+                "expected_status": "void",
+                "current_profit": bet.profit,
+                "stake": bet.stake,
+                "odds": bet.odds,
+                "reason": "Missing stat value for grading",
+            }
         if expected_status == "won":
             profit = bet.stake * (bet.odds - 1)
         elif expected_status == "lost":
             profit = -bet.stake
 
         discrepancy = None
-        if expected_status != bet.status or (profit is not None and bet.profit != profit):
+        # Only report if expected status differs from current status
+        if expected_status != (bet.status or ""):
             # Update bet in DB
             bet.status = expected_status
             bet.profit = profit
@@ -41,28 +63,24 @@ class BetVerifier:
             discrepancy = {
                 "type": "single",
                 "bet_id": bet.id,
-                "selection": bet.selection,
+                "selection": bet.selection or "",
                 "current_status": bet.status,
                 "expected_status": expected_status,
                 "current_profit": bet.profit,
                 "stake": bet.stake,
                 "odds": bet.odds,
-                "reason": await self._get_verification_reason(bet, expected_status),
+                "reason": await self._get_verification_reason(bet, str(expected_status)),
             }
         return discrepancy
-    def __init__(self, session: AsyncSession):
-        self.session = session
-        self.bets = BetRepository(session)
-        self.games = GameRepository(session)
-        self.stats = PlayerStatRepository(session)
+    # Only one __init__ method should exist; remove duplicate
 
     async def verify_all_graded_bets(self) -> Dict[str, Any]:
         """
         Re-check all graded bets (won/lost) against actual game/player data.
         Returns a list of discrepancies without modifying the database.
         """
-        # Get all graded bets (won or lost, not pending or void)
-        stmt = select(Bet).where(Bet.status.in_(["won", "lost"]))
+        # Get all bets that are graded or voided (not pending)
+        stmt = select(Bet).where(Bet.status.in_(["won", "lost", "void"]))
         result = await self.session.execute(stmt)
         graded_bets = result.scalars().all()
 
@@ -103,6 +121,7 @@ class BetVerifier:
         if not legs:
             return None
 
+
         expected_statuses = []
         leg_verifications = []
         for leg in legs:
@@ -127,11 +146,14 @@ class BetVerifier:
                     "reason": await self._get_verification_reason(leg, expected_status),
                 })
 
-        # Unified parlay status logic: parlay is 'won' if all legs are 'won' or 'void'/'push' (and at least one 'won'), 'lost' if any leg is 'lost', 'void' if all void/push
-        active_legs = [s for s in expected_statuses if s not in ("void", "push")]
-        all_won = all(s == "won" or s in ("void", "push") for s in expected_statuses) and any(s == "won" for s in expected_statuses)
+        # If any leg is void, parlay is void and not counted in P/L
+        any_void = any(s == "void" for s in expected_statuses)
         any_lost = any(s == "lost" for s in expected_statuses)
-        if any_lost:
+        all_won = all(s == "won" for s in expected_statuses)
+
+        if any_void:
+            expected_parlay_status = "void"
+        elif any_lost:
             expected_parlay_status = "lost"
         elif all_won:
             expected_parlay_status = "won"
@@ -139,7 +161,7 @@ class BetVerifier:
             expected_parlay_status = "void"
 
         # Use synthetic parlay status (not DB field)
-        current_parlay_status = "lost" if any(leg.status == "lost" for leg in legs) else ("won" if all(leg.status == "won" or leg.status in ("void", "push") for leg in legs) and any(leg.status == "won" for leg in legs) else "void")
+        current_parlay_status = "void" if any(leg.status == "void" for leg in legs) else ("lost" if any(leg.status == "lost" for leg in legs) else ("won" if all(leg.status == "won" for leg in legs) else "void"))
 
         if not leg_verifications and current_parlay_status == expected_parlay_status:
             return None
@@ -158,41 +180,27 @@ class BetVerifier:
         }
 
 
-        # Recalculate profit using latest odds logic
-        profit = None
-        if expected_status == "won":
-            # Always use decimal odds for backend calculations
-            # Profit = stake * (odds - 1)
-            profit = bet.stake * (bet.odds - 1)
-        elif expected_status == "lost":
-            profit = -bet.stake
-
-        discrepancy = None
-        if expected_status != bet.status or (profit is not None and bet.profit != profit):
-            # Update bet in DB
-            bet.status = expected_status
-            bet.profit = profit
-            bet.graded_at = datetime.utcnow()
-            await self.session.flush()
-            discrepancy = {
-                "type": "single",
-                "bet_id": bet.id,
-                "selection": bet.selection,
-                "current_status": bet.status,
-                "expected_status": expected_status,
-                "current_profit": bet.profit,
-                "stake": bet.stake,
-                "odds": bet.odds,
-                "reason": await self._get_verification_reason(bet, expected_status),
-            }
-        return discrepancy
+        # Remove undefined 'bet' block left over from previous patch
 
     async def _calculate_expected_status(self, bet: Bet) -> Optional[str]:
         """Calculate what the bet status SHOULD be based on actual data"""
+        # Allow regrading void bets if game/player data is available
         if bet.bet_type in ("moneyline", "spread"):
-            return await self._check_moneyline_result(bet)
-        elif bet.bet_type == "prop":
-            return await self._check_prop_result(bet)
+            # If bet is void but game result is available, regrade
+            if bet.status == "void":
+                result = await self._check_moneyline_result(bet)
+                if result is not None:
+                    return result
+            else:
+                return await self._check_moneyline_result(bet)
+        elif bet.bet_type in ("prop", "total"):
+            # If bet is void but game/player data is available, regrade
+            if bet.status == "void":
+                result = await self._check_prop_result(bet)
+                if result is not None:
+                    return result
+            else:
+                return await self._check_prop_result(bet)
         return None
 
     async def _check_moneyline_result(self, bet: Bet) -> Optional[str]:
@@ -242,43 +250,74 @@ class BetVerifier:
             return "won" if not home_won else "lost"
 
     async def _check_prop_result(self, bet: Bet) -> Optional[str]:
-        """Check prop bet against player stats"""
-        if not bet.player_id or not bet.game_id:
+        """Check prop bet against player stats, auto-void if injured or DNP."""
+        if not bet.game_id:
             return None
 
+        sel_lower = (bet.selection or '').lower()
+        is_totals = 'over' in sel_lower or 'under' in sel_lower or (bet.stat_type and bet.stat_type.lower() == 'total')
+
+        # Totals bet: use game scores if player stats are missing
+        if is_totals:
+            game = await self.games.get(bet.game_id)
+            game_result = None
+            if not game or game.home_score is None:
+                stmt = select(GameResult).where(GameResult.game_id == bet.game_id)
+                result = await self.session.execute(stmt)
+                game_result = result.scalar_one_or_none()
+            home_score = game.home_score if game and game.home_score is not None else (game_result.home_score if game_result else None)
+            away_score = game.away_score if game and game.away_score is not None else (game_result.away_score if game_result else None)
+            if home_score is not None and away_score is not None:
+                value = home_score + away_score
+                selection_str = bet.selection or ""
+                numbers = re.findall(r'[-+]?\d*\.?\d+', selection_str)
+                if not numbers:
+                    return None
+                line = float(numbers[-1])
+                if "over" in sel_lower:
+                    return "won" if value > line else "lost"
+                else:
+                    return "won" if value < line else "lost"
+
+        # Fallback: original player stat grading
+        if not bet.player_id:
+            return None
         stat = await self.stats.get_for_player_game(bet.player_id, bet.game_id)
         if not stat:
             return None
-
+        # Auto-void if minutes is None/0/NaN
+        minutes = getattr(stat, 'minutes', None)
+        try:
+            min_val = float(minutes) if minutes is not None else None
+        except (TypeError, ValueError):
+            min_val = None
+        if min_val is None or min_val == 0:
+            return "void"
+        # Optionally, check injuries table for player_id/game_id and status == 'Out'
+        # (Assume self.injuries is available, otherwise skip)
+        if hasattr(self, 'injuries'):
+            injury = await self.injuries.get_for_player_game(bet.player_id, bet.game_id)
+            if injury and getattr(injury, 'status', '').lower() == 'out':
+                return "void"
         stat_field = bet.stat_type or bet.market
         if not stat_field:
             return None
-            
         value = getattr(stat, stat_field, None)
-        
         if value is None and hasattr(stat, "stats_json") and stat.stats_json:
             value = stat.stats_json.get(stat_field)
-
         if value is None:
             return None
-
         try:
             value = float(value)
         except (TypeError, ValueError):
             return None
-
-        # Extract line from selection
         if not bet.selection:
             return None
-
-        import re
-        numbers = re.findall(r'[-+]?\d*\.?\d+', bet.selection)
+        selection_str = bet.selection or ""
+        numbers = re.findall(r'[-+]?\d*\.?\d+', selection_str)
         if not numbers:
             return None
-
         line = float(numbers[-1])
-        sel_lower = bet.selection.lower()
-
         if "over" in sel_lower:
             return "won" if value > line else "lost"
         else:

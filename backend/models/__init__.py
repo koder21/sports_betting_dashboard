@@ -1,3 +1,5 @@
+# Import order follows the FK dependency graph:
+# Sport → Team/Player → Game → GameState → Stats/Bets/Alerts
 from .sport import Sport
 from .team import Team
 from .player import Player

@@ -5,8 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .base import BaseRepository
 from ..models import Injury
-
-
 class InjuryRepository(BaseRepository[Injury]):
     
     def __init__(self, session: AsyncSession) -> None:
@@ -29,7 +27,14 @@ class InjuryRepository(BaseRepository[Injury]):
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
-
+    async def get_for_player_game(self, player_id, game_id):
+        from ..models.injury import Injury
+        stmt = select(Injury).where(
+            Injury.player_id == player_id,
+            Injury.game_id == game_id
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
     async def add_if_new(
         self,
         player_id: str,

@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import ErrorBoundary from '../components/ErrorBoundary.jsx';
+import SuspenseFallback from '../components/SuspenseFallback.jsx';
 import api from "../services/api.js";
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -6,43 +8,41 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import "./AnalyticsPage.css";
+import { useApi } from "../hooks/useApi";
+import { useMetrics } from "../hooks/useMetrics";
 
 function AnalyticsPage() {
-  const [summary, setSummary] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    api.get("/api/analytics/summary")
-      .then((res) => setSummary(res.data || null))
-      .catch((err) => console.error('Failed to fetch analytics:', err))
-      .finally(() => setLoading(false));
+  useMetrics("AnalyticsPage");
+  const fetchSummary = React.useCallback(() => {
+    return api.get("/api/analytics/summary").then(res => res.data || null);
   }, []);
+  const { data: summary, loading, error, refetch } = useApi(fetchSummary, null);
 
 
   if (loading) {
     return (
-      <div className="analytics-container">
-        <div className="loading">Loading analytics...</div>
+      <div className="analytics-container" role="main" aria-label="Analytics Page">
+        <div className="loading" role="status" aria-live="polite">Loading analytics...</div>
       </div>
     );
   }
 
   if (!summary) {
     return (
-      <div className="analytics-container">
-        <div className="no-data">No betting data available for analysis</div>
+      <div className="analytics-container" role="main" aria-label="Analytics Page">
+        <div className="no-data" role="status" aria-live="polite">No betting data available for analysis</div>
       </div>
     );
   }
 
-  const { roi, trends, markets, by_sport, by_bet_type, over_time, parlay_performance, streaks, ev_kelly, player_trends, team_momentum, team_splits, betting_patterns, by_source } = summary;
+  const { roi, trends, by_sport, by_bet_type, over_time, parlay_performance, streaks, ev_kelly, player_trends, betting_patterns, by_source } = summary;
 
   // Colors for charts
   const COLORS = ['#4a90e2', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22'];
   
   // Prepare data for sport performance chart
   const sportData = Object.entries(by_sport || {})
-    .filter(([sport, stats]) => stats.total > 0)
+    .filter(([, stats]) => stats.total > 0)
     .map(([sport, stats]) => ({
       name: sport,
       winRate: parseFloat(stats.win_rate?.toFixed(1) || 0),
@@ -53,7 +53,7 @@ function AnalyticsPage() {
 
   // Prepare data for bet type comparison
   const betTypeData = Object.entries(by_bet_type || {})
-    .filter(([type, stats]) => stats.total > 0)
+    .filter(([, stats]) => stats.total > 0)
     .map(([type, stats]) => ({
       name: type.toUpperCase(),
       won: stats.won || 0,
@@ -578,7 +578,7 @@ function AnalyticsPage() {
               </table>
             </div>
           ) : (
-            <div className="no-table-data">No bet type data available</div>
+            <div className="no-table-data" role="status" aria-live="polite">No bet type data available</div>
           )}
         </div>
 
@@ -587,4 +587,12 @@ function AnalyticsPage() {
   );
 }
 
-export default AnalyticsPage;
+export default function AnalyticsPageWrapper(props) {
+  return (
+    <ErrorBoundary>
+      <React.Suspense fallback={<SuspenseFallback message="Loading analytics..." />}>
+        <AnalyticsPage {...props} />
+      </React.Suspense>
+    </ErrorBoundary>
+  );
+}

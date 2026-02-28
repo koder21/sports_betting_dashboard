@@ -10,7 +10,7 @@ const BetTabs = React.memo(({ activeTab, onTabChange }) => {
 
   return (
     <div className="bet-tabs" role="tablist">
-      {tabs.map(tab => (
+      {tabs.map((tab) => (
         <button
           key={tab.id}
           role="tab"
@@ -19,7 +19,9 @@ const BetTabs = React.memo(({ activeTab, onTabChange }) => {
           className={`bet-tab ${activeTab === tab.id ? 'active' : ''}`}
           onClick={() => onTabChange(tab.id)}
         >
-          <span className="tab-icon" aria-hidden="true">{tab.icon}</span>
+          <span className="tab-icon" aria-hidden="true">
+            {tab.icon}
+          </span>
           <span className="tab-label">{tab.label}</span>
         </button>
       ))}

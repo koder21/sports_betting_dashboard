@@ -13,11 +13,11 @@ import { convertToUserTimezone } from '../services/timezoneService.js';
  */
 export const formatDate = (dateString, format = 'date') => {
   if (!dateString) return '';
-  
+
   try {
     return convertToUserTimezone(dateString, format);
-  } catch (error) {
-    console.error('Date formatting error:', error);
+  } catch {
+      console.error('Date formatting error:');
     return String(dateString);
   }
 };
@@ -47,11 +47,11 @@ export const formatTime = (dateString) => {
  */
 export const formatRelativeTime = (dateString) => {
   if (!dateString) return '';
-  
+
   try {
     const date = new Date(dateString);
     const now = new Date();
-    const diffMs = now - date;
+      const diffMs = now - date; 
     const diffSecs = Math.floor(diffMs / 1000);
     const diffMins = Math.floor(diffSecs / 60);
     const diffHours = Math.floor(diffMins / 60);
@@ -62,7 +62,7 @@ export const formatRelativeTime = (dateString) => {
       const absDays = Math.abs(diffDays);
       const absHours = Math.abs(diffHours);
       const absMins = Math.abs(diffMins);
-      
+
       if (absDays > 0) return `in ${absDays} day${absDays !== 1 ? 's' : ''}`;
       if (absHours > 0) return `in ${absHours} hour${absHours !== 1 ? 's' : ''}`;
       if (absMins > 0) return `in ${absMins} minute${absMins !== 1 ? 's' : ''}`;
@@ -77,7 +77,7 @@ export const formatRelativeTime = (dateString) => {
     if (diffHours > 0) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
     if (diffMins > 0) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
     return 'just now';
-  } catch (error) {
+  } catch {
     console.error('Relative time formatting error:', error);
     return formatDate(dateString, 'date');
   }
@@ -91,17 +91,17 @@ export const formatRelativeTime = (dateString) => {
  */
 export const groupByDate = (items, dateKey = 'placed_at') => {
   if (!items || items.length === 0) return {};
-  
+
   const groups = {};
-  
+
   items.forEach((item) => {
     const dateStr = item[dateKey];
     if (!dateStr) return;
-    
+
     try {
       const date = new Date(dateStr);
       const dateOnly = date.toISOString().split('T')[0]; // YYYY-MM-DD
-      
+
       if (!groups[dateOnly]) {
         groups[dateOnly] = [];
       }
@@ -110,7 +110,7 @@ export const groupByDate = (items, dateKey = 'placed_at') => {
       console.error('Date grouping error:', error);
     }
   });
-  
+
   return groups;
 };
 
@@ -123,15 +123,15 @@ export const groupByDate = (items, dateKey = 'placed_at') => {
  */
 export const sortByDate = (items, dateKey = 'placed_at', direction = 'desc') => {
   if (!items || items.length === 0) return [];
-  
+
   return [...items].sort((a, b) => {
     const dateA = new Date(a[dateKey]);
     const dateB = new Date(b[dateKey]);
-    
+
     if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
       return 0;
     }
-    
+
     return direction === 'desc' ? dateB - dateA : dateA - dateB;
   });
 };
@@ -143,13 +143,13 @@ export const sortByDate = (items, dateKey = 'placed_at', direction = 'desc') => 
  */
 export const isToday = (dateString) => {
   if (!dateString) return false;
-  
+
   try {
     const date = new Date(dateString);
     const today = new Date();
-    
+
     return date.toDateString() === today.toDateString();
-  } catch (error) {
+  } catch {
     return false;
   }
 };
@@ -161,13 +161,13 @@ export const isToday = (dateString) => {
  */
 export const isPast = (dateString) => {
   if (!dateString) return false;
-  
+
   try {
     const date = new Date(dateString);
     const now = new Date();
-    
+
     return date < now;
-  } catch (error) {
+  } catch {
     return false;
   }
 };

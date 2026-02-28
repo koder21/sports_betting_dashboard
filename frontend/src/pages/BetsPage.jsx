@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useMemo, useCallback} from "react";
+import ErrorBoundary from "../components/ErrorBoundary.jsx";
+import SuspenseFallback from "../components/SuspenseFallback.jsx";
 import api from "../services/api.js";
-import { getOddsFormat, americanToDecimal, decimalToAmerican } from "../services/oddsService.js";
+import { decimalToAmerican } from "../services/oddsService.js";
 import { groupBetsByParlay } from "../utils/betCalculations.js";
 import { groupByDate } from "../utils/dateFormatting.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
+import SkeletonLoader from "../components/SkeletonLoader.jsx";
 import ErrorMessage from "../components/ErrorMessage.jsx";
 import BetTabs from "../components/BetTabs.jsx";
 import BetFilters from "../components/BetFilters.jsx";
@@ -12,67 +15,65 @@ import BetStats from "../components/BetStats.jsx";
 import VerificationModal from "../components/VerificationModal.jsx";
 import BetInputSection from "../components/BetInputSection.jsx";
 import "./BetsPage.css";
+import { useApi } from "../hooks/useApi";
+import { useOddsFormat } from "../hooks/useOddsFormat";
+import { useLoading } from "../hooks/useLoading";
+import { useError } from "../hooks/useError";
+import { useMetrics } from "../hooks/useMetrics";
 
 // Constants
 const DEFAULT_TAB = "pending";
 const POLL_INTERVAL = 30000; // 30 seconds
+const DAYS_PER_PAGE = 10;
 
 function BetsPage() {
-    // Pagination for finished bets: show only N days, with 'load more'
-    const DAYS_PER_PAGE = 10;
-    const [daysShown, setDaysShown] = useState(DAYS_PER_PAGE);
+  useMetrics("BetsPage");
+  const { error, setErrorMsg: setError } = useError();
+  const { loading, startLoading, stopLoading } = useLoading();
+  const setLoading = useCallback((val) => val ? startLoading() : stopLoading(), [startLoading, stopLoading]);
+  const [oddsFormat] = useOddsFormat();
+
   // State
-  const [rawText, setRawText] = useState("");
-  const [bets, setBets] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [copyingAI, setCopyingAI] = useState(false);
-  const [error, setError] = useState(null);
-  const [oddsFormat, setOddsFormat] = useState(getOddsFormat());
-  const [activeTab, setActiveTab] = useState(DEFAULT_TAB);
-  const [showWins, setShowWins] = useState(true);
-  const [showLosses, setShowLosses] = useState(true);
-  const [dateFilter, setDateFilter] = useState("");
-  const [verifying, setVerifying] = useState(false);
-  const [verificationResults, setVerificationResults] = useState(null);
-  const [showVerificationModal, setShowVerificationModal] = useState(false);
-  const [collapsedDays, setCollapsedDays] = useState({});
-  const [expandedBets, setExpandedBets] = useState({});
-  const [aiContextData, setAiContextData] = useState(null);
-  const [showCopyRetry, setShowCopyRetry] = useState(false);
-
-  // Fetch bets on mount and poll
-  useEffect(() => {
-    fetchBets();
-    const interval = setInterval(fetchBets, POLL_INTERVAL);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Listen for odds format changes
-  useEffect(() => {
-    const handleOddsFormatChange = (e) => {
-      setOddsFormat(e.detail.format);
-    };
-    window.addEventListener('oddsFormatChanged', handleOddsFormatChange);
-    return () => window.removeEventListener('oddsFormatChanged', handleOddsFormatChange);
-  }, []);
-
-  // Fetch bets from API
-  const fetchBets = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await api.get("/api/bets/all");
-      if (response.data.bets) {
-        setBets(response.data.bets);
+  const [daysShown, setDaysShown] = React.useState(DAYS_PER_PAGE);
+  const [rawText, setRawText] = React.useState("");
+  const [copyingAI, setCopyingAI] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState(DEFAULT_TAB);
+  const [showWins, setShowWins] = React.useState(true);
+  const [showLosses, setShowLosses] = React.useState(true);
+  const [dateFilter, setDateFilter] = React.useState("");
+  const [verificationResults, setVerificationResults] = React.useState(null);
+  const [showVerificationModal, setShowVerificationModal] = React.useState(false);
+  const [verifying, setVerifying] = React.useState(false);
+    // Restore verifyBets logic
+    const verifyBets = React.useCallback(async () => {
+      setVerifying(true);
+      setError(null);
+      try {
+        const response = await api.post("/api/bets/verify");
+        setVerificationResults(response.data);
+        if (response.data.discrepancies_found > 0) {
+          setShowVerificationModal(true);
+        } else {
+          setError("✓ All bets verified correctly! No discrepancies found.");
+          setTimeout(() => setError(null), 5000);
+        }
+      } catch (err) {
+        setError("Failed to verify bets: " + (err.response?.data?.detail || err.message));
+      } finally {
+        setVerifying(false);
       }
-    } catch (err) {
-      setError("Failed to fetch bets. Please try again.");
-      console.error('Fetch bets error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    }, []);
+  const [collapsedDays, setCollapsedDays] = React.useState({});
+  const [expandedBets, setExpandedBets] = React.useState({});
+  const [aiContextData, setAiContextData] = React.useState(null);
+  const [showCopyRetry, setShowCopyRetry] = React.useState(false);
+
+// API hook for bets
+const fetchBetsApi = useCallback(async () => {
+  const response = await api.get("/api/bets/all");
+  return response.data.bets || [];
+}, []); // No external dependencies
+const { data: bets, refetch: fetchBets } = useApi(fetchBetsApi, [], []);
 
   // Copy for AI function
   const copyForAI = useCallback(async () => {
@@ -109,9 +110,7 @@ function BetsPage() {
     } finally {
       setCopyingAI(false);
     }
-  }, []);
-
-  // Retry clipboard copy
+  }, [setError]);
   const retryClipboardCopy = useCallback(async () => {
     if (!aiContextData) {
       setError("No data to copy. Please fetch again.");
@@ -135,7 +134,7 @@ function BetsPage() {
     } finally {
       setCopyingAI(false);
     }
-  }, [aiContextData]);
+  }, [aiContextData, setError]);
 
   // Parse bet text into structured format
   const parseBetText = useCallback((text) => {
@@ -200,7 +199,7 @@ function BetsPage() {
     
     if (currentGroup) groups.push(currentGroup);
     return { parlays: groups.filter(g => g.legs.length > 1), singles };
-  }, []);
+  }, []); // No external dependencies
 
   // Place bets from textarea
   const placeBets = useCallback(async () => {
@@ -273,7 +272,7 @@ function BetsPage() {
     } finally {
       setLoading(false);
     }
-  }, [rawText, parseBetText, fetchBets]);
+  }, [rawText, parseBetText, fetchBets, setError, setLoading]);
 
   // Delete all pending bets
   const deleteAllPendingBets = useCallback(async () => {
@@ -298,9 +297,7 @@ function BetsPage() {
     } finally {
       setLoading(false);
     }
-  }, [fetchBets]);
-
-  // Group and filter bets (same as before)
+  }, [fetchBets, setError, setLoading]);
   const groupedBets = useMemo(() => groupBetsByParlay(bets), [bets]);
 
   const tabFilteredBets = useMemo(() => {
@@ -392,28 +389,7 @@ function BetsPage() {
     } finally {
       setLoading(false);
     }
-  }, [fetchBets]);
-
-  const verifyBets = useCallback(async () => {
-    setVerifying(true);
-    setError(null);
-
-    try {
-      const response = await api.post("/api/bets/verify");
-      setVerificationResults(response.data);
-      
-      if (response.data.discrepancies_found > 0) {
-        setShowVerificationModal(true);
-      } else {
-        setError("✓ All bets verified correctly!");
-        setTimeout(() => setError(null), 5000);
-      }
-    } catch (err) {
-      setError(`Verification failed: ${err.response?.data?.message || err.message}`);
-    } finally {
-      setVerifying(false);
-    }
-  }, []);
+  }, [fetchBets, setError, setLoading]);
 
   const applyCorrections = useCallback(async (corrections) => {
     setLoading(true);
@@ -430,7 +406,7 @@ function BetsPage() {
     } finally {
       setLoading(false);
     }
-  }, [fetchBets]);
+  }, [fetchBets, setError, setLoading]);
 
   const overallStats = useMemo(() => {
     const finished = groupedBets.filter(g => ["won", "lost"].includes(g.status));
@@ -455,17 +431,17 @@ function BetsPage() {
 
   return (
     <div className="bets-page">
-      <div className="bets-header">
+      <div className="bets-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <h1>Betting Tracker</h1>
         <button 
           className="verify-btn"
           onClick={verifyBets}
           disabled={verifying || loading}
+          style={{ padding: '8px 16px', fontWeight: 600, background: '#ffc107', color: '#222', border: 'none', borderRadius: 4, cursor: verifying || loading ? 'not-allowed' : 'pointer' }}
         >
           {verifying ? "Verifying..." : "🔍 Verify Bets"}
         </button>
       </div>
-
       {error && (
         <ErrorMessage
           message={error}
@@ -476,7 +452,6 @@ function BetsPage() {
 
       <BetStats stats={overallStats} />
 
-      {/* Input Section for Pasting Bets */}
       <BetInputSection
         rawText={rawText}
         onTextChange={setRawText}
@@ -503,40 +478,55 @@ function BetsPage() {
         onDateFilterChange={setDateFilter}
       />
 
-      {loading && bets.length > 0 && (
-        <div className="inline-loading">
-          <LoadingSpinner size="small" message="Refreshing..." />
-        </div>
-      )}
+      <div className="bets-page-container" role="main" aria-label="Bets Page">
+        {loading && bets.length > 0 && (
+          <div className="inline-loading" role="status" aria-live="polite">
+            <LoadingSpinner size="small" message="Refreshing..." />
+          </div>
+        )}
 
-      <BetGroupList
-        betsByDay={betsByDay}
-        collapsedDays={collapsedDays}
-        expandedBets={expandedBets}
-        oddsFormat={oddsFormat}
-        onToggleDay={toggleDayCollapse}
-        onToggleExpansion={toggleBetExpansion}
-        onDeleteGroup={deleteBetGroup}
-      />
+        {loading && bets.length === 0 ? (
+          <div role="status" aria-live="polite">
+            <SkeletonLoader rows={6} columns={1} type="list" width="100%" height="2em" />
+          </div>
+        ) : (
+          <BetGroupList
+            betsByDay={betsByDay}
+            collapsedDays={collapsedDays}
+            expandedBets={expandedBets}
+            oddsFormat={oddsFormat}
+            onToggleDay={toggleDayCollapse}
+            onToggleExpansion={toggleBetExpansion}
+            onDeleteGroup={deleteBetGroup}
+          />
+        )}
 
-          {/* Load more days for finished bets */}
-          {activeTab === "finished" && betsByDay.length < Object.keys(groupByDate(dateFilteredBets, 'placed_at')).length && (
-            <div style={{ textAlign: 'center', margin: '1.5em 0' }}>
-              <button className="load-more-btn" onClick={handleLoadMoreDays}>
-                Load More Days
-              </button>
-            </div>
-          )}
+        {activeTab === "finished" && betsByDay.length < Object.keys(groupByDate(dateFilteredBets, 'placed_at')).length && (
+          <div style={{ textAlign: 'center', margin: '1.5em 0' }} role="region" aria-label="Load more finished bets">
+            <button className="load-more-btn" onClick={handleLoadMoreDays} aria-label="Load more days">
+              Load More Days
+            </button>
+          </div>
+        )}
 
-      {showVerificationModal && verificationResults && (
-        <VerificationModal
-          results={verificationResults}
-          onClose={() => setShowVerificationModal(false)}
-          onApply={applyCorrections}
-        />
-      )}
+        {showVerificationModal && verificationResults && (
+          <VerificationModal
+            results={verificationResults}
+            onClose={() => setShowVerificationModal(false)}
+            onApply={applyCorrections}
+          />
+        )}
+      </div>
     </div>
   );
 }
 
-export default BetsPage;
+export default function BetsPageWrapper(props) {
+  return (
+    <ErrorBoundary>
+      <React.Suspense fallback={<SuspenseFallback message="Loading bets..." />}>
+        <BetsPage {...props} />
+      </React.Suspense>
+    </ErrorBoundary>
+  );
+}

@@ -81,4 +81,10 @@ class BetRepository(BaseRepository[Bet]):
         result = await self.session.execute(stmt)
         # Again, prefer committing at the Service layer, but keeping consistent with original.
         await self.session.commit()
-        return result.rowcount
+        count = getattr(result, "rowcount", None)
+        if count is None:
+            # Fallback: count bets now updated
+            count_stmt = select(Bet).where(Bet.parlay_id == parlay_id)
+            count_result = await self.session.execute(count_stmt)
+            count = len(count_result.scalars().all())
+        return count

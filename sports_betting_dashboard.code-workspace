@@ -1,8 +1,22 @@
 {
-	"folders": [
-		{
-			"path": "."
-		}
-	],
-	"settings": {}
+  "folders": [
+    {
+      "path": ".",
+    },
+  ],
+  "settings": {
+    "sqltools.connections": [
+      {
+        "ssh": "Disabled",
+        "previewLimit": 50,
+        "server": "localhost",
+        "port": 5432,
+        "driver": "PostgreSQL",
+        "name": "sbd db",
+        "group": "postgresql+asyncpg://sbd:sbddb@localhost:5432/sports_intel",
+        "database": "sports_intel",
+        "username": "sbd",
+      },
+    ],
+  },
 }

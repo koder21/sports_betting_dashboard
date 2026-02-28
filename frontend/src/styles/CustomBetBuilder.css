@@ -91,7 +91,7 @@
   .close-btn {
     color: #999;
   }
-  
+
   .close-btn:hover {
     color: #e0e0e0;
   }
@@ -135,11 +135,11 @@
     border-color: #444;
     color: #e0e0e0;
   }
-  
+
   .type-btn:hover:not(.active) {
     border-color: #0d6efd;
   }
-  
+
   .type-btn.active {
     border-color: #0d6efd;
     background: #0d6efd;
@@ -196,12 +196,12 @@
     background: #2a2a2a;
     border-color: #444;
   }
-  
+
   .game-card:hover {
     border-color: #0d6efd;
     background: #1a3a52;
   }
-  
+
   .game-card.selected {
     border-color: #0d6efd;
     background: #1a3a52;
@@ -240,15 +240,15 @@
   .game-matchup {
     color: #e0e0e0;
   }
-  
+
   .team {
     color: #e0e0e0;
   }
-  
+
   .at {
     color: #666;
   }
-  
+
   .game-time {
     color: #666;
   }
@@ -289,11 +289,11 @@
   .game-leg-editor {
     border-top-color: #444;
   }
-  
+
   .leg-input label {
     color: #999;
   }
-  
+
   .leg-input select,
   .leg-input input {
     background: #2a2a2a;
@@ -371,14 +371,14 @@
   .input-group label {
     color: #999;
   }
-  
+
   .input-group input,
   .input-group textarea {
     background: #2a2a2a;
     color: #e0e0e0;
     border-color: #444;
   }
-  
+
   .input-group input:focus,
   .input-group textarea:focus {
     border-color: #0d6efd;
@@ -418,11 +418,11 @@
     background: #1a3a52;
     border-left-color: #0d6efd;
   }
-  
+
   .summary-row {
     color: #e0e0e0;
   }
-  
+
   .summary-row.highlight {
     color: #66b3ff;
   }
@@ -497,20 +497,20 @@
   .builder-actions {
     border-top-color: #444;
   }
-  
+
   .builder-cancel-btn {
     background: #333;
     color: #e0e0e0;
   }
-  
+
   .builder-cancel-btn:hover {
     background: #444;
   }
-  
+
   .builder-submit-btn {
     background: #198754;
   }
-  
+
   .builder-submit-btn:hover:not(:disabled) {
     background: #157347;
   }

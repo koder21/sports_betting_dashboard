@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, distinct, and_, case, extract
-from typing import Dict, Any, List
+from sqlalchemy import select, func, distinct, case, extract
 from datetime import datetime, timedelta
 
 from ..db import get_db
@@ -160,9 +159,9 @@ async def get_sport_stats(sport: str, session: AsyncSession = Depends(get_db)):
         "recent_games_30d": recent_games,
         "home_wins": home_wins,
         "away_wins": away_wins,
-        "avg_home_score": round(avg_scores[0], 1) if avg_scores[0] else 0,
-        "avg_away_score": round(avg_scores[1], 1) if avg_scores[1] else 0,
-        "avg_total_score": round(avg_scores[2], 1) if avg_scores[2] else 0,
+        "avg_home_score": round(avg_scores[0], 1) if avg_scores and avg_scores[0] is not None else 0,
+        "avg_away_score": round(avg_scores[1], 1) if avg_scores and avg_scores[1] is not None else 0,
+        "avg_total_score": round(avg_scores[2], 1) if avg_scores and avg_scores[2] is not None else 0,
         "monthly_games": monthly_games,
         "top_teams": top_teams,
         "score_distribution": score_distribution

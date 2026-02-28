@@ -1,49 +1,47 @@
-import React, { useState, useEffect } from "react";
-import LiveTicker from "./LiveTicker";
-import AlertToasts from "./AlertToasts";
-import { Link, useLocation } from "react-router-dom";
-import api from "../services/api.js";
+import React, { useState, useEffect } from 'react';
+import LiveTicker from './LiveTicker.jsx';
+import AlertToasts from './AlertToasts.jsx';
+import { Link, useLocation } from 'react-router-dom';
+import api from '../services/api.js';
 
 function Layout({ children }) {
   const location = useLocation();
   const [alertCount, setAlertCount] = useState(0);
 
-  const loadAlertCount = async () => {
+  const loadAlertCount = React.useCallback(async () => {
     try {
-      const res = await api.get("/api/alerts/");
+      const res = await api.get('/api/alerts/');
       setAlertCount(res.data?.length || 0);
     } catch (err) {
       console.error('Failed to fetch alert count:', err);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadAlertCount();
-    // Poll for new alerts every 30 seconds (faster than 5 minutes)
-    const interval = setInterval(loadAlertCount, 30000);
-    
+    // Disabled polling for debugging
+    // const interval = setInterval(loadAlertCount, 30000);
     // Listen for custom event when alerts are dismissed
     const handleAlertDismissed = () => {
       loadAlertCount();
     };
     window.addEventListener('alertDismissed', handleAlertDismissed);
-    
     return () => {
-      clearInterval(interval);
+      // clearInterval(interval);
       window.removeEventListener('alertDismissed', handleAlertDismissed);
     };
-  }, []);
+  }, [loadAlertCount]);
 
   const navItems = [
-    { path: "/live", label: "Live Scores"},
-    { path: "/props", label: "Prop Explorer" },
-    { path: "/bets", label: "Bets" },
-    { path: "/aai-bets", label: "AAI Bets" },
-    { path: "/analytics", label: "Bet Analytics" },
-    { path: "/sports-analytics", label: "Sports Analytics" },
+    { path: '/live', label: 'Live Scores' },
+    { path: '/props', label: 'Prop Explorer' },
+    { path: '/bets', label: 'Bets' },
+    { path: '/aai-bets', label: 'AAI Bets' },
+    { path: '/analytics', label: 'Bet Analytics' },
+    { path: '/sports-analytics', label: 'Sports Analytics' },
   ];
 
-  const alertItem = { path: "/alerts", label: "Alerts", badge: alertCount };
+  const alertItem = { path: '/alerts', label: 'Alerts', badge: alertCount };
 
   return (
     <div className="app-root">
@@ -54,11 +52,7 @@ function Layout({ children }) {
             <Link
               key={item.path}
               to={item.path}
-              className={
-                location.pathname.startsWith(item.path)
-                  ? "nav-link active"
-                  : "nav-link"
-              }
+              className={location.pathname.startsWith(item.path) ? 'nav-link active' : 'nav-link'}
             >
               {item.label}
             </Link>
@@ -68,34 +62,26 @@ function Layout({ children }) {
           <Link
             to={alertItem.path}
             className={
-              location.pathname.startsWith(alertItem.path)
-                ? "nav-link active"
-                : "nav-link"
+              location.pathname.startsWith(alertItem.path) ? 'nav-link active' : 'nav-link'
             }
           >
             {alertItem.label}
-            {alertItem.badge > 0 && (
-              <span className="alert-badge">{alertItem.badge}</span>
-            )}
+            {alertItem.badge > 0 && <span className="alert-badge">{alertItem.badge}</span>}
           </Link>
           <Link
             to="/settings"
-            className={
-              location.pathname.startsWith("/settings")
-                ? "nav-link active"
-                : "nav-link"
-            }
+            className={location.pathname.startsWith('/settings') ? 'nav-link active' : 'nav-link'}
           >
             ⚙️ Settings
           </Link>
         </nav>
       </aside>
       <main className="main-content">
-        {/* Hide ticker on analytics pages and live page for better performance */}
-        {!location.pathname.startsWith('/analytics') && 
-         !location.pathname.startsWith('/sports-analytics') && 
-         !location.pathname.startsWith('/live') &&
-         <LiveTicker />}
+        {/* Hide ticker on analytics pages, live page, and AAI Bets page for better performance */}
+        {!location.pathname.startsWith('/analytics') &&
+          !location.pathname.startsWith('/sports-analytics') &&
+          !location.pathname.startsWith('/live') &&
+          !location.pathname.startsWith('/aai-bets') && <LiveTicker />}
         {children}
       </main>
       <AlertToasts />

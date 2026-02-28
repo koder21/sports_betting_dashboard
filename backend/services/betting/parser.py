@@ -95,12 +95,26 @@ class BetParser:
         odds = float(odds_match.group(1)) if odds_match else -110
         stake = float(stake_match.group(1)) if stake_match else 100
         reason = reason_match.group(1).strip() if reason_match else None
-        
+
+        # Improved bet type detection
+        selection_lower = selection.lower()
+        team_total_pattern = re.match(r"^[a-zA-Z\s]+/[a-zA-Z\s]+\s+(over|under)\s+\d+", selection)
+        player_prop_pattern = re.match(r"^[a-zA-Z\s\.'-]+\s+(over|under)\s+\d+", selection)
+
+        if ' ml' in selection_lower or ' moneyline' in selection_lower:
+            bet_type = 'moneyline'
+        elif team_total_pattern:
+            bet_type = 'total'
+        elif player_prop_pattern:
+            bet_type = 'prop'
+        elif 'over' in selection_lower or 'under' in selection_lower:
+            bet_type = 'total'
+
         # Detect sport from game teams or selection
         sport = await self._detect_sport(game_str, selection)
         if not sport:
             return None
-        
+
         parsed['sport_id'] = sport.id
         parsed['bet_type'] = bet_type
         parsed['selection'] = selection
@@ -111,9 +125,9 @@ class BetParser:
         parsed['reason'] = reason
         parsed['parlay_name'] = parlay_name
         parsed['raw_text'] = line
-        
+
         # Additional parsing for prop bets
-        if bet_type.lower() == 'prop':
+        if bet_type.lower() == 'prop' or bet_type.lower() == 'total':
             await self._parse_prop(parsed, selection)
         
         # Find game_id - use provided game_id first, otherwise look it up

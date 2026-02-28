@@ -2,11 +2,16 @@
 from collections import Counter
 from backend.services.aai.fresh_data_scraper import FreshDataScraper
 import asyncio
+import logging
 import os
 
 DATABASE_URL = os.environ.get("DATABASE_URL") or "postgresql+asyncpg://postgres:postgres@localhost:5432/sports_intel"
 
-async def main():
+async def main() -> None:
+    """
+    Prints duplicate injuries by (player_id, team_id, description).
+    Fetches injury data from ESPN and counts duplicates.
+    """
     from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
     from sqlalchemy.orm import sessionmaker
     engine = create_async_engine(DATABASE_URL, echo=False)
@@ -50,13 +55,14 @@ async def main():
         keys = [(i["player_id"], i["team_id"], i["description"]) for i in all_injuries]
         counter = Counter(keys)
         dups = [k for k, v in counter.items() if v > 1]
-        print(f"Total injuries: {len(all_injuries)}")
-        print(f"Duplicate (player_id, team_id, description) keys: {len(dups)}")
+        logging.info(f"Total injuries: {len(all_injuries)}")
+        logging.info(f"Duplicate (player_id, team_id, description) keys: {len(dups)}")
         if dups:
-            print("Sample duplicates:")
+            logging.info("Sample duplicates:")
             for k in dups[:10]:
-                print(k)
+                logging.info(str(k))
     await engine.dispose()
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     asyncio.run(main())

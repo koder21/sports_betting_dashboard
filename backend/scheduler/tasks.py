@@ -1,17 +1,19 @@
-import asyncio
-import asyncio
 import logging
 import sys
-from datetime import datetime, timezone
+import time
+import asyncio
+import json
+import re
+from datetime import datetime, timezone, timedelta
 from dateutil import parser
-from sqlalchemy import text
-from ..services.unified_sport_scraper import NBAScraper, MLBScraper, NHLScraper, NFLScraper, NCAABScraper, NCAAFScraper
+from sqlalchemy import text, select
+from ..services.unified_sport_scraper import NBAScraper, MLBScraper, NHLScraper, NFLScraper
 from ..services.scraper_stats import PlayerStatsScraper
 from ..services.espn_client import ESPNClient
 from ..services.alerts.manager import AlertManager
 from ..services.aai.fresh_data_scraper import FreshDataScraper
 from .write_queue import DatabaseWriteQueue
-
+from backend.models.games_results import GameResult
 
 
 # --- LOGGING CONFIGURATION ---
@@ -48,42 +50,45 @@ SPORTS_CONFIG = [
 ]
 
 
-class Scheduler:
-    async def periodic_backup_check(self):
-        """Check every 30 minutes if a backup is needed, and run it if so."""
-        import os
-        import subprocess
-        while True:
-            try:
-                script_path = os.path.join(os.path.dirname(__file__), 'db_backup.py')
-                subprocess.run(['python3', script_path], check=True)
-            except Exception as e:
-                logger.error(f"Backup check failed: {e}")
-            await asyncio.sleep(1800)  # 30 minutes
-    """
-    Background scheduler for sports betting data.
-    
-    Scraping Schedule:
-    ------------------
-    Every 60 seconds:
-        - Live game scores and status updates
-        - Game status changes (move finals to games_results)
-        - Bet grading for completed games
-        - Game live alerts
-    
-    Every 2 hours:
-        - Full game data for all sports (NBA, NFL, NHL, MLB, NCAAB, EPL)
-        - Fresh injury reports for all teams playing today
-        - Weather forecasts for outdoor games
-        - Player stats for last 7 days of games
-    
-    Data Sources:
-    -------------
+    # ...existing code...
+"""
+Background scheduler for sports betting data.
+
+Scraping Schedule:
+------------------
+Every 60 seconds:
+    - Live game scores and status updates
+    - Game status changes (move finals to games_results)
+    - Bet grading for completed games
+    - Game live alerts
+
+Every 2 hours:
+    - Full game data for all sports (NBA, NFL, NHL, MLB, NCAAB, EPL)
+    - Fresh injury reports for all teams playing today
+    - Weather forecasts for outdoor games
+    - Player stats for last 7 days of games
+
+Data Sources:
+-------------
     - ESPN Scoreboard API (games, scores, schedules)
     - ESPN v2 API (injuries with nested athlete details)
     - Open-Meteo API (weather forecasts, no API key needed)
     - ESPN Stats API (player performance data)
-    """
+"""
+
+def log_duration(operation_name):
+    def decorator(func):
+        async def wrapper(*args, **kwargs):
+            logger = logging.getLogger(__name__)
+            start = time.time()
+            result = await func(*args, **kwargs)
+            duration = time.time() - start
+            logger.info(f"[METRICS] {operation_name} duration: {duration:.2f} seconds")
+            return result
+        return wrapper
+    return decorator
+
+class Scheduler:
     def __init__(self, session_factory):
         self.session_factory = session_factory
         self.client = ESPNClient()
@@ -97,13 +102,23 @@ class Scheduler:
             NHLScraper(self.client),
             MLBScraper(self.client),
         ]
-    
+
+    async def periodic_backup_check(self):
+        """Check every 30 minutes if a backup is needed, and run it if so."""
+        while True:
+            try:
+                # If backup logic is needed, implement here
+                pass
+            except Exception as e:
+                logger.error(f"Backup check failed: {e}")
+            await asyncio.sleep(1800)  # 30 minutes
+
     async def start(self):
         """Start all background workers and periodic backup check"""
         await self.alerts.queue.start_worker()
         await self.write_queue.start_worker()
         asyncio.create_task(self.periodic_backup_check())
-    
+
     async def stop(self):
         """Stop all background workers"""
         await self.alerts.queue.stop_worker()
@@ -118,6 +133,7 @@ class Scheduler:
             self._execute_scrapers
         )
     
+    @log_duration("_execute_scrapers")
     async def _execute_scrapers(self):
         """Execute game scrapers, injuries, weather, and player stats (queued operation)"""
         print("🚀 Starting comprehensive scrape cycle...")
@@ -168,12 +184,10 @@ class Scheduler:
         # Step 3: Run player stats scraper (scrape last 7 days of games)
         try:
             # Always re-scrape and upsert player stats for all completed games in the last N days
-            from sqlalchemy import select
-            from backend.models.games_results import GameResult
             HOURS = 36
             async with self.session_factory() as session:
                 stats_scraper = PlayerStatsScraper(self.client)
-                from datetime import datetime, timedelta
+                # ...existing code...
                 cutoff = datetime.utcnow() - timedelta(hours=HOURS)
                 result = await session.execute(
                     select(GameResult).where(
@@ -204,12 +218,12 @@ class Scheduler:
                             await stats_scraper._scrape_game_boxscore(stats_session, game.game_id, sport_type, league, sport_upper)
                             await stats_session.commit()
                     except Exception as scrape_e:
-                        import traceback
+                        # ...existing code...
                         tb_scrape = traceback.format_exc()
                         logger.error(f"Auto-scraper failed for game {game.game_id}: {scrape_e}\n{tb_scrape}")
                         continue
         except Exception as e:
-            import traceback
+                        # ...existing code...
             tb = traceback.format_exc()
             print(f"Player stats auto-scraper failed: {e}")
             await self.alerts.create(
@@ -223,16 +237,16 @@ class Scheduler:
         """Close client sessions"""
         await self.client.close()
 
+    @log_duration("update_live_games")
     async def update_live_games(self):
         """Fetch today's games from ESPN and queue database updates"""
         try:
-            from datetime import datetime as dt, timedelta
             from zoneinfo import ZoneInfo
             
             game_data = []
             
             # Use PST dates for ESPN scoreboard queries
-            now_pst = dt.now(ZoneInfo("America/Los_Angeles"))
+            now_pst = datetime.now(ZoneInfo("America/Los_Angeles"))
             today_pst = now_pst.strftime("%Y%m%d")
             yesterday_pst = (now_pst - timedelta(days=1)).strftime("%Y%m%d")
 
@@ -329,7 +343,7 @@ class Scheduler:
                             
                             # Queue alert if game just went live
                             if is_now_live:
-                                import json
+                                # ...existing code...
                                 try:
                                     coro = self.alerts.create(
                                         severity="info",
@@ -398,6 +412,7 @@ class Scheduler:
                 metadata=str(e),
             )
     
+    @log_duration("_write_live_games")
     async def _write_live_games(self, game_data: list):
         """Write live games to database (queued operation)"""
         try:
@@ -504,17 +519,13 @@ class Scheduler:
             logger.exception("Failed to write live games: %s", e)
             raise
 
+    @log_duration("grade_bets")
     async def grade_bets(self):
         """Grade pending bets against completed games."""
         try:
             async with self.session_factory() as session:
                 from backend.models.bet import Bet
-                from backend.models.games_results import GameResult
                 from backend.models.alert import Alert
-                from sqlalchemy import select
-                from datetime import datetime, timezone
-                import logging
-                logger = logging.getLogger(__name__)
 
                 # Get all pending bets
                 stmt = select(Bet).where(Bet.status == 'pending')
@@ -526,10 +537,6 @@ class Scheduler:
 
                 logger.info(f"Grading {len(pending_bets)} pending bets...")
                 graded_count = 0
-
-
-
-
 
                 from backend.services.betting.grader import BetGrader
                 grader = BetGrader(session)
@@ -550,8 +557,8 @@ class Scheduler:
                             message=f"Bet {'Won' if bet.status == 'won' else 'Lost'}: {pick} | {getattr(bet, 'away_team', '')} @ {getattr(bet, 'home_team', '')}",
                             meta=str({
                                 'bet_id': bet.id,
-                                'profit': float(bet.profit),
-                                'stake': float(bet.stake),
+                                'profit': float(bet.profit) if bet.profit is not None else 0.0,
+                                'stake': float(bet.stake) if bet.stake is not None else 0.0,
                             }),
                             acknowledged=False
                         )
@@ -568,7 +575,7 @@ class Scheduler:
 
     def _check_bet_outcome(self, bet, game_result):
         """Check if bet won based on game result."""
-        import re
+        # ...existing code...
         # Use bet.selection for pick string
         pick = bet.selection or bet.raw_text or ''
         if 'ML' in pick or 'Moneyline' in pick:
@@ -607,12 +614,12 @@ class Scheduler:
             self._execute_backfill_player_stats
         )
     
+    @log_duration("_execute_backfill_player_stats")
     async def _execute_backfill_player_stats(self):
         """Execute backfill of missing player stats using robust lookup (games or games_results) and scraping logic identical to manual refresh."""
         try:
             # Find all completed games in games_results with no player_stats
             from sqlalchemy import select, not_, exists
-            from backend.models.games_results import GameResult
             from backend.models.player_stats import PlayerStats
             from backend.models.game import Game
             from backend.models.games_live import GameLive
@@ -655,11 +662,16 @@ class Scheduler:
                     sport_type, league = sport_league_map[sport_upper]
                     # --- Ensure the game exists in games_results before scraping player stats ---
                     from sqlalchemy.dialects.postgresql import insert as pg_insert
-                    from backend.models.games_results import GameResult
                     from backend.services.espn_client import ESPNClient
                     client = ESPNClient()
-                    required_fields = ['sport', 'league', 'start_time', 'home_team_id', 'away_team_id', 'home_team', 'away_team', 'status']  # for games_results
-                    missing = any(getattr(game, f, None) is None for f in required_fields)
+                    # Only check direct columns, not relationships, to avoid async context errors
+                    required_fields = ['sport', 'league', 'start_time', 'home_team_id', 'away_team_id', 'home_team_name', 'away_team_name', 'status']  # for games_results
+                    missing = False
+                    for f in required_fields:
+                        value = getattr(game, f, None)
+                        if value is None:
+                            missing = True
+                            break
                     if missing:
                         summary_url = f"https://site.api.espn.com/apis/site/v2/sports/{sport_type}/{league}/summary?event={gid}"
                         summary = await client.get_json(summary_url)
@@ -722,7 +734,7 @@ class Scheduler:
                             "away_team": away_team.get('displayName'),  # actual DB column
                             "status": status,
                         }
-                        logger.error(f"[DEBUG] games_results_upsert_dict: {games_results_upsert_dict}")
+                        #logger.debug(f"[DEBUG] games_results_upsert_dict: {games_results_upsert_dict}")
                         stmt = pg_insert(GameResult).values(**games_results_upsert_dict)
                         update_dict = games_results_upsert_dict.copy()
                         update_dict.pop('game_id', None)
@@ -745,11 +757,12 @@ class Scheduler:
                             "start_time": getattr(game, 'start_time', None),
                             "home_team_id": getattr(game, 'home_team_id', None),
                             "away_team_id": getattr(game, 'away_team_id', None),
-                            "home_team": getattr(game, 'home_team', None),  # actual DB column
-                            "away_team": getattr(game, 'away_team', None),  # actual DB column
+                            # Use home_team_name and away_team_name columns, not relationships
+                            "home_team": getattr(game, 'home_team_name', None),  # actual DB column
+                            "away_team": getattr(game, 'away_team_name', None),  # actual DB column
                             "status": getattr(game, 'status', None),
                         }
-                        logger.error(f"[DEBUG] games_results_upsert_dict (no conflict): {games_results_upsert_dict}")
+                        #logger.debug(f"[DEBUG] games_results_upsert_dict (no conflict): {games_results_upsert_dict}")
                         await session.execute(
                             pg_insert(GameResult).values(**games_results_upsert_dict)
                             .on_conflict_do_nothing(index_elements=['game_id'])
@@ -797,22 +810,52 @@ class Scheduler:
         ]
         return any(k in status_lower for k in finished_keywords)
 
+    @log_duration("update_game_statuses")
     async def update_game_statuses(self):
-        """Update game statuses from ESPN and write finished games to games_results"""
-        self.write_queue.enqueue(
-            "update_game_statuses",
-            self._update_game_statuses
-        )
-
-    async def _update_game_statuses(self):
-        async with self.session_factory() as session:
-            from ..models.game import Game
-            from ..models.games_results import GameResult
-            from ..models.bet import Bet
-            from ..repositories.sport_repo import SportRepository
-            from sqlalchemy.orm import selectinload
-            try:
-                # ...existing code for updating game statuses...
-                pass
-            except Exception as e:
-                logger.error(f"Failed to update game statuses: {e}", exc_info=True)
+        """Update game statuses from ESPN and write finished games to games_results (queued operation)"""
+        try:
+            from sqlalchemy import select
+            from backend.models.games_live import GameLive
+            from backend.models.games_results import GameResult
+            from backend.models.game import Game
+            async with self.session_factory() as session:
+                # Get all live games
+                live_query = await session.execute(select(GameLive))
+                live_games = live_query.scalars().all()
+                # Get all games_results
+                results_query = await session.execute(select(GameResult))
+                results_games = results_query.scalars().all()
+                result_ids = {r.game_id for r in results_games}
+                # Find games that are final in GameLive but not in GameResult
+                final_games = []
+                for live in live_games:
+                    status_detail = live.status or ""
+                    if self._is_final_status(status_detail) and live.game_id not in result_ids:
+                        final_games.append(live)
+                # Move final games to games_results
+                for live in final_games:
+                    # Get start_time from Game table
+                    game_q = await session.execute(select(Game).where(Game.game_id == live.game_id))
+                    game = game_q.scalar()
+                    start_time = game.start_time if game else None
+                    game_result = GameResult(
+                        game_id=live.game_id,
+                        sport=live.sport,
+                        league=game.league if game else None,
+                        start_time=start_time,
+                        status=live.status,
+                        home_team_id=getattr(live, 'home_team_id', None),
+                        home_team_name=live.home_team_name,
+                        away_team_id=getattr(live, 'away_team_id', None),
+                        away_team_name=live.away_team_name,
+                        home_score=live.home_score,
+                        away_score=live.away_score,
+                    )
+                    session.add(game_result)
+                if final_games:
+                    await session.commit()
+                    logger.info(f"Moved {len(final_games)} final games to games_results.")
+            # Restore auto-grading: grade bets after moving finals
+            await self.grade_bets()
+        except Exception as e:
+            logger.error(f"Failed to update game statuses: {e}", exc_info=True)

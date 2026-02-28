@@ -1,15 +1,15 @@
-import React from "react";
-import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
-import Layout from "./components/Layout.jsx";
-import GameDetailPage from "./pages/GameDetailPage.jsx";
-import PropExplorerPage from "./pages/PropExplorerPage.jsx";
-import BetsPage from "./pages/BetsPage.jsx";
-import AAIBetsPage from "./pages/AAIBetsPage.jsx";
-import AlertsPage from "./pages/AlertsPage.jsx";
-import AnalyticsPage from "./pages/AnalyticsPage.jsx";
-import SportsAnalyticsPage from "./pages/SportsAnalyticsPage.jsx";
-import LiveScoresPage from "./pages/LiveScoresPage";
-import SettingsPage from "./pages/SettingsPage";
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import Layout from './components/Layout.jsx';
+import GameDetailPage from './pages/GameDetailPage.jsx';
+import PropExplorerPage from './pages/PropExplorerPage.jsx';
+import BetsPage from './pages/BetsPage.jsx';
+import AAIBetsPage from './pages/AAIBetsPage.jsx';
+import AlertsPage from './pages/AlertsPage.jsx';
+import AnalyticsPage from './pages/AnalyticsPage.jsx';
+import SportsAnalyticsPage from './pages/SportsAnalyticsPage.jsx';
+import LiveScoresPage from './pages/LiveScoresPage.jsx';
+import SettingsPage from './pages/SettingsPage.jsx';
 
 // Redirect component that properly handles path parameters
 function GameRedirect() {
@@ -32,7 +32,7 @@ function App() {
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/sports-analytics" element={<SportsAnalyticsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/live" element={<LiveScoresPage />} /> 
+          <Route path="/live" element={<LiveScoresPage />} />
           <Route path="/live/*" element={<LiveScoresPage />} />
         </Routes>
       </Layout>

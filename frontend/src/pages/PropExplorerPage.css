@@ -1,0 +1,68 @@
+/* Prop Explorer Page Styles */
+
+.prop-explorer-page {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+.players-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.player-card {
+  background: #222;
+  border-radius: 8px;
+  padding: 1rem;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.player-card.selected {
+  border: 2px solid #4a90e2;
+}
+
+.stats-panel {
+  margin-top: 2rem;
+}
+
+.no-selection {
+  color: #aaa;
+  font-style: italic;
+}
+
+.stat-card {
+  background: #333;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  margin: 0.5rem 0;
+  color: #fff;
+}
+
+.recent-games {
+  margin-top: 1rem;
+}
+
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.stats-table th, .stats-table td {
+  padding: 0.5rem;
+  border: 1px solid #444;
+  color: #fff;
+}
+
+.stats-table th {
+  background: #4a90e2;
+}
+
+.stats-table tr:nth-child(even) {
+  background: #2a2a2a;
+}

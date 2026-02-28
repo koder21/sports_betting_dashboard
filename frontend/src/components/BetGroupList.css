@@ -89,7 +89,7 @@
   transition: transform 0.2s ease;
 }
 
-.day-header[aria-expanded="true"] .collapse-icon {
+.day-header[aria-expanded='true'] .collapse-icon {
   transform: rotate(90deg);
 }
 

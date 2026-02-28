@@ -5,12 +5,14 @@ from typing import Optional
 
 from ..db import get_db
 from ..repositories.forecaster_leaderboard import ForecasterLeaderboardRepo
+from backend.utils.redis_cache import redis_cache
 from ..services.weather import WeatherService
 
 router = APIRouter()
 
 
 @router.get("/forecasters/leaderboard")
+@redis_cache(ttl=60)
 async def get_forecaster_leaderboard(
     sport: Optional[str] = Query(None, description="Filter by sport"),
     days: int = Query(90, description="Days of history to include"),
@@ -19,7 +21,8 @@ async def get_forecaster_leaderboard(
 ):
     """Get forecaster/model performance leaderboard ranked by ROI."""
     repo = ForecasterLeaderboardRepo(session)
-    leaderboard = await repo.get_leaderboard(sport=sport, days=days, limit=limit)
+    sport_int = int(sport) if sport is not None else None
+    leaderboard = await repo.get_leaderboard(sport=sport_int, days=days, limit=limit)
     return {
         "status": "ok",
         "period": f"Last {days} days",

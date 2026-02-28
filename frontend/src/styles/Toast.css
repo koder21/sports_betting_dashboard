@@ -8,7 +8,9 @@
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   z-index: 10001;
-  animation: slideInRight 0.3s ease-out, slideOutRight 0.3s ease-in 2.7s forwards;
+  animation:
+    slideInRight 0.3s ease-out,
+    slideOutRight 0.3s ease-in 2.7s forwards;
   font-weight: 500;
   max-width: 400px;
 }

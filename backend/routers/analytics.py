@@ -3,6 +3,7 @@ import traceback
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, Query
+from backend.utils.redis_cache import redis_cache
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db import get_db
@@ -13,6 +14,7 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 @router.get("/summary")
+@redis_cache(ttl=120)
 async def analytics_summary(session: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
     try:
         svc = AnalyticsSummary(session)
@@ -24,6 +26,7 @@ async def analytics_summary(session: AsyncSession = Depends(get_db)) -> Dict[str
 
 
 @router.get("/team-momentum")
+@redis_cache(ttl=120)
 async def get_team_momentum(
     team_ids: Optional[List[str]] = Query(None),
     session: AsyncSession = Depends(get_db)
@@ -33,9 +36,7 @@ async def get_team_momentum(
     """
     tracker = TeamTrendAnalytics(session)
     momentum_data = await tracker.team_momentum(games_window=5)
-    
     teams = momentum_data.get("momentum", [])
-    
     if team_ids:
         teams = [t for t in teams if t["team_id"] in team_ids]
     

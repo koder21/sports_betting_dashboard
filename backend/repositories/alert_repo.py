@@ -47,9 +47,12 @@ class AlertRepository(BaseRepository[Alert]):
         )
 
         result = await self.session.execute(stmt)
-        # Note: Transaction commit is usually handled by the Service layer/UoW,
-        # but if this is a standalone action, strict commit is required to persist.
-        # Ideally, remove this commit() if your Service handles the transaction.
         await self.session.commit()
         
-        return result.rowcount
+        count = getattr(result, "rowcount", None)
+        if count is None:
+            # Fallback: count alerts now acknowledged
+            count_stmt = select(Alert).where(Alert.acknowledged.is_(True))
+            count_result = await self.session.execute(count_stmt)
+            count = len(count_result.scalars().all())
+        return count

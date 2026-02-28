@@ -1,87 +1,53 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useState } from "react";
+import ErrorBoundary from '../components/ErrorBoundary.jsx';
+import SuspenseFallback from '../components/SuspenseFallback.jsx';
 import api from "../services/api.js";
 import { CommunityInsights } from "../components/CommunityInsights.jsx";
-
+import { useApi } from "../hooks/useApi";
+import { useMetrics } from "../hooks/useMetrics";
+import "./PropExplorerPage.css";
 function PropExplorerPage() {
-  const [players, setPlayers] = useState([]);
-  const [filteredPlayers, setFilteredPlayers] = useState([]);
-  const [loading, setLoading] = useState(true);
-
+  useMetrics("PropExplorerPage");
   const [activeTab, setActiveTab] = useState("explorer");
-  
-  // Filters
   const [sportFilter, setSportFilter] = useState("all");
   const [teamFilter, setTeamFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  
-  // Stats display
   const [selectedPlayer, setSelectedPlayer] = useState(null);
-  const [playerStats, setPlayerStats] = useState([]);
-  const [loadingStats, setLoadingStats] = useState(false);
 
-  // Load all players on mount
-  useEffect(() => {
-    loadPlayers();
-  }, []);
+  // Load all players on page load
+  const fetchPlayers = useCallback(() => api.get("/api/props/players").then(res => res.data || []), []);
+  const { data: players = [], loading: loadingPlayers, error: errorPlayers, refetch: refetchPlayers } = useApi(fetchPlayers, []);
 
-  // Apply filters whenever they change
-  useEffect(() => {
-    applyFilters();
-  }, [sportFilter, teamFilter, searchQuery, players]);
+  // Load stats for selected player
+  const fetchPlayerStats = useCallback(
+    (playerId) => api.get(`/api/props/players/${playerId}/stats`).then(res => res.data || []),
+    []
+  );
+  const [playerIdForStats, setPlayerIdForStats] = useState(null);
+  const { data: playerStats = [], loading: loadingStats, error: errorStats, refetch: refetchStats } = useApi(
+    useCallback(() => (playerIdForStats ? fetchPlayerStats(playerIdForStats) : Promise.resolve([])), [fetchPlayerStats, playerIdForStats]),
+    []
+  );
 
-  const loadPlayers = async () => {
-    try {
-      setLoading(true);
-      const res = await api.get("/api/props/players");
-      setPlayers(res.data || []);
-    } catch (err) {
-      console.error("Failed to load players:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadPlayerStats = async (playerId) => {
-    try {
-      setLoadingStats(true);
-      const res = await api.get(`/api/props/players/${playerId}/stats`);
-      setPlayerStats(res.data || []);
-    } catch (err) {
-      console.error("Failed to load player stats:", err);
-      setPlayerStats([]);
-    } finally {
-      setLoadingStats(false);
-    }
-  };
-
-  const applyFilters = () => {
+  // Apply filters whenever dependencies change
+  const filteredPlayers = React.useMemo(() => {
     let filtered = [...players];
-
-    // Sport filter
-    if (sportFilter !== "all") {
-      filtered = filtered.filter(p => p.sport === sportFilter);
-    }
-
-    // Team filter
-    if (teamFilter !== "all") {
-      filtered = filtered.filter(p => p.team_id === teamFilter);
-    }
-
-    // Search query (name)
+    if (sportFilter !== "all") filtered = filtered.filter(p => p.sport === sportFilter);
+    if (teamFilter !== "all") filtered = filtered.filter(p => p.team_id === teamFilter);
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(p => 
+      filtered = filtered.filter(p =>
         (p.full_name || "").toLowerCase().includes(query) ||
         (p.name || "").toLowerCase().includes(query)
       );
     }
-
-    setFilteredPlayers(filtered);
-  };
+    return filtered;
+  }, [sportFilter, teamFilter, searchQuery, players]);
 
   const handlePlayerSelect = (player) => {
     setSelectedPlayer(player);
-    loadPlayerStats(player.player_id);
+    setPlayerIdForStats(player.player_id);
+    refetchStats();
   };
 
   const getUniqueSports = () => {
@@ -166,15 +132,16 @@ function PropExplorerPage() {
     <div className="prop-explorer-page">
       <h1>Prop Explorer</h1>
 
-      <div className="prop-tabs">
+      {/* Tab Navigation */}
+      <div className="tabs">
         <button
-          className={activeTab === "explorer" ? "prop-tab active" : "prop-tab"}
+          className={`tab ${activeTab === "explorer" ? "active" : ""}`}
           onClick={() => setActiveTab("explorer")}
         >
-          Player Explorer
+          Player Props
         </button>
         <button
-          className={activeTab === "community" ? "prop-tab active" : "prop-tab"}
+          className={`tab ${activeTab === "community" ? "active" : ""}`}
           onClick={() => setActiveTab("community")}
         >
           Community Insights
@@ -189,151 +156,153 @@ function PropExplorerPage() {
 
       {activeTab === "explorer" && (
         <>
-          {loading ? (
-            <div className="loading">Loading players...</div>
-          ) : !players || players.length === 0 ? (
-            <div className="no-players">No player data available.</div>
-          ) : (
+          <div className="filters-bar">
+            <div className="filter-group">
+              <label>Sport:</label>
+              <select value={sportFilter} onChange={(e) => setSportFilter(e.target.value)}>
+                <option value="all">All Sports</option>
+                {getUniqueSports().map(sport => (
+                  <option key={sport} value={sport}>{sport}</option>
+                ))}
+              </select>
+            </div>
+            <div className="filter-group">
+              <label>Team:</label>
+              <select value={teamFilter} onChange={(e) => setTeamFilter(e.target.value)}>
+                <option value="all">All Teams</option>
+                {getUniqueTeams().map(team => (
+                  <option key={team.id} value={team.id}>{team.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="filter-group">
+              <label>Search Player:</label>
+              <input
+                type="text"
+                placeholder="Enter player name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className="filter-actions">
+              <button onClick={() => {
+                setSportFilter("all");
+                setTeamFilter("all");
+                setSearchQuery("");
+              }}>Clear Filters</button>
+            </div>
+          </div>
+          {errorPlayers && <div className="error" role="alert">Failed to load players: {errorPlayers.message || String(errorPlayers)}</div>}
+          {!loadingPlayers && players.length === 0 && <div className="no-players" role="status" aria-live="polite">No player data available.</div>}
+          {!loadingPlayers && players.length > 0 && (
             <>
-              <div className="filters-bar">
-                <div className="filter-group">
-                  <label>Sport:</label>
-                  <select value={sportFilter} onChange={(e) => setSportFilter(e.target.value)}>
-                    <option value="all">All Sports</option>
-                    {getUniqueSports().map(sport => (
-                      <option key={sport} value={sport}>{sport}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="filter-group">
-                  <label>Team:</label>
-                  <select value={teamFilter} onChange={(e) => setTeamFilter(e.target.value)}>
-                    <option value="all">All Teams</option>
-                    {getUniqueTeams().map(team => (
-                      <option key={team.id} value={team.id}>{team.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="filter-group">
-                  <label>Search Player:</label>
-                  <input
-                    type="text"
-                    placeholder="Enter player name..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
+              <div className="results-summary">
+                {loadingPlayers ? "Loading..." : `${filteredPlayers.length} players found`}
               </div>
-                              <div className="filter-actions">
-                                <button onClick={() => {
-                                  setSportFilter("all");
-                                  setTeamFilter("all");
-                                  setSearchQuery("");
-                                }}>Clear Filters</button>
-                              </div>
-                              <div className="results-summary">
-                                {loading ? "Loading..." : `${filteredPlayers.length} players found`}
-                              </div>
-                              <div className="prop-content">
-                                <div className="players-list">
-                                  <h3>Players</h3>
-                                  {filteredPlayers.length === 0 && !loading && (
-                                    <p className="no-results">No players match your filters</p>
-                                  )}
-                                  <div className="player-cards">
-                                    {filteredPlayers.map(player => (
-                                      <div
-                                        key={player.player_id}
-                                        className={`player-card ${selectedPlayer?.player_id === player.player_id ? "selected" : ""}`}
-                                        onClick={() => handlePlayerSelect(player)}
-                                      >
-                                        {player.headshot && (
-                                          <img src={player.headshot} alt={player.full_name} className="player-headshot" />
-                                        )}
-                                        <div className="player-info">
-                                          <div className="player-name">{player.full_name || player.name}</div>
-                                          <div className="player-meta">
-                                            {player.position && <span className="position">{player.position}</span>}
-                                            {player.team_name && <span className="team">{player.team_name}</span>}
-                                          </div>
-                                          <div className="player-sport">{player.sport}</div>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                                <div className="stats-panel">
-                                  {!selectedPlayer && (
-                                    <div className="no-selection">
-                                      <p>← Select a player to view statistics</p>
-                                    </div>
-                                  )}
-                                  {selectedPlayer && (
-                                    <>
-                                      <div className="player-header">
-                                        {selectedPlayer.headshot && (
-                                          <img src={selectedPlayer.headshot} alt={selectedPlayer.full_name} className="player-headshot-large" />
-                                        )}
-                                        <div>
-                                          <h2>{selectedPlayer.full_name || selectedPlayer.name}</h2>
-                                          <div className="player-details">
-                                            <span>{selectedPlayer.position}</span> • 
-                                            <span>{selectedPlayer.team_id}</span> • 
-                                            <span>{selectedPlayer.sport}</span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                      {loadingStats && <p>Loading stats...</p>}
-                                      {!loadingStats && playerStats.length === 0 && (
-                                        <p className="no-stats">No statistics available for this player</p>
-                                      )}
-                                      {!loadingStats && playerStats.length > 0 && (
-                                        <>
-                                          <div className="stats-summary">
-                                            <h3>Season Averages ({playerStats.length} games)</h3>
-                                            <div className="stat-cards">
-                                              {getRelevantStats().map(stat => (
-                                                <div key={stat.key} className="stat-card">
-                                                  <div className="stat-label">{stat.label}</div>
-                                                  <div className="stat-value">{calculateAverage(stat.key)}</div>
-                                                </div>
-                                              ))}
-                                            </div>
-                                          </div>
-                                          <div className="recent-games">
-                                            <h3>Recent Games</h3>
-                                            <table className="stats-table">
-                                              <thead>
-                                                <tr>
-                                                  <th>Game</th>
-                                                  {getRelevantStats().map(stat => (
-                                                    <th key={stat.key}>{stat.label}</th>
-                                                  ))}
-                                                </tr>
-                                              </thead>
-                                              <tbody>
-                                                {playerStats.slice(0, 10).map((stat, idx) => (
-                                                  <tr key={idx}>
-                                                    <td>{stat.game_id}</td>
-                                                    {getRelevantStats().map(s => (
-                                                      <td key={s.key}>{stat[s.key] ?? "-"}</td>
-                                                    ))}
-                                                  </tr>
-                                                ))}
-                                              </tbody>
-                                            </table>
-                                          </div>
-                                        </>
-                                      )}
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            </>
+              <div className="prop-content" role="main" aria-label="Prop Explorer Content">
+                <div className="players-list">
+                  <h3>Players</h3>
+                  {filteredPlayers.length === 0 && !loadingPlayers && (
+                    <p className="no-results">No players match your filters</p>
+                  )}
+                  <div className="player-cards" role="region" aria-label="Player Cards">
+                    {loadingPlayers ? (
+                      <SkeletonLoader rows={8} columns={1} type="list" width="100%" height="2.5em" />
+                    ) : (
+                      filteredPlayers.map(player => (
+                        <div
+                          key={player.player_id}
+                          className={`player-card ${selectedPlayer?.player_id === player.player_id ? "selected" : ""}`}
+                          onClick={() => handlePlayerSelect(player)}
+                        >
+                          {player.headshot && (
+                            <img src={player.headshot} alt={player.full_name} className="player-headshot" />
                           )}
+                          <div className="player-info">
+                            <div className="player-name">{player.full_name || player.name}</div>
+                            <div className="player-meta">
+                              {player.position && <span className="position">{player.position}</span>}
+                              {player.team_name && <span className="team">{player.team_name}</span>}
+                            </div>
+                            <div className="player-sport">{player.sport}</div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+                <div className="stats-panel">
+                  {!selectedPlayer && (
+                    <div className="no-selection">
+                      <p>← Select a player to view statistics</p>
+                    </div>
+                  )}
+                  {selectedPlayer && (
+                    <>
+                      <div className="player-header">
+                        {selectedPlayer.headshot && (
+                          <img src={selectedPlayer.headshot} alt={selectedPlayer.full_name} className="player-headshot-large" />
+                        )}
+                        <div>
+                          <h2>{selectedPlayer.full_name || selectedPlayer.name}</h2>
+                          <div className="player-details">
+                            <span>{selectedPlayer.position}</span> • 
+                            <span>{selectedPlayer.team_id}</span> • 
+                            <span>{selectedPlayer.sport}</span>
+                          </div>
+                        </div>
+                      </div>
+                      {loadingStats && <p>Loading stats...</p>}
+                      {!loadingStats && playerStats.length === 0 && (
+                        <p className="no-stats">No statistics available for this player</p>
+                      )}
+                      {!loadingStats && playerStats.length > 0 && (
+                        <>
+                          <div className="stats-summary">
+                            <h3>Season Averages ({playerStats.length} games)</h3>
+                            <div className="stat-cards">
+                              {getRelevantStats().map(stat => (
+                                <div key={stat.key} className="stat-card">
+                                  <div className="stat-label">{stat.label}</div>
+                                  <div className="stat-value">{calculateAverage(stat.key)}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="recent-games">
+                            <h3>Recent Games</h3>
+                            <table className="stats-table">
+                              <thead>
+                                <tr>
+                                  <th>Game</th>
+                                  {getRelevantStats().map(stat => (
+                                    <th key={stat.key}>{stat.label}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {playerStats.slice(0, 10).map((stat, idx) => (
+                                  <tr key={idx}>
+                                    <td>{stat.game_id}</td>
+                                    {getRelevantStats().map(s => (
+                                      <td key={s.key}>{stat[s.key] ?? "-"}</td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
                         </>
                       )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+                        </>
+                      )}
+
                       <style>{`
           color: white;
         }
@@ -657,4 +626,12 @@ function PropExplorerPage() {
   );
 }
 
-export default PropExplorerPage;
+export default function PropExplorerPageWrapper(props) {
+  return (
+    <ErrorBoundary>
+      <React.Suspense fallback={<SuspenseFallback message="Loading prop explorer..." />}>
+        <PropExplorerPage {...props} />
+      </React.Suspense>
+    </ErrorBoundary>
+  );
+}

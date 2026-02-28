@@ -1,95 +1,66 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../services/api";
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
+import { convertToUserTimezone } from '../services/timezoneService';
 
 function LiveTicker() {
   const [games, setGames] = useState([]);
   const navigate = useNavigate();
 
-  const loadLive = async () => {
+  // Fetch live games from API
+  const loadLive = React.useCallback(async () => {
     try {
-        const res = await api.get("/api/live");
-        let list = res.data || [];
-
-        // SMART ORDERING: live > final (results) > scheduled (upcoming)
-        list.sort((a, b) => {
-        const statusRank = (g) => {
-            if (g.status === "in") return 0;
-            if (g.status === "final") return 1;
-            if (g.status === "scheduled") return 2;
-            return 3;
-        };
-
-        const rankA = statusRank(a);
-        const rankB = statusRank(b);
-        if (rankA !== rankB) return rankA - rankB;
-
-        const diffA = Math.abs((a.home_score || 0) - (a.away_score || 0));
-        const diffB = Math.abs((b.home_score || 0) - (b.away_score || 0));
-
-        if (rankA === 0) {
-            if (diffA !== diffB) return diffA - diffB;
-            return (a.clock || "").localeCompare(b.clock || "");
-        }
-
-        if (rankA === 1) {
-            return (a.start_time || "").localeCompare(b.start_time || "");
-        }
-
-        if (rankA === 2) {
-            if (diffA !== diffB) return diffA - diffB;
-        }
-
-        return String(a.game_id).localeCompare(String(b.game_id));
-        });
-
-        setGames(list);
-    } catch (err) {
-        console.error("Ticker failed to load live scores:", err);
+      const res = await api.get('/api/live');
+      setGames(res.data || []);
+    } catch {
+      setGames([]);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadLive();
-    // Poll more frequently (every 10 seconds instead of 15) for faster status updates
     const interval = setInterval(loadLive, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [loadLive]);
 
   const sportIcon = (sport) => {
     switch (sport) {
-      case "NBA": return "🏀";
-      case "NFL": return "🏈";
-      case "NHL": return "🏒";
-      case "NCAAB": return "🎓🏀";
-      case "EPL": return "⚽";
-      default: return "🎮";
+      case 'NBA':
+        return '🏀';
+      case 'NFL':
+        return '🏈';
+      case 'NHL':
+        return '🏒';
+      case 'NCAAB':
+        return '🎓🏀';
+      case 'EPL':
+        return '⚽';
+      default:
+        return '🎮';
     }
   };
 
   const formatGameTime = (game) => {
     // For live games, show clock
-    if (game.status === "in" && game.clock) {
+    if (game.status === 'in' && game.clock) {
       return <span className="clock">({game.clock})</span>;
     }
     // For scheduled/upcoming games, show start time in user's timezone
-    if (game.status === "scheduled" && game.start_time) {
+    if (game.status === 'scheduled' && game.start_time) {
       // Use timezone conversion
-      return <span className="start-time">{convertToUserTimezone(game.start_time, "time-with-tz")}</span>;
+      return (
+        <span className="start-time">{convertToUserTimezone(game.start_time, 'time-with-tz')}</span>
+      );
     }
     // For finished games, show final
-    if (game.status === "final") {
+    if (game.status === 'final') {
       return <span className="final-badge">FINAL</span>;
     }
     return null;
   };
 
   if (games.length === 0) {
-    return (
-      <div className="ticker-bar empty">
-        No live games right now
-      </div>
-    );
+    return <div className="ticker-bar empty">No live games right now</div>;
   }
 
   return (
@@ -103,19 +74,31 @@ function LiveTicker() {
               onClick={() => navigate(`/games/${g.game_id}/details`)}
             >
               <span className="sport-icon">{sportIcon(g.sport)}</span>
-
-              {g.home_logo && (
-                <img src={g.home_logo} className="team-logo" alt="" />
-              )}
+              <img
+                src={g.home_logo || '/images/default_team_logo.png'}
+                className="team-logo"
+                alt=""
+                onError={e => {
+                  if (e.target.src.indexOf('default_team_logo.png') === -1) {
+                    e.target.onerror = null;
+                    e.target.src = '/images/default_team_logo.png';
+                  }
+                }}
+              />
               {g.home_team} <span className="score">{g.home_score}</span>
-
               <span className="vs">vs</span>
-
-              {g.away_logo && (
-                <img src={g.away_logo} className="team-logo" alt="" />
-              )}
+              <img
+                src={g.away_logo || '/images/default_team_logo.png'}
+                className="team-logo"
+                alt=""
+                onError={e => {
+                  if (e.target.src.indexOf('default_team_logo.png') === -1) {
+                    e.target.onerror = null;
+                    e.target.src = '/images/default_team_logo.png';
+                  }
+                }}
+              />
               {g.away_team} <span className="score">{g.away_score}</span>
-
               {formatGameTime(g)}
             </span>
           ))}
@@ -128,19 +111,31 @@ function LiveTicker() {
               onClick={() => navigate(`/games/${g.game_id}/details`)}
             >
               <span className="sport-icon">{sportIcon(g.sport)}</span>
-
-              {g.home_logo && (
-                <img src={g.home_logo} className="team-logo" alt="" />
-              )}
+              <img
+                src={g.home_logo || '/images/default_team_logo.png'}
+                className="team-logo"
+                alt=""
+                onError={e => {
+                  if (e.target.src.indexOf('default_team_logo.png') === -1) {
+                    e.target.onerror = null;
+                    e.target.src = '/images/default_team_logo.png';
+                  }
+                }}
+              />
               {g.home_team} <span className="score">{g.home_score}</span>
-
               <span className="vs">vs</span>
-
-              {g.away_logo && (
-                <img src={g.away_logo} className="team-logo" alt="" />
-              )}
+              <img
+                src={g.away_logo || '/images/default_team_logo.png'}
+                className="team-logo"
+                alt=""
+                onError={e => {
+                  if (e.target.src.indexOf('default_team_logo.png') === -1) {
+                    e.target.onerror = null;
+                    e.target.src = '/images/default_team_logo.png';
+                  }
+                }}
+              />
               {g.away_team} <span className="score">{g.away_score}</span>
-
               {formatGameTime(g)}
             </span>
           ))}

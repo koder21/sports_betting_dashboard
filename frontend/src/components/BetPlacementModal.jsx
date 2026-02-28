@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import api from "../services/api.js";
-import "../styles/BetPlacementModal.css";
+import React, { useState } from 'react';
+import api from '../services/api.js';
+import '../styles/BetPlacementModal.css';
 
 function BetPlacementModal({ bet, isOpen, onClose, onSuccess }) {
   const [stake, setStake] = useState(50);
@@ -25,11 +25,11 @@ function BetPlacementModal({ bet, isOpen, onClose, onSuccess }) {
         combined_confidence: parseFloat(bet.combined_confidence || bet.confidence || 65),
         stake: parseFloat(stake),
         odds: parseFloat(odds),
-        reason: bet.reason || "AAI recommendation",
-        sport: bet.sport && bet.sport.trim() ? bet.sport.trim() : "NBA",
+        reason: bet.reason || 'AAI recommendation',
+        sport: bet.sport && bet.sport.trim() ? bet.sport.trim() : 'NBA',
       };
 
-      const response = await api.post("/bets/place-aai-single", payload);
+      const response = await api.post('/bets/place-aai-single', payload);
 
       if (response.data.success) {
         setSuccessState(true);
@@ -39,10 +39,10 @@ function BetPlacementModal({ bet, isOpen, onClose, onSuccess }) {
           setSuccessState(false);
         }, 1500);
       } else {
-        setError(response.data.error || "Failed to place bet");
+        setError(response.data.error || 'Failed to place bet');
       }
     } catch (err) {
-      setError(err.response?.data?.error || "Error placing bet");
+      setError(err.response?.data?.error || 'Error placing bet');
     } finally {
       setLoading(false);
     }
@@ -61,7 +61,9 @@ function BetPlacementModal({ bet, isOpen, onClose, onSuccess }) {
           <>
             <div className="bet-placement-header">
               <h2>Place Bet</h2>
-              <button className="close-btn" onClick={onClose}>✕</button>
+              <button className="close-btn" onClick={onClose}>
+                ✕
+              </button>
             </div>
 
             <div className="bet-placement-content">
@@ -72,11 +74,15 @@ function BetPlacementModal({ bet, isOpen, onClose, onSuccess }) {
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Confidence:</span>
-                  <span className="detail-value">{bet.combined_confidence || bet.confidence || 65}%</span>
+                  <span className="detail-value">
+                    {bet.combined_confidence || bet.confidence || 65}%
+                  </span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Matchup:</span>
-                  <span className="detail-value">{bet.away} @ {bet.home}</span>
+                  <span className="detail-value">
+                    {bet.away} @ {bet.home}
+                  </span>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Reason:</span>
@@ -126,19 +132,11 @@ function BetPlacementModal({ bet, isOpen, onClose, onSuccess }) {
               {error && <div className="bet-error">{error}</div>}
 
               <div className="bet-actions">
-                <button
-                  className="bet-cancel-btn"
-                  onClick={onClose}
-                  disabled={loading}
-                >
+                <button className="bet-cancel-btn" onClick={onClose} disabled={loading}>
                   Cancel
                 </button>
-                <button
-                  className="bet-submit-btn"
-                  onClick={handlePlaceBet}
-                  disabled={loading}
-                >
-                  {loading ? "Placing..." : "Place Bet"}
+                <button className="bet-submit-btn" onClick={handlePlaceBet} disabled={loading}>
+                  {loading ? 'Placing...' : 'Place Bet'}
                 </button>
               </div>
             </div>

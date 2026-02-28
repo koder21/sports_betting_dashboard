@@ -1,4 +1,4 @@
-from typing import Any, Generic, Sequence, Type, TypeVar, Union
+from typing import Generic, Sequence, Type, TypeVar, Union, Optional
 
 from sqlalchemy import inspect, select
 from sqlalchemy.ext.asyncio import AsyncSession

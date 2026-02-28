@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text
-from datetime import datetime, timedelta
-
+from sqlalchemy import select
+from datetime import datetime
 from ..db import get_db
-from ..models import GameLive, Game, GameUpcoming, GameResult
+from ..models import GameLive, Game, GameUpcoming
+from .games import classify_game_status
 
 router = APIRouter()
 
@@ -49,7 +49,7 @@ async def get_upcoming_games(session: AsyncSession = Depends(get_db)):
         if start_time:
             if isinstance(start_time, str):
                 try:
-                    parsed_start = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                    parsed_start = datetime.fromisoformat(str(start_time).replace('Z', '+00:00'))
                 except Exception:
                     parsed_start = None
             elif hasattr(start_time, 'isoformat'):
@@ -74,12 +74,13 @@ async def get_upcoming_games(session: AsyncSession = Depends(get_db)):
                     game_dict["start_time"] = start_time.isoformat()
                 else:
                     game_dict["start_time"] = str(start_time)
-            if hasattr(game, 'period') and game.period is not None:
-                game_dict["period"] = game.period
-            if hasattr(game, 'clock') and game.clock is not None:
-                game_dict["clock"] = game.clock
-            if hasattr(game, 'possession') and game.possession is not None:
-                game_dict["possession"] = game.possession
+            period = getattr(game, 'period', None)
+            if period is not None:
+                game_dict["period"] = period
+            if getattr(game, 'clock', None) is not None:
+                game_dict["clock"] = getattr(game, 'clock')
+            if hasattr(game, 'possession') and getattr(game, 'possession', None) is not None:
+                game_dict["possession"] = getattr(game, 'possession')
             sport = game_dict["sport"]
             home_tid = getattr(game, 'home_team_id', None)
             away_tid = getattr(game, 'away_team_id', None)
@@ -99,10 +100,6 @@ SPORTS = {
     7: "EPL",
 }
 
-from .games import classify_game_status
-
-
-
 async def _get_live_scores(session: AsyncSession):
     """Fetch live games from the database with start times from games table.
     
@@ -118,17 +115,6 @@ async def _get_live_scores(session: AsyncSession):
     
     # Extract all game IDs for bulk lookup
     game_ids = [game.game_id for game in live_games]
-    
-    # Bulk fetch all related records in one query each
-    upcoming_result = await session.execute(
-        select(GameUpcoming).where(GameUpcoming.game_id.in_(game_ids))
-    )
-    upcoming_records = {r.game_id: r for r in upcoming_result.scalars()}
-    
-    result_result = await session.execute(
-        select(GameResult).where(GameResult.game_id.in_(game_ids))
-    )
-    result_records = {r.game_id: r for r in result_result.scalars()}
     
     games_result = await session.execute(
         select(Game).where(Game.game_id.in_(game_ids))
@@ -152,13 +138,13 @@ async def _get_live_scores(session: AsyncSession):
         home_team_id = game_record.home_team_id if game_record else None
         away_team_id = game_record.away_team_id if game_record else None
         sport = (game_record.sport if game_record else None) or getattr(game, 'sport', None) or ""
-        home_logo = espn_logo_url(home_team_id, sport)
-        away_logo = espn_logo_url(away_team_id, sport)
+        home_logo = espn_logo_url(str(home_team_id) if home_team_id is not None else "", sport)
+        away_logo = espn_logo_url(str(away_team_id) if away_team_id is not None else "", sport)
         if not start_time:
             if game_record and game_record.start_time:
                 start_time = game_record.start_time
-        if not start_time and hasattr(game, 'start_time') and game.start_time:
-            start_time = game.start_time
+        if not start_time and hasattr(game, 'start_time') and getattr(game, 'start_time', None):
+            start_time = getattr(game, 'start_time', None)
         # Filter out games whose start_time is in the future (not yet started)
         parsed_start = None
         if start_time:

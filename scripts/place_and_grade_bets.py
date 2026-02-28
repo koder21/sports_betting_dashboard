@@ -76,12 +76,23 @@ def parse_pipe_format(text: str) -> List[Dict]:
             original_stake = stake
         
         # Detect bet type
-        if ' ML' in selection or ' ml' in selection:
+        sel_lower = selection.lower()
+        team_total_pattern = re.match(r"^[a-zA-Z\s]+/[a-zA-Z\s]+\s+(over|under)\s+\d+", selection)
+        player_prop_pattern = re.match(r"^[a-zA-Z\s\.'-]+\s+(over|under)\s+\d+", selection)
+
+        if ' ml' in sel_lower or ' moneyline' in sel_lower:
             bet_type = 'moneyline'
             player_name = None
-        elif ' over ' in selection.lower() or ' under ' in selection.lower():
+        elif team_total_pattern:
+            bet_type = 'total'
+            player_name = None
+        elif player_prop_pattern:
             bet_type = 'prop'
-            player_name = selection.split(' over')[0].split(' under')[0].strip().lower()
+            player_name = selection.split(' over')[0].split(' under')[0].strip()
+        elif 'over' in sel_lower or 'under' in sel_lower:
+            # fallback: if over/under but not matching above, treat as total
+            bet_type = 'total'
+            player_name = None
         else:
             bet_type = 'moneyline'
             player_name = None
