@@ -20,7 +20,6 @@ class Player(Base):
     espn_ref: Mapped[Optional[str]] = mapped_column(String(256), nullable=True)
 
     # ── Name ──────────────────────────────────────────────────────────────────
-    # full_name is the canonical display name; name is a short/slug fallback.
     full_name: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     name: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
 

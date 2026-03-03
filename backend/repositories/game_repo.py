@@ -1,19 +1,13 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional, Sequence
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from .base import BaseRepository
 from ..models import Game
 from ..utils.json import normalize_json_payload
 
 
 class GameRepository(BaseRepository[Game]):
-    """
-    Repository for Game entities with specialized upsert and JSON handling.
-    """
-
     JSON_FIELDS = {
         "lines_json",
         "odds_history_json",
@@ -82,23 +76,12 @@ class GameRepository(BaseRepository[Game]):
         return result.scalars().all()
 
     async def upsert(self, game_data: dict[str, Any]) -> Game:
-        """
-        High-level upsert that normalizes input data before persistence.
-        """
-        # Create a copy to avoid mutating the original input
         data = game_data.copy()
-
-        # 1. Resolve Game ID
         game_id = data.get("game_id") or data.get("espn_id")
         if not game_id:
             raise ValueError("Payload must contain 'game_id' or 'espn_id'")
-        
-        # Ensure ID is string and stored in the primary field
         data["game_id"] = str(game_id)
-        # Remove alias to prevent keyword argument errors
         data.pop("espn_id", None) 
-
-        # 2. Normalize Dates
         date_val = data.pop("date", None)
         if date_val and not data.get("start_time"):
             if isinstance(date_val, datetime):
@@ -109,20 +92,16 @@ class GameRepository(BaseRepository[Game]):
                 except (ValueError, TypeError):
                     data["start_time"] = None
 
-        # 3. Normalize JSON Fields
         for key in self.JSON_FIELDS:
             if key in data:
                 data[key] = normalize_json_payload(data[key])
 
-        # 4. Normalize Status
         status = data.get("status")
         if status in ("STATUS_FINAL", "STATUS_FULL_TIME"):
             data["status"] = "final"
         
-        # 5. Type Cast IDs
         for key in ("home_team_id", "away_team_id", "sport_id"):
              if key in data and data[key] is not None:
-                 # sport_id is int, others are str usually
                  if key == "sport_id":
                      data[key] = int(data[key])
                  else:
@@ -131,16 +110,10 @@ class GameRepository(BaseRepository[Game]):
         return await self._perform_upsert(data)
 
     async def _perform_upsert(self, clean_data: dict[str, Any]) -> Game:
-        """
-        Internal method to execute the upsert on the database.
-        """
         game_id = clean_data["game_id"]
         sport_id = clean_data.get("sport_id")
-
-        # Check existence
         existing_game = await self.get_by_espn(game_id, sport_id)
 
-        # Filter dictionary to only include keys that exist in the model
         valid_payload = {
             k: v for k, v in clean_data.items() 
             if k in self._valid_columns
@@ -149,15 +122,11 @@ class GameRepository(BaseRepository[Game]):
         if not existing_game:
             new_game = Game(**valid_payload)
             self.session.add(new_game)
-            # Flush is used here to generate the primary key (id) if other
-            # operations immediately rely on it.
             await self.session.flush()
             return new_game
         else:
-            # Update existing instance
             for key, value in valid_payload.items():
                 if getattr(existing_game, key) != value:
                     setattr(existing_game, key, value)
             
-            # No flush needed unless requested by caller, but generally safe to wait for commit
             return existing_game

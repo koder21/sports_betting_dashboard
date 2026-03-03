@@ -14,7 +14,6 @@ from typing import Any, Dict, List, Optional, Tuple
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...models.game import Game
 from ...models.games_results import GameResult
 from ...models.games_upcoming import GameUpcoming
 from ...models.injury import Injury
@@ -22,19 +21,25 @@ from ...models.injury import Injury
 logger = logging.getLogger(__name__)
 
 try:
-    from .models_aggregator import ModelsAggregator
+    from .models_aggregator import ModelsAggregator as _ModelsAggregator
+    _has_models_aggregator = True
 except Exception:
-    ModelsAggregator = None
+    _ModelsAggregator = None  # type: ignore[assignment, misc]
+    _has_models_aggregator = False
 
 try:
-    from .value_calculator import ValueCalculator
+    from .value_calculator import ValueCalculator as _ValueCalculator
+    _has_value_calculator = True
 except Exception:
-    ValueCalculator = None
+    _ValueCalculator = None  # type: ignore[assignment, misc]
+    _has_value_calculator = False
 
 try:
-    from .kelly_calculator import KellyCalculator
+    from .kelly_calculator import KellyCalculator as _KellyCalculator
+    _has_kelly_calculator = True
 except Exception:
-    KellyCalculator = None
+    _KellyCalculator = None  # type: ignore[assignment, misc]
+    _has_kelly_calculator = False
 
 
 @dataclass
@@ -75,9 +80,9 @@ class RecommendationsEngine:
     def __init__(self, session: AsyncSession, bankroll: float = 1000.0):
         self.session  = session
         self.bankroll = bankroll
-        self.models_aggregator = ModelsAggregator(session) if ModelsAggregator else None
-        self.value_calculator  = ValueCalculator()         if ValueCalculator  else None
-        self.kelly_calculator  = KellyCalculator()         if KellyCalculator  else None
+        self.models_aggregator = _ModelsAggregator(session) if _has_models_aggregator else None  # type: ignore[misc]
+        self.value_calculator  = _ValueCalculator()         if _has_value_calculator  else None  # type: ignore[misc]
+        self.kelly_calculator  = _KellyCalculator()         if _has_kelly_calculator  else None  # type: ignore[misc]
 
     async def get_todays_recommendations(
         self,
@@ -161,7 +166,7 @@ class RecommendationsEngine:
         }
 
     async def _get_todays_games(self, sports: Optional[List[str]]) -> List[Dict[str, Any]]:
-        from datetime import datetime, timezone
+        from datetime import datetime
         # Use timezone-naive UTC datetime for comparison
         now = datetime.utcnow()
         stmt = select(GameUpcoming).where(GameUpcoming.start_time >= now)
@@ -242,7 +247,7 @@ class RecommendationsEngine:
 
         raw_ml       = game.get("odds_home" if is_home else "odds_away")
         has_mkt_odds = raw_ml is not None
-        mkt_dec      = self._ml_to_dec(raw_ml) if has_mkt_odds else None
+        mkt_dec      = self._ml_to_dec(float(raw_ml)) if raw_ml is not None else None
         mkt_prob     = (1 / mkt_dec) if mkt_dec else None
 
         if has_mkt_odds and mkt_prob:
@@ -348,11 +353,7 @@ class RecommendationsEngine:
 
     async def _team_form(self, team_id: str, sport: str, n: int = 10) -> Dict[str, Any]:
         try:
-            try:
-                order_col = GameResult.game_date
-            except AttributeError:
-                order_col = GameResult.start_time
-
+            order_col = GameResult.start_time
             stmt = (
                 select(GameResult)
                 .where(or_(GameResult.home_team_id == team_id,
@@ -482,12 +483,12 @@ class RecommendationsEngine:
         """Build a single parlay with enhanced metrics."""
         leg_count = len(legs)
         
-        combined_prob = math.prod(l.combined_confidence / 100 for l in legs) * 100
+        combined_prob = math.prod(leg.combined_confidence / 100 for leg in legs) * 100
         
         if combined_prob < min_combined_confidence:
             return None
         
-        parlay_odds = math.prod(l.market_odds or l.fair_odds for l in legs)
+        parlay_odds = math.prod(leg.market_odds or leg.fair_odds for leg in legs)
         
         # Calculate EV
         win_prob = combined_prob / 100
@@ -505,15 +506,15 @@ class RecommendationsEngine:
         
         leg_details = [
             {
-                "pick": l.pick,
-                "game": f"{l.away_team} @ {l.home_team}",
-                "sport": l.sport,
-                "confidence": round(l.combined_confidence, 1),
-                "odds": round(l.market_odds or l.fair_odds, 2),
-                "has_market_odds": l.has_market_odds,
-                "start_time": l.start_time.isoformat() if l.start_time else None,
+                "pick": leg.pick,
+                "game": f"{leg.away_team} @ {leg.home_team}",
+                "sport": leg.sport,
+                "confidence": round(leg.combined_confidence, 1),
+                "odds": round(leg.market_odds or leg.fair_odds, 2),
+                "has_market_odds": leg.has_market_odds,
+                "start_time": leg.start_time.isoformat() if leg.start_time else None,
             }
-            for l in legs
+            for leg in legs
         ]
         
         return {

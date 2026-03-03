@@ -17,9 +17,7 @@ class Bet(Base):
     Lifecycle: pending → graded (won / lost / push / void).
     """
 
-    from typing import ClassVar
-
-    __tablename__: ClassVar[str] = "bets"
+    __tablename__ = "bets"  # type: ignore[assignment]
 
     # ── Identity ──────────────────────────────────────────────────────────────
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

@@ -3,10 +3,8 @@ Vegas prop aggregator
 Pulls featured/popular props from sportsbook odds
 Uses data already available from props scrapers
 """
-from datetime import datetime
 from typing import Dict, List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
 import logging
 
 logger = logging.getLogger(__name__)
@@ -28,7 +26,7 @@ class VegasPropAggregator:
         # This would integrate with your existing props scraper data
         # For now, returns high-action props based on recent scrapes
         
-        props = []
+        props: List[Dict] = []
         # TODO: Integrate with existing props_dk_enhanced.py or props_web_scraper.py
         # to pull featured props that sportsbooks are promoting
         
@@ -56,7 +54,7 @@ class VegasPropAggregator:
         Get most popular props for a sport
         Popularity = frequency in odds updates, action volume
         """
-        props = []
+        props: List[Dict] = []
         # TODO: Query props by frequency of appearance in latest odds updates
         
         return props

@@ -6,11 +6,11 @@ BACKUP_DIR = os.path.join(os.path.dirname(__file__), '../../backups')
 BACKUP_FILE_PREFIX = 'postgres_backup'
 LAST_BACKUP_FILE = os.path.join(BACKUP_DIR, 'last_backup.txt')
 
-DB_NAME = os.environ.get('POSTGRES_DB', 'sports_intel')
-DB_USER = os.environ.get('POSTGRES_USER', 'sbd')
+DB_NAME = os.environ.get('POSTGRES_DB')
+DB_USER = os.environ.get('POSTGRES_USER')
 DB_HOST = os.environ.get('POSTGRES_HOST', 'localhost')
 DB_PORT = os.environ.get('POSTGRES_PORT', '5432')
-DB_PASSWORD = os.environ.get('POSTGRES_PASSWORD', 'sbddb')
+DB_PASSWORD = os.environ.get('POSTGRES_PASSWORD')
 
 
 def get_last_backup_time():
@@ -30,6 +30,10 @@ def set_last_backup_time(dt):
 
 
 def perform_backup():
+    if not DB_NAME or not DB_USER or not DB_PASSWORD:
+        print("Backup skipped: POSTGRES_DB, POSTGRES_USER, and POSTGRES_PASSWORD env vars must be set.")
+        return
+
     now = datetime.now()
     backup_filename = f"{BACKUP_FILE_PREFIX}_{now.strftime('%Y%m%d_%H%M%S')}.sql"
     backup_path = os.path.join(BACKUP_DIR, backup_filename)

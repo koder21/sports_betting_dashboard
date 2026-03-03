@@ -1,8 +1,7 @@
-from typing import Dict, Any, List
+from typing import Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 from backend.db import get_session
-import math
 
 from ...repositories.bet_repo import BetRepository
 
@@ -96,6 +95,7 @@ class EVKellyAnalytics:
                 bets = BetRepository(session)
                 all_bets = await bets.list_all_with_relations()
         else:
+            assert self.bets is not None
             all_bets = await self.bets.list_all_with_relations()
         
         if not all_bets:
@@ -111,9 +111,9 @@ class EVKellyAnalytics:
             }
         
         # Group by parlay_id to count bets, not legs
-        parlays_by_id = {}
-        parlay_odds = {}
-        parlay_stakes = {}
+        parlays_by_id: Dict[str, Any] = {}
+        parlay_odds: Dict[str, Any] = {}
+        parlay_stakes: Dict[str, Any] = {}
         
         for b in all_bets:
             if b.parlay_id:
@@ -142,14 +142,14 @@ class EVKellyAnalytics:
             odds_list = parlay_odds[parlay_id]
             
             # Determine parlay outcome
-            graded_legs = [l for l in legs if l.status in ["won", "lost", "push", "void"]]
-            pending_legs = [l for l in legs if l.status == "pending"]
+            graded_legs = [leg for leg in legs if leg.status in ["won", "lost", "push", "void"]]
+            pending_legs = [leg for leg in legs if leg.status == "pending"]
             
             if pending_legs:
                 continue  # Skip pending bets
             
             # Calculate actual win probability based on parlay result
-            is_winner = all(l.status == "won" for l in graded_legs) and len(graded_legs) == len(legs)
+            is_winner = all(leg.status == "won" for leg in graded_legs) and len(graded_legs) == len(legs)
             actual_probability = 1.0 if is_winner else 0.0
             
             if not odds_list:

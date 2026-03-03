@@ -177,7 +177,7 @@ class ExternalOddsAggregator:
         }
 
     async def _get_elo_probability(
-        self, game: Game, team_name: str, is_home: bool, context: Dict[str, Any]
+        self, game: Optional[Game], team_name: str, is_home: bool, context: Dict[str, Any]
     ) -> Optional[float]:
         """Estimate Elo-based probability from recent team form."""
         home_form = context.get("home_form")
@@ -214,7 +214,7 @@ class ExternalOddsAggregator:
         return self.implied_probability_from_moneyline(moneyline)
 
     async def _get_predictive_model_probability(
-        self, game: Game, team_name: str, is_home: bool, context: Dict[str, Any]
+        self, game: Optional[Game], team_name: str, is_home: bool, context: Dict[str, Any]
     ) -> Optional[float]:
         """Lightweight ML-style probability from recent form and home edge."""
         diff = context.get("form_diff")
@@ -225,7 +225,7 @@ class ExternalOddsAggregator:
         return max(0.01, min(prob, 0.99))
 
     async def _get_kelly_probability(
-        self, game: Game, team_name: str, is_home: bool, context: Dict[str, Any]
+        self, game: Optional[Game], team_name: str, is_home: bool, context: Dict[str, Any]
     ) -> Optional[float]:
         """Kelly-adjusted probability using form confidence and market odds."""
         moneyline = self._extract_moneyline(game, is_home)
@@ -437,8 +437,10 @@ class AAIBetRecommender:
         form_idx = 0
         for candidate, home_task, away_task in candidate_forms:
             game = candidate["game"]  # Preserve game reference for later use
-            home_form = form_results[form_idx] if not isinstance(form_results[form_idx], Exception) else None
-            away_form = form_results[form_idx + 1] if not isinstance(form_results[form_idx + 1], Exception) else None
+            home_raw = form_results[form_idx]
+            away_raw = form_results[form_idx + 1]
+            home_form: Optional[TeamForm] = home_raw if isinstance(home_raw, TeamForm) else None
+            away_form: Optional[TeamForm] = away_raw if isinstance(away_raw, TeamForm) else None
             form_idx += 2
             
             if not home_form or not away_form:
@@ -888,9 +890,9 @@ class AAIBetRecommender:
         upcoming_games = upcoming_result.scalars().all()
 
         for upcoming in upcoming_games:
-            game = upcoming.game
+            game: Optional[Game] = upcoming.game
             if not game:
-                game = await self.session.get(Game, upcoming.game_id)
+                game = await self.session.get(Game, upcoming.game_id)  # type: ignore[assignment]
             start_time = upcoming.start_time or (game.start_time if game else None)
             if not start_time:
                 continue
@@ -930,7 +932,7 @@ class AAIBetRecommender:
         for live in live_games:
             game = live.game
             if not game:
-                game = await self.session.get(Game, live.game_id)
+                game = await self.session.get(Game, live.game_id)  # type: ignore[assignment]
             if not game:
                 continue
             start_time = game.start_time or live.updated_at
@@ -1033,7 +1035,6 @@ class AAIBetRecommender:
         opponent_injuries = [inj for inj in injuries if inj.team_id == opponent_team_id]
         
         # Simple heuristic: key injuries reduce confidence
-        key_positions = {"QB", "RB", "WR", "TE", "PG", "SG", "SF", "PF", "C"}
         pick_team_key_injuries = len([
             inj for inj in pick_team_injuries 
             if inj.status in ("Out", "Doubtful")

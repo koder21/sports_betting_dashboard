@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 from backend.db import get_session
@@ -17,10 +17,11 @@ class TrendAnalytics:
                 bets = BetRepository(session)
                 all_bets = await bets.list_all_with_relations()
         else:
+            assert self.bets is not None
             all_bets = await self.bets.list_all_with_relations()
 
         # Group by parlay_id to count bets, not legs
-        parlays_by_id = {}
+        parlays_by_id: dict[str, list[Any]] = {}
         singles = []
         for b in all_bets:
             if b.parlay_id:
@@ -46,18 +47,18 @@ class TrendAnalytics:
         for parlay_id, legs in parlays_by_id.items():
             if legs[0].original_stake is None:
                 continue
-            graded_legs = [l for l in legs if l.status in ["won", "lost", "push", "void"]]
-            pending_legs = [l for l in legs if l.status == "pending"]
+            graded_legs = [leg for leg in legs if leg.status in ["won", "lost", "push", "void"]]
+            pending_legs = [leg for leg in legs if leg.status == "pending"]
             
             if pending_legs:
                 pending += 1
-            elif all(l.status == "won" for l in graded_legs) and len(graded_legs) == len(legs):
+            elif all(leg.status == "won" for leg in graded_legs) and len(graded_legs) == len(legs):
                 wins += 1
-            elif any(l.status == "lost" for l in legs):
+            elif any(leg.status == "lost" for leg in legs):
                 losses += 1
-            elif all(l.status == "void" for l in legs):
+            elif all(leg.status == "void" for leg in legs):
                 voids += 1
-            elif all(l.status in ["push", "void"] for l in legs):
+            elif all(leg.status in ["push", "void"] for leg in legs):
                 pushes += 1
             else:
                 # Mixed void/push situation - treat as push
@@ -90,10 +91,11 @@ class TrendAnalytics:
                 bets = BetRepository(session)
                 all_bets = await bets.list_all_with_relations()
         else:
+            assert self.bets is not None
             all_bets = await self.bets.list_all_with_relations()
 
         # Group by parlay_id to count bets, not legs
-        parlays_by_id = {}
+        parlays_by_id: dict[str, list[Any]] = {}
         singles = []
         for b in all_bets:
             if b.parlay_id:
@@ -118,16 +120,16 @@ class TrendAnalytics:
             if m not in markets:
                 markets[m] = {"won": 0, "lost": 0, "push": 0, "void": 0, "pending": 0}
             
-            graded_legs = [l for l in legs if l.status in ["won", "lost", "push", "void"]]
-            pending_legs = [l for l in legs if l.status == "pending"]
+            graded_legs = [leg for leg in legs if leg.status in ["won", "lost", "push", "void"]]
+            pending_legs = [leg for leg in legs if leg.status == "pending"]
             
             if pending_legs:
                 markets[m]["pending"] += 1
-            elif all(l.status == "won" for l in graded_legs) and len(graded_legs) == len(legs):
+            elif all(leg.status == "won" for leg in graded_legs) and len(graded_legs) == len(legs):
                 markets[m]["won"] += 1
-            elif any(l.status == "lost" for l in legs):
+            elif any(leg.status == "lost" for leg in legs):
                 markets[m]["lost"] += 1
-            elif all(l.status == "void" for l in legs):
+            elif all(leg.status == "void" for leg in legs):
                 markets[m]["void"] += 1
             else:
                 markets[m]["push"] += 1
@@ -158,23 +160,24 @@ class TrendAnalytics:
                 bets = BetRepository(session)
                 all_bets = await bets.list_all_with_relations()
         else:
+            assert self.bets is not None
             all_bets = await self.bets.list_all_with_relations()
         
         # Group bets by parlay_id (multi-leg parlays) and singles
-        parlays_by_id = {}
-        parlay_dates = {}
-        singles = []
+        parlays_by_id: dict[str, list[Any]] = {}
+        parlay_dates: dict[str, Any] = {}
+        singles: list[Any] = []
         for b in all_bets:
             if b.parlay_id:
                 if b.parlay_id not in parlays_by_id:
                     parlays_by_id[b.parlay_id] = []
-                    parlay_dates[b.parlay_id] = b.placed_at or b.created_at
+                    parlay_dates[b.parlay_id] = b.placed_at
                 parlays_by_id[b.parlay_id].append(b)
             else:
                 singles.append(b)
 
         # Only count grouped bets (multi-leg parlays and singles)
-        bet_statuses = []
+        bet_statuses: list[dict[str, Any]] = []
 
         # Multi-leg parlays: count as one grouped bet
         for parlay_id, legs in parlays_by_id.items():
@@ -182,14 +185,14 @@ class TrendAnalytics:
                 # Treat 1-leg parlays as singles
                 singles.append(legs[0])
                 continue
-            graded_legs = [l for l in legs if l.status in ["won", "lost", "push", "void"]]
-            pending_legs = [l for l in legs if l.status == "pending"]
+            graded_legs = [leg for leg in legs if leg.status in ["won", "lost", "push", "void"]]
+            pending_legs = [leg for leg in legs if leg.status == "pending"]
             status = None
             if pending_legs:
                 status = "pending"
-            elif all(l.status == "won" for l in graded_legs) and len(graded_legs) == len(legs):
+            elif all(leg.status == "won" for leg in graded_legs) and len(graded_legs) == len(legs):
                 status = "won"
-            elif any(l.status == "lost" for l in legs):
+            elif any(leg.status == "lost" for leg in legs):
                 status = "lost"
             else:
                 status = "other"  # push/void
@@ -204,7 +207,7 @@ class TrendAnalytics:
             if bet.status in ["won", "lost"]:
                 bet_statuses.append({
                     "status": bet.status,
-                    "date": bet.placed_at or bet.created_at
+                    "date": bet.placed_at
                 })
 
         # Sort by date (most recent first)
@@ -216,12 +219,12 @@ class TrendAnalytics:
         longest_win_streak = 0
         longest_loss_streak = 0
 
-        for bet in bet_statuses:
-            if bet["status"] == "won":
+        for entry in bet_statuses:
+            if entry["status"] == "won":
                 current_win_streak += 1
                 current_loss_streak = 0
                 longest_win_streak = max(longest_win_streak, current_win_streak)
-            elif bet["status"] == "lost":
+            elif entry["status"] == "lost":
                 current_loss_streak += 1
                 current_win_streak = 0
                 longest_loss_streak = max(longest_loss_streak, current_loss_streak)

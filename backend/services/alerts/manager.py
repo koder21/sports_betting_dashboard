@@ -1,9 +1,7 @@
 from datetime import datetime
 from typing import Dict, Any, List, Optional, Callable
-import asyncio
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import OperationalError
 
 from ...repositories.alert_repo import AlertRepository
 from ...models.alert import Alert
@@ -41,7 +39,7 @@ class AlertManager:
                 meta=meta_str,
                 acknowledged=False,
             )
-            await self.alerts.add(alert)
+            self.alerts.add(alert)
             await self.session.commit()
             return
 

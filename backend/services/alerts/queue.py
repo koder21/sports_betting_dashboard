@@ -72,8 +72,11 @@ class AlertQueue:
                         repo = AlertRepository(session)
                         await self._create_alert_with_session(session, repo, task)
                 else:
-                    session = self.session
-                    await self._create_alert_with_session(session, self.repo, task)
+                    _session = self.session
+                    _repo = self.repo
+                    if _session is None or _repo is None:
+                        return
+                    await self._create_alert_with_session(_session, _repo, task)
                 
                 # Log success if retries happened
                 if attempt > 0:
@@ -114,7 +117,7 @@ class AlertQueue:
                         and_(
                             Alert.category == "game_live",
                             Alert.meta.like(f'%"game_id": "{game_id}"%'),
-                            Alert.acknowledged == False
+                            Alert.acknowledged == False  # noqa: E712
                         )
                     )
                     existing = await session.execute(stmt)

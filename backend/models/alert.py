@@ -32,7 +32,6 @@ class Alert(Base):
     acknowledged: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     __table_args__ = (
-        # Most common query pattern: "unacknowledged alerts by severity"
         Index("ix_alert_severity_ack", "severity", "acknowledged"),
     )
 

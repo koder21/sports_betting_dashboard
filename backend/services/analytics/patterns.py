@@ -1,9 +1,6 @@
 from typing import Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
-from backend.db import get_session
 from collections import defaultdict
-from datetime import datetime, timedelta
 
 from ...repositories.bet_repo import BetRepository
 
@@ -46,11 +43,11 @@ class BettingPatternsAnalytics:
             }
         
         # Analyze by sport
-        sport_stats = defaultdict(lambda: {"won": 0, "lost": 0, "profit": 0.0})
-        bet_type_stats = defaultdict(lambda: {"won": 0, "lost": 0, "profit": 0.0})
-        day_stats = defaultdict(lambda: {"won": 0, "lost": 0})
-        hour_stats = defaultdict(lambda: {"won": 0, "lost": 0})
-        combo_stats = defaultdict(lambda: {"won": 0, "lost": 0, "profit": 0.0})
+        sport_stats: defaultdict[str, Any] = defaultdict(lambda: {"won": 0, "lost": 0, "profit": 0.0})
+        bet_type_stats: defaultdict[str, Any] = defaultdict(lambda: {"won": 0, "lost": 0, "profit": 0.0})
+        day_stats: defaultdict[str, Any] = defaultdict(lambda: {"won": 0, "lost": 0})
+        hour_stats: defaultdict[int, Any] = defaultdict(lambda: {"won": 0, "lost": 0})
+        combo_stats: defaultdict[str, Any] = defaultdict(lambda: {"won": 0, "lost": 0, "profit": 0.0})
         
         for bet in graded_bets:
             is_win = bet.status == "won"
@@ -90,7 +87,7 @@ class BettingPatternsAnalytics:
         
         # Day of week analysis
         days_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-        day_results = []
+        day_results: list[Dict[str, Any]] = []
         for day in days_order:
             if day in day_stats:
                 stats = day_stats[day]
@@ -103,7 +100,7 @@ class BettingPatternsAnalytics:
                 })
         
         # Hour of day analysis
-        hour_results = []
+        hour_results: list[Dict[str, Any]] = []
         for hour in range(24):
             if hour in hour_stats:
                 stats = hour_stats[hour]
@@ -117,11 +114,11 @@ class BettingPatternsAnalytics:
                 })
         
         # Sort for display
-        best_sports.sort(key=lambda x: x["win_rate"], reverse=True)
-        best_bet_types.sort(key=lambda x: x["win_rate"], reverse=True)
-        best_combos.sort(key=lambda x: x["win_rate"], reverse=True)
-        worst_sports = sorted(best_sports, key=lambda x: x["win_rate"])[:3]
-        worst_bet_types = sorted(best_bet_types, key=lambda x: x["win_rate"])[:3]
+        best_sports.sort(key=lambda x: float(x["win_rate"]), reverse=True)
+        best_bet_types.sort(key=lambda x: float(x["win_rate"]), reverse=True)
+        best_combos.sort(key=lambda x: float(x["win_rate"]), reverse=True)
+        worst_sports = sorted(best_sports, key=lambda x: float(x["win_rate"]))[:3]
+        worst_bet_types = sorted(best_bet_types, key=lambda x: float(x["win_rate"]))[:3]
         
         return {
             "best_sports": best_sports,
@@ -129,11 +126,11 @@ class BettingPatternsAnalytics:
             "best_combinations": best_combos[:10],
             "worst_sports": worst_sports,
             "worst_bet_types": worst_bet_types,
-            "best_days": sorted(day_results, key=lambda x: x["win_rate"], reverse=True),
-            "best_hours": sorted(hour_results, key=lambda x: x["win_rate"], reverse=True)[:5]
+            "best_days": sorted(day_results, key=lambda x: float(x["win_rate"]), reverse=True),
+            "best_hours": sorted(hour_results, key=lambda x: float(x["win_rate"]), reverse=True)[:5]
         }
 
-    def _format_stats(self, stats_dict: Dict, min_bets: int = 1) -> list:
+    def _format_stats(self, stats_dict: Dict[str, Any], min_bets: int = 1) -> list[Dict[str, Any]]:
         """Convert stats dict to formatted list"""
         result = []
         for key, stats in stats_dict.items():

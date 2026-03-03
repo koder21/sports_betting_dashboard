@@ -1,12 +1,15 @@
 from typing import Dict, Any, List
 from datetime import datetime
+import logging
+import re
+import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-import uuid
-import re
 from ..models.bet import Bet
 from ..models.game import Game
 from ..models.sport import Sport
+
+logger = logging.getLogger(__name__)
 
 
 class BetPlacementService:
@@ -31,7 +34,7 @@ class BetPlacementService:
         return sport_obj
     
 
-    async def _get_game(self, game_id: str) -> Game:
+    async def _get_game(self, game_id: str) -> Any:
         """Get game object by ID. Checks both games and games_upcoming tables."""
         from ..models.games_upcoming import GameUpcoming
         stmt = select(Game).where(Game.game_id == game_id)
@@ -99,9 +102,9 @@ class BetPlacementService:
         reason_prefix: str
     ) -> List[Bet]:
         """Create parlay leg bet records."""
+        logger.info("Creating parlay legs: parlay_id=%s, stake=%s, legs=%d", parlay_id, stake, len(legs))
         stake_per_leg = stake / len(legs)
         legs_text = " + ".join([leg["pick"] for leg in legs])
-        
         created_bets = []
         for leg in legs:
             pick = leg["pick"]
@@ -131,12 +134,15 @@ class BetPlacementService:
                 parlay_id=parlay_id,
                 bet_type=bet_type,
                 selection=pick,
-                reason=f"{reason_prefix} | {leg.get('confidence', '')}% | {leg.get('reason', '')}".strip(),
+                reason=f"{reason_prefix} | {leg.get('confidence', '')}% | {leg.get('reason', '')}".strip(" |"),
                 status="pending"
+            )
+            logger.debug(
+                "Adding leg: selection=%s, parlay_id=%s, stake=%s, odds=%s, game_id=%s",
+                bet.selection, bet.parlay_id, bet.stake, bet.odds, bet.game_id,
             )
             self.session.add(bet)
             created_bets.append(bet)
-        
         return created_bets
     
     # ============================================================================
@@ -194,16 +200,10 @@ class BetPlacementService:
         try:
             if len(legs) < 2:
                 raise ValueError("Parlay requires at least 2 legs")
-            
             sport_obj = await self._get_sport(sport)
-            
-            # Calculate parlay odds
             parlay_odds = self._calculate_parlay_odds([leg["odds"] for leg in legs])
-            
-            # Generate parlay ID
             parlay_id = str(uuid.uuid4())
-            
-            # Create leg bets
+            logger.info("Starting place_aai_parlay: parlay_id=%s, stake=%s, legs=%d", parlay_id, stake, len(legs))
             created_bets = await self._create_parlay_legs(
                 legs=legs,
                 stake=stake,
@@ -211,11 +211,10 @@ class BetPlacementService:
                 sport_id=sport_obj.id,
                 reason_prefix="AAI Parlay | Confidence"
             )
-            
+            logger.info("Committing parlay_id=%s with %d legs.", parlay_id, len(created_bets))
             await self.session.commit()
-            
+            logger.info("Commit complete for parlay_id=%s.", parlay_id)
             legs_text = " + ".join([leg["pick"] for leg in legs])
-            
             return {
                 "success": True,
                 "parlay_id": parlay_id,
@@ -230,6 +229,7 @@ class BetPlacementService:
             }
         except Exception as e:
             await self.session.rollback()
+            logger.error("Exception in place_aai_parlay: %s", e, exc_info=True)
             return {"success": False, "error": str(e)}
     
     async def build_custom_single(
@@ -244,6 +244,8 @@ class BetPlacementService:
         try:
             game_obj = await self._get_game(game_id)
             
+            if game_obj.sport_id is None:
+                raise ValueError(f"Game {game_id} does not have a valid sport_id")
             bet = await self._create_single_bet(
                 game_id=game_id,
                 pick=pick,

@@ -11,7 +11,7 @@ class PropIntelligenceService:
         self.stats = PlayerStatRepository(session)
         self.players = PlayerRepository(session)
 
-    async def suggest_prop(self, player_id: int, market: str) -> Optional[Dict[str, Any]]:
+    async def suggest_prop(self, player_id: str, market: str) -> Optional[Dict[str, Any]]:
         player = await self.players.get(player_id)
         if not player:
             return None

@@ -13,9 +13,7 @@ if TYPE_CHECKING:
 from .player_stats import PlayerStats
 
 class GameResult(Base):
-    from typing import ClassVar
-
-    __tablename__: ClassVar[str] = "games_results"
+    __tablename__ = "games_results"  # type: ignore[assignment]
 
     # ── Identity (shared PK with games) ──────────────────────────────────────
     game_id: Mapped[str] = mapped_column(
@@ -45,8 +43,6 @@ class GameResult(Base):
     away_team_id: Mapped[Optional[str]] = mapped_column(
         String(64), ForeignKey("teams.team_id", ondelete="SET NULL"), nullable=True, index=True
     )
-    # Column name in DB kept as "home_team"/"away_team" for schema compat;
-    # Python attribute is _name to avoid shadowing the relationship.
     home_team_name: Mapped[Optional[str]] = mapped_column("home_team", String(128), nullable=True)
     away_team_name: Mapped[Optional[str]] = mapped_column("away_team", String(128), nullable=True)
     home_logo: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)

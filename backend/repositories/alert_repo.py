@@ -51,7 +51,6 @@ class AlertRepository(BaseRepository[Alert]):
         
         count = getattr(result, "rowcount", None)
         if count is None:
-            # Fallback: count alerts now acknowledged
             count_stmt = select(Alert).where(Alert.acknowledged.is_(True))
             count_result = await self.session.execute(count_stmt)
             count = len(count_result.scalars().all())

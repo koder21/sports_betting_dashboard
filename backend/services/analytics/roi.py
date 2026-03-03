@@ -72,7 +72,7 @@ class ROIAnalytics:
         total_staked = 0.0
         total_profit = 0.0
         unique_bets = set()
-        parlays_by_id = {}
+        parlays_by_id: dict[Any, list[Any]] = {}
         singles = []
         for b in all_bets:
             if b.parlay_id:
@@ -89,18 +89,18 @@ class ROIAnalytics:
         for pid in parlays_by_id.keys():
             unique_bets.add(pid)
         for parlay_id, legs in parlays_by_id.items():
-            if any(l.status == "void" for l in legs):
+            if any(leg.status == "void" for leg in legs):
                 continue
             parlay_stake = legs[0].original_stake if legs[0].original_stake else sum(leg.stake for leg in legs)
             total_staked += parlay_stake
-            graded_legs = [l for l in legs if l.status in ["won", "lost", "push", "void"]]
-            pending_legs = [l for l in legs if l.status == "pending"]
+            graded_legs = [leg for leg in legs if leg.status in ["won", "lost", "push", "void"]]
+            pending_legs = [leg for leg in legs if leg.status == "pending"]
             if pending_legs:
                 profit = 0.0
-            elif all(l.status == "won" for l in graded_legs) and len(graded_legs) == len(legs):
+            elif all(leg.status == "won" for leg in graded_legs) and len(graded_legs) == len(legs):
                 parlay_odds = legs[0].parlay_odds or 0.0
                 profit = calculate_profit_from_parlay_odds(parlay_stake, parlay_odds)
-            elif any(l.status == "lost" for l in legs):
+            elif any(leg.status == "lost" for leg in legs):
                 profit = -parlay_stake
             else:
                 profit = 0.0
@@ -113,8 +113,8 @@ class ROIAnalytics:
             if bet.status == "pending":
                 profit = 0.0
             elif bet.status == "won":
-                odds = bet.odds or 0.0
-                profit = calculate_profit_from_decimal_odds(stake, odds)
+                # Use stored profit (written correctly by grader with American odds)
+                profit = bet.profit if bet.profit is not None else 0.0
             elif bet.status == "lost":
                 profit = -stake
             else:

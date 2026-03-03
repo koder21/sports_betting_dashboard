@@ -12,10 +12,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     DATABASE_URL: str = "postgresql+asyncpg://sbd:sbddb@localhost:5432/sports_intel"
     
-    # Betting Configuration
-    BANKROLL: float = 2000.0  # Initial bankroll for ROI calculation
-    
-    # CORS origins as list of strings (comma-separated in .env)
+    BANKROLL: float = 2000.0
     CORS_ORIGINS: list[str] = []
 
     @field_validator("CORS_ORIGINS", mode="before")

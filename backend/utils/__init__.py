@@ -7,7 +7,7 @@ async def safe_sleep(seconds: float = 0.2) -> None:
 
 
 def safe_get(d: dict, path: list[str], default: Any = None) -> Any:
-    cur = d
+    cur: Any = d
     for key in path:
         if not isinstance(cur, dict):
             return default

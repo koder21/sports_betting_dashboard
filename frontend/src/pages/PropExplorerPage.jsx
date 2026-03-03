@@ -1,44 +1,60 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState } from 'react';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import SuspenseFallback from '../components/SuspenseFallback.jsx';
-import api from "../services/api.js";
-import { CommunityInsights } from "../components/CommunityInsights.jsx";
-import { useApi } from "../hooks/useApi";
-import { useMetrics } from "../hooks/useMetrics";
-import "./PropExplorerPage.css";
+import SkeletonLoader from '../components/SkeletonLoader.jsx';
+import api from '../services/api.js';
+import { CommunityInsights } from '../components/CommunityInsights.jsx';
+import { useApi } from '../hooks/useApi';
+import { useMetrics } from '../hooks/useMetrics';
+import './PropExplorerPage.css';
 function PropExplorerPage() {
-  useMetrics("PropExplorerPage");
-  const [activeTab, setActiveTab] = useState("explorer");
-  const [sportFilter, setSportFilter] = useState("all");
-  const [teamFilter, setTeamFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  useMetrics('PropExplorerPage');
+  const [activeTab, setActiveTab] = useState('explorer');
+  const [sportFilter, setSportFilter] = useState('all');
+  const [teamFilter, setTeamFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedPlayer, setSelectedPlayer] = useState(null);
 
   // Load all players on page load
-  const fetchPlayers = useCallback(() => api.get("/api/props/players").then(res => res.data || []), []);
-  const { data: players = [], loading: loadingPlayers, error: errorPlayers, refetch: refetchPlayers } = useApi(fetchPlayers, []);
+  const fetchPlayers = useCallback(
+    () => api.get('/api/props/players').then((res) => res.data || []),
+    []
+  );
+  const {
+    data: players = [],
+    loading: loadingPlayers,
+    error: errorPlayers,
+  } = useApi(fetchPlayers, []);
 
   // Load stats for selected player
   const fetchPlayerStats = useCallback(
-    (playerId) => api.get(`/api/props/players/${playerId}/stats`).then(res => res.data || []),
+    (playerId) => api.get(`/api/props/players/${playerId}/stats`).then((res) => res.data || []),
     []
   );
   const [playerIdForStats, setPlayerIdForStats] = useState(null);
-  const { data: playerStats = [], loading: loadingStats, error: errorStats, refetch: refetchStats } = useApi(
-    useCallback(() => (playerIdForStats ? fetchPlayerStats(playerIdForStats) : Promise.resolve([])), [fetchPlayerStats, playerIdForStats]),
+  const {
+    data: playerStats = [],
+    loading: loadingStats,
+    refetch: refetchStats,
+  } = useApi(
+    useCallback(
+      () => (playerIdForStats ? fetchPlayerStats(playerIdForStats) : Promise.resolve([])),
+      [fetchPlayerStats, playerIdForStats]
+    ),
     []
   );
 
   // Apply filters whenever dependencies change
   const filteredPlayers = React.useMemo(() => {
     let filtered = [...players];
-    if (sportFilter !== "all") filtered = filtered.filter(p => p.sport === sportFilter);
-    if (teamFilter !== "all") filtered = filtered.filter(p => p.team_id === teamFilter);
+    if (sportFilter !== 'all') filtered = filtered.filter((p) => p.sport === sportFilter);
+    if (teamFilter !== 'all') filtered = filtered.filter((p) => p.team_id === teamFilter);
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(p =>
-        (p.full_name || "").toLowerCase().includes(query) ||
-        (p.name || "").toLowerCase().includes(query)
+      filtered = filtered.filter(
+        (p) =>
+          (p.full_name || '').toLowerCase().includes(query) ||
+          (p.name || '').toLowerCase().includes(query)
       );
     }
     return filtered;
@@ -51,18 +67,18 @@ function PropExplorerPage() {
   };
 
   const getUniqueSports = () => {
-    const sports = [...new Set(players.map(p => p.sport).filter(Boolean))];
+    const sports = [...new Set(players.map((p) => p.sport).filter(Boolean))];
     return sports.sort();
   };
 
   const getUniqueTeams = () => {
     let teamPlayers = players;
-    if (sportFilter !== "all") {
-      teamPlayers = players.filter(p => p.sport === sportFilter);
+    if (sportFilter !== 'all') {
+      teamPlayers = players.filter((p) => p.sport === sportFilter);
     }
     // Create array of unique teams with both id and name
     const teamMap = new Map();
-    teamPlayers.forEach(p => {
+    teamPlayers.forEach((p) => {
       if (p.team_id && !teamMap.has(p.team_id)) {
         teamMap.set(p.team_id, p.team_name || p.team_id);
       }
@@ -74,55 +90,53 @@ function PropExplorerPage() {
   };
 
   const calculateAverage = (statName) => {
-    if (playerStats.length === 0) return "-";
-    const values = playerStats
-      .map(s => s[statName])
-      .filter(v => v != null && !isNaN(v));
-    if (values.length === 0) return "-";
+    if (playerStats.length === 0) return '-';
+    const values = playerStats.map((s) => s[statName]).filter((v) => v != null && !isNaN(v));
+    if (values.length === 0) return '-';
     const avg = values.reduce((a, b) => a + b, 0) / values.length;
     return avg.toFixed(1);
   };
 
   const getRelevantStats = () => {
     if (!selectedPlayer) return [];
-    
+
     const sport = selectedPlayer.sport;
-    if (sport === "NBA" || sport === "NCAAB") {
+    if (sport === 'NBA' || sport === 'NCAAB') {
       return [
-        { label: "Points", key: "points" },
-        { label: "Rebounds", key: "rebounds" },
-        { label: "Assists", key: "assists" },
-        { label: "Steals", key: "steals" },
-        { label: "Blocks", key: "blocks" },
-        { label: "3PT Made", key: "three_pt" },
+        { label: 'Points', key: 'points' },
+        { label: 'Rebounds', key: 'rebounds' },
+        { label: 'Assists', key: 'assists' },
+        { label: 'Steals', key: 'steals' },
+        { label: 'Blocks', key: 'blocks' },
+        { label: '3PT Made', key: 'three_pt' },
       ];
-    } else if (sport === "NFL" || sport === "NCAAF") {
+    } else if (sport === 'NFL' || sport === 'NCAAF') {
       return [
-        { label: "Passing Yards", key: "passing_yards" },
-        { label: "Passing TDs", key: "passing_tds" },
-        { label: "Rushing Yards", key: "rushing_yards" },
-        { label: "Rushing TDs", key: "rushing_tds" },
-        { label: "Receiving Yards", key: "receiving_yards" },
-        { label: "Receiving TDs", key: "receiving_tds" },
-        { label: "Interceptions", key: "interceptions" },
+        { label: 'Passing Yards', key: 'passing_yards' },
+        { label: 'Passing TDs', key: 'passing_tds' },
+        { label: 'Rushing Yards', key: 'rushing_yards' },
+        { label: 'Rushing TDs', key: 'rushing_tds' },
+        { label: 'Receiving Yards', key: 'receiving_yards' },
+        { label: 'Receiving TDs', key: 'receiving_tds' },
+        { label: 'Interceptions', key: 'interceptions' },
       ];
-    } else if (sport === "NHL") {
+    } else if (sport === 'NHL') {
       return [
-        { label: "Goals", key: "nhl_goals" },
-        { label: "Assists", key: "nhl_assists" },
-        { label: "Points", key: "points" },
-        { label: "Shots on Goal", key: "nhl_shots" },
-        { label: "Hits", key: "nhl_hits" },
-        { label: "+/-", key: "nhl_plus_minus" },
+        { label: 'Goals', key: 'nhl_goals' },
+        { label: 'Assists', key: 'nhl_assists' },
+        { label: 'Points', key: 'points' },
+        { label: 'Shots on Goal', key: 'nhl_shots' },
+        { label: 'Hits', key: 'nhl_hits' },
+        { label: '+/-', key: 'nhl_plus_minus' },
       ];
-    } else if (sport === "MLB") {
+    } else if (sport === 'MLB') {
       return [
-        { label: "Hits", key: "hits" },
-        { label: "Runs", key: "runs" },
-        { label: "RBI", key: "rbi" },
-        { label: "Home Runs", key: "hr" },
-        { label: "Stolen Bases", key: "sb" },
-        { label: "Strikeouts", key: "so" },
+        { label: 'Hits', key: 'hits' },
+        { label: 'Runs', key: 'runs' },
+        { label: 'RBI', key: 'rbi' },
+        { label: 'Home Runs', key: 'hr' },
+        { label: 'Stolen Bases', key: 'sb' },
+        { label: 'Strikeouts', key: 'so' },
       ];
     }
     return [];
@@ -135,34 +149,36 @@ function PropExplorerPage() {
       {/* Tab Navigation */}
       <div className="tabs">
         <button
-          className={`tab ${activeTab === "explorer" ? "active" : ""}`}
-          onClick={() => setActiveTab("explorer")}
+          className={`tab ${activeTab === 'explorer' ? 'active' : ''}`}
+          onClick={() => setActiveTab('explorer')}
         >
           Player Props
         </button>
         <button
-          className={`tab ${activeTab === "community" ? "active" : ""}`}
-          onClick={() => setActiveTab("community")}
+          className={`tab ${activeTab === 'community' ? 'active' : ''}`}
+          onClick={() => setActiveTab('community')}
         >
           Community Insights
         </button>
       </div>
 
-      {activeTab === "community" && (
+      {activeTab === 'community' && (
         <div className="community-tab">
           <CommunityInsights />
         </div>
       )}
 
-      {activeTab === "explorer" && (
+      {activeTab === 'explorer' && (
         <>
           <div className="filters-bar">
             <div className="filter-group">
               <label>Sport:</label>
               <select value={sportFilter} onChange={(e) => setSportFilter(e.target.value)}>
                 <option value="all">All Sports</option>
-                {getUniqueSports().map(sport => (
-                  <option key={sport} value={sport}>{sport}</option>
+                {getUniqueSports().map((sport) => (
+                  <option key={sport} value={sport}>
+                    {sport}
+                  </option>
                 ))}
               </select>
             </div>
@@ -170,8 +186,10 @@ function PropExplorerPage() {
               <label>Team:</label>
               <select value={teamFilter} onChange={(e) => setTeamFilter(e.target.value)}>
                 <option value="all">All Teams</option>
-                {getUniqueTeams().map(team => (
-                  <option key={team.id} value={team.id}>{team.name}</option>
+                {getUniqueTeams().map((team) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -185,19 +203,31 @@ function PropExplorerPage() {
               />
             </div>
             <div className="filter-actions">
-              <button onClick={() => {
-                setSportFilter("all");
-                setTeamFilter("all");
-                setSearchQuery("");
-              }}>Clear Filters</button>
+              <button
+                onClick={() => {
+                  setSportFilter('all');
+                  setTeamFilter('all');
+                  setSearchQuery('');
+                }}
+              >
+                Clear Filters
+              </button>
             </div>
           </div>
-          {errorPlayers && <div className="error" role="alert">Failed to load players: {errorPlayers.message || String(errorPlayers)}</div>}
-          {!loadingPlayers && players.length === 0 && <div className="no-players" role="status" aria-live="polite">No player data available.</div>}
+          {errorPlayers && (
+            <div className="error" role="alert">
+              Failed to load players: {errorPlayers.message || String(errorPlayers)}
+            </div>
+          )}
+          {!loadingPlayers && players.length === 0 && (
+            <div className="no-players" role="status" aria-live="polite">
+              No player data available.
+            </div>
+          )}
           {!loadingPlayers && players.length > 0 && (
             <>
               <div className="results-summary">
-                {loadingPlayers ? "Loading..." : `${filteredPlayers.length} players found`}
+                {loadingPlayers ? 'Loading...' : `${filteredPlayers.length} players found`}
               </div>
               <div className="prop-content" role="main" aria-label="Prop Explorer Content">
                 <div className="players-list">
@@ -207,21 +237,33 @@ function PropExplorerPage() {
                   )}
                   <div className="player-cards" role="region" aria-label="Player Cards">
                     {loadingPlayers ? (
-                      <SkeletonLoader rows={8} columns={1} type="list" width="100%" height="2.5em" />
+                      <SkeletonLoader
+                        rows={8}
+                        columns={1}
+                        type="list"
+                        width="100%"
+                        height="2.5em"
+                      />
                     ) : (
-                      filteredPlayers.map(player => (
+                      filteredPlayers.map((player) => (
                         <div
                           key={player.player_id}
-                          className={`player-card ${selectedPlayer?.player_id === player.player_id ? "selected" : ""}`}
+                          className={`player-card ${selectedPlayer?.player_id === player.player_id ? 'selected' : ''}`}
                           onClick={() => handlePlayerSelect(player)}
                         >
                           {player.headshot && (
-                            <img src={player.headshot} alt={player.full_name} className="player-headshot" />
+                            <img
+                              src={player.headshot}
+                              alt={player.full_name}
+                              className="player-headshot"
+                            />
                           )}
                           <div className="player-info">
                             <div className="player-name">{player.full_name || player.name}</div>
                             <div className="player-meta">
-                              {player.position && <span className="position">{player.position}</span>}
+                              {player.position && (
+                                <span className="position">{player.position}</span>
+                              )}
                               {player.team_name && <span className="team">{player.team_name}</span>}
                             </div>
                             <div className="player-sport">{player.sport}</div>
@@ -241,13 +283,17 @@ function PropExplorerPage() {
                     <>
                       <div className="player-header">
                         {selectedPlayer.headshot && (
-                          <img src={selectedPlayer.headshot} alt={selectedPlayer.full_name} className="player-headshot-large" />
+                          <img
+                            src={selectedPlayer.headshot}
+                            alt={selectedPlayer.full_name}
+                            className="player-headshot-large"
+                          />
                         )}
                         <div>
                           <h2>{selectedPlayer.full_name || selectedPlayer.name}</h2>
                           <div className="player-details">
-                            <span>{selectedPlayer.position}</span> • 
-                            <span>{selectedPlayer.team_id}</span> • 
+                            <span>{selectedPlayer.position}</span> •
+                            <span>{selectedPlayer.team_id}</span> •
                             <span>{selectedPlayer.sport}</span>
                           </div>
                         </div>
@@ -261,7 +307,7 @@ function PropExplorerPage() {
                           <div className="stats-summary">
                             <h3>Season Averages ({playerStats.length} games)</h3>
                             <div className="stat-cards">
-                              {getRelevantStats().map(stat => (
+                              {getRelevantStats().map((stat) => (
                                 <div key={stat.key} className="stat-card">
                                   <div className="stat-label">{stat.label}</div>
                                   <div className="stat-value">{calculateAverage(stat.key)}</div>
@@ -275,7 +321,7 @@ function PropExplorerPage() {
                               <thead>
                                 <tr>
                                   <th>Game</th>
-                                  {getRelevantStats().map(stat => (
+                                  {getRelevantStats().map((stat) => (
                                     <th key={stat.key}>{stat.label}</th>
                                   ))}
                                 </tr>
@@ -284,8 +330,8 @@ function PropExplorerPage() {
                                 {playerStats.slice(0, 10).map((stat, idx) => (
                                   <tr key={idx}>
                                     <td>{stat.game_id}</td>
-                                    {getRelevantStats().map(s => (
-                                      <td key={s.key}>{stat[s.key] ?? "-"}</td>
+                                    {getRelevantStats().map((s) => (
+                                      <td key={s.key}>{stat[s.key] ?? '-'}</td>
                                     ))}
                                   </tr>
                                 ))}
@@ -300,10 +346,11 @@ function PropExplorerPage() {
               </div>
             </>
           )}
-                        </>
-                      )}
+        </>
+      )}
 
-                      <style>{`
+      <style>{`
+        .prop-explorer-page {
           color: white;
         }
 

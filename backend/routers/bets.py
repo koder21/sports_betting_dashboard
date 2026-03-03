@@ -1,118 +1,173 @@
-
-from fastapi import APIRouter, Depends, Body, HTTPException, Request
+from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from fastapi import status
+from pydantic import BaseModel
+from sqlalchemy import delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from ..db import get_db
+from ..models.bet import Bet
 from ..services.betting.engine import BettingEngine
 from ..services.betting.verifier import BetVerifier
 
 router = APIRouter()
 
-# Apply corrections endpoint for /api/bets/apply-corrections
-@router.post("/apply-corrections", status_code=status.HTTP_200_OK)
-async def apply_corrections(request: Request, session: AsyncSession = Depends(get_db)):
-    """
-    Apply approved corrections to bets and parlays.
-    """
-    data = await request.json()
-    corrections = data if isinstance(data, list) else data.get("corrections", [])
-    verifier = BetVerifier(session)
-    try:
-        result = await verifier.apply_corrections(corrections)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-@router.post("/verify", status_code=status.HTTP_200_OK)
-async def verify_bets(session: AsyncSession = Depends(get_db)):
-    """
-    Verify all bets for discrepancies. Returns verification results.
-    """
-    verifier = BetVerifier(session)
-    try:
-        results = await verifier.verify_all_graded_bets()
-        return results
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
-# Restore get all bets endpoint in correct place
+# ── Place bets ────────────────────────────────────────────────────────────────
+
+class PlaceFromTextRequest(BaseModel):
+    raw_text: str
+
+
+@router.post("/place-from-text")
+async def place_bets_from_text(
+    request: PlaceFromTextRequest,
+    session: AsyncSession = Depends(get_db),
+):
+    """Parse and place all bets from raw pasted text in one atomic transaction."""
+    engine = BettingEngine(session)
+    result = await engine.place_bets_from_text(request.raw_text)
+    if result.get("status") == "error":
+        raise HTTPException(status_code=400, detail=result)
+    return result
+
+
+# ── Read ──────────────────────────────────────────────────────────────────────
+
 @router.get("/all")
 async def get_all_bets(session: AsyncSession = Depends(get_db)):
     engine = BettingEngine(session)
     bets = await engine.get_bets_with_details()
     return {"status": "ok", "bets": bets}
 
-# Delete all bets in a parlay group by parlay_id
+
+# ── Verify / corrections ──────────────────────────────────────────────────────
+
+@router.post("/verify", status_code=status.HTTP_200_OK)
+async def verify_bets(session: AsyncSession = Depends(get_db)):
+    """Verify all graded bets for discrepancies."""
+    verifier = BetVerifier(session)
+    try:
+        return await verifier.verify_all_graded_bets()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/apply-corrections", status_code=status.HTTP_200_OK)
+async def apply_corrections(request: Request, session: AsyncSession = Depends(get_db)):
+    """Apply approved corrections to bets and parlays."""
+    data = await request.json()
+    corrections = data if isinstance(data, list) else data.get("corrections", [])
+    verifier = BetVerifier(session)
+    try:
+        return await verifier.apply_corrections(corrections)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Delete: parlays ───────────────────────────────────────────────────────────
+
 @router.delete("/parlay/{parlay_id}")
 async def delete_parlay(parlay_id: str, session: AsyncSession = Depends(get_db)):
-    """Delete all bets in a parlay group by parlay_id"""
-    from sqlalchemy import delete, select
-    from ..models.bet import Bet
-
-    # Find all bets with this parlay_id
+    """Delete all legs of a parlay by parlay_id."""
     result = await session.execute(select(Bet).where(Bet.parlay_id == parlay_id))
     bets = result.scalars().all()
+
     if not bets:
         raise HTTPException(status_code=404, detail=f"No bets found for parlay_id {parlay_id}")
 
-    # Only allow delete if all bets are deletable (won/lost/finished/pending)
     allowed_statuses = {"won", "lost", "finished", "pending"}
     for bet in bets:
         if bet.status not in allowed_statuses:
-            raise HTTPException(status_code=400, detail=f"Bet {bet.id} in parlay has status '{bet.status}' and cannot be deleted.")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Bet {bet.id} has status '{bet.status}' and cannot be deleted",
+            )
 
     await session.execute(delete(Bet).where(Bet.parlay_id == parlay_id))
     await session.commit()
     return {"status": "ok", "message": f"Deleted parlay {parlay_id} ({len(bets)} bets)"}
 
+
+# ── Delete: finished ──────────────────────────────────────────────────────────
+
 @router.delete("/finished/{bet_id}")
 async def delete_finished_bet(bet_id: int, session: AsyncSession = Depends(get_db)):
-    """Delete a single finished, won, or lost bet"""
-    from sqlalchemy import delete, select
-    from ..models.bet import Bet
-
-    # Get the bet first to verify it exists and is finished/won/lost
+    """Delete a single finished, won, or lost bet."""
     result = await session.execute(select(Bet).where(Bet.id == bet_id))
     bet = result.scalar_one_or_none()
 
     if not bet:
-        return {"status": "error", "message": f"Bet {bet_id} not found"}
-
+        raise HTTPException(status_code=404, detail=f"Bet {bet_id} not found")
     if bet.status not in ("finished", "won", "lost"):
-        return {"status": "error", "message": f"Only finished, won, or lost bets can be deleted. This bet is {bet.status}"}
+        raise HTTPException(
+            status_code=400,
+            detail=f"Only finished/won/lost bets can be deleted here. Bet {bet_id} is '{bet.status}'",
+        )
 
-    # Delete the bet
     await session.execute(delete(Bet).where(Bet.id == bet_id))
     await session.commit()
-
     return {"status": "ok", "message": f"Deleted bet {bet_id}"}
 
 
 @router.delete("/finished-all")
 async def delete_all_finished_bets(session: AsyncSession = Depends(get_db)):
-    """Delete all finished, won, or lost bets"""
-    from sqlalchemy import delete, select, or_
-    from ..models.bet import Bet
-
-    # Count all completed bets
+    """Delete all finished, won, or lost bets."""
     result = await session.execute(
-        select(Bet).where(
-            or_(Bet.status == "finished", Bet.status == "won", Bet.status == "lost")
-        )
+        select(Bet).where(or_(Bet.status == "finished", Bet.status == "won", Bet.status == "lost"))
     )
-    completed_bets = result.scalars().all()
-    count = len(completed_bets)
+    bets = result.scalars().all()
+    count = len(bets)
 
     if count == 0:
         return {"status": "ok", "message": "No finished/won/lost bets to delete", "deleted": 0}
 
-    # Delete all completed bets
     await session.execute(
-        delete(Bet).where(
-            or_(Bet.status == "finished", Bet.status == "won", Bet.status == "lost")
-        )
+        delete(Bet).where(or_(Bet.status == "finished", Bet.status == "won", Bet.status == "lost"))
     )
     await session.commit()
-
     return {"status": "ok", "message": f"Deleted {count} finished/won/lost bets", "deleted": count}
+
+
+# ── Delete: pending ───────────────────────────────────────────────────────────
+# NOTE: These were previously in bets_pending.py which was not mounted.
+# Consolidated here so no app.include_router change is needed.
+
+@router.get("/pending")
+async def get_pending_bets(session: AsyncSession = Depends(get_db)):
+    """Return all pending bets."""
+    engine = BettingEngine(session)
+    return await engine.bets.list_pending()
+
+
+@router.delete("/pending-all")
+async def delete_all_pending_bets(session: AsyncSession = Depends(get_db)):
+    """Delete all pending bets."""
+    result = await session.execute(select(Bet).where(Bet.status == "pending"))
+    count = len(result.scalars().all())
+
+    if count == 0:
+        return {"status": "ok", "message": "No pending bets to delete", "deleted": 0}
+
+    await session.execute(delete(Bet).where(Bet.status == "pending"))
+    await session.commit()
+    return {"status": "ok", "message": f"Deleted {count} pending bets", "deleted": count}
+
+
+@router.delete("/pending/{bet_id}")
+async def delete_pending_bet(bet_id: int, session: AsyncSession = Depends(get_db)):
+    """Delete a single pending bet by ID."""
+    result = await session.execute(select(Bet).where(Bet.id == bet_id))
+    bet = result.scalar_one_or_none()
+
+    if not bet:
+        raise HTTPException(status_code=404, detail=f"Bet {bet_id} not found")
+    if bet.status != "pending":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Only pending bets can be deleted this way. Bet {bet_id} is '{bet.status}'",
+        )
+
+    await session.execute(delete(Bet).where(Bet.id == bet_id))
+    await session.commit()
+    return {"status": "ok", "message": f"Deleted pending bet {bet_id}"}

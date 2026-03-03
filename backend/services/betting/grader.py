@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import datetime
 from typing import Optional, Dict, Any
 
@@ -34,24 +35,17 @@ class BetGrader:
                 await self._espn_client.close()
 
     async def grade(self, bet) -> Optional[Dict[str, Any]]:
-        #logger.debug(f"[Grader] Grading bet {bet.id}: type={bet.bet_type}, selection={bet.selection}, status={bet.status}, game_id={bet.game_id}, player_id={getattr(bet, 'player_id', None)}")
         if bet.bet_type in ("prop", "total"):
             result = await self._grade_prop(bet)
             if not result:
-                logger.debug(f"[Grader] Bet {bet.id} not graded: _grade_prop returned None")
+                logger.debug("[Grader] Bet %s not graded: _grade_prop returned None", bet.id)
             else:
-                logger.debug(f"[Grader] Bet {bet.id} graded: {result}")
+                logger.debug("[Grader] Bet %s graded: %s", bet.id, result)
             return result
 
         if bet.bet_type in ("moneyline", "spread"):
-            result = await self._grade_game(bet)
-            #if not result:
-            #    logger.debug(f"[Grader] Bet {bet.id} not graded: _grade_game returned None")
-            #else:
-            #    logger.debug(f"[Grader] Bet {bet.id} graded: {result}")
-            return result
+            return await self._grade_game(bet)
 
-        #logger.debug(f"[Grader] Bet {bet.id} not graded: unknown bet_type {bet.bet_type}")
         return None
 
     async def _grade_prop(self, bet) -> Optional[Dict[str, Any]]:
@@ -76,19 +70,20 @@ class BetGrader:
             # Totals bet logic: if stat_type is 'total' or selection contains 'over'/'under', use game scores
             sel = (bet.selection or "").strip().lower()
             is_totals = 'over' in sel or 'under' in sel or (bet.stat_type and bet.stat_type.lower() == 'total')
+            value: Optional[float] = None
             if is_totals and game and game.home_score is not None and game.away_score is not None:
-                value = game.home_score + game.away_score
+                score: float = float(game.home_score + game.away_score)
+                value = score
                 bet.result_value = value
                 line = 0.0
                 if bet.selection:
-                    import re
                     numbers = re.findall(r'[-+]?\d*\.?\d+', bet.selection)
                     if numbers:
                         line = float(numbers[-1])
                 if "over" in sel:
-                    bet.status = "won" if value > line else "lost"
+                    bet.status = "won" if score > line else "lost"
                 else:
-                    bet.status = "won" if value < line else "lost"
+                    bet.status = "won" if score < line else "lost"
                 bet.graded_at = datetime.utcnow()
                 bet.profit = self._calc_profit(bet)
                 return {"bet_id": bet.id, "status": bet.status, "profit": bet.profit, "result_value": value}
@@ -104,27 +99,59 @@ class BetGrader:
                 bet.graded_at = datetime.utcnow()
                 return {"bet_id": bet.id, "status": "void", "reason": "Player stats not available"}
             stat_field = bet.stat_type or bet.market
-            value = getattr(stat, stat_field, None)
+
+            # Guard: if no stat field at all, void the bet
+            if not stat_field:
+                bet.status = "void"
+                bet.graded_at = datetime.utcnow()
+                return {"bet_id": bet.id, "status": "void", "reason": "No stat_type or market defined"}
+
+            # Normalise common shorthand names → PlayerStats column names
+            _FIELD_ALIASES: dict = {
+                "pts": "points", "points": "points",
+                "reb": "rebounds", "rebounds": "rebounds", "trb": "rebounds",
+                "ast": "assists", "assists": "assists",
+                "stl": "steals", "steals": "steals",
+                "blk": "blocks", "blocks": "blocks",
+                "tov": "turnovers", "to": "turnovers", "turnovers": "turnovers",
+                "pra": None,  # points+rebounds+assists – handled below
+                "passing_yards": "passing_yards", "pass_yds": "passing_yards",
+                "rushing_yards": "rushing_yards", "rush_yds": "rushing_yards",
+                "receiving_yards": "receiving_yards", "rec_yds": "receiving_yards",
+                "passing_tds": "passing_tds", "rush_tds": "rushing_tds",
+                "receiving_tds": "receiving_tds",
+                "hits": "hits", "hr": "hr", "rbi": "rbi", "sb": "sb",
+                "goals": "nhl_goals", "nhl_goals": "nhl_goals",
+                "shots": "nhl_shots", "nhl_shots": "nhl_shots",
+            }
+            stat_field_norm = stat_field.lower().strip()
+            mapped_field = _FIELD_ALIASES.get(stat_field_norm, stat_field_norm)
+
+            # Special combo stat: PRA = points + rebounds + assists
             stats_json = getattr(stat, "stats_json", None)
-            if value is None and stats_json and isinstance(stats_json, dict):
-                value = stats_json.get(stat_field)
+            if stat_field_norm == "pra":
+                p = getattr(stat, "points", None) or 0
+                r = getattr(stat, "rebounds", None) or 0
+                a = getattr(stat, "assists", None) or 0
+                value = float(p + r + a) if any([p, r, a]) else None
+            elif mapped_field:
+                raw = getattr(stat, mapped_field, None)
+                if raw is None and stats_json and isinstance(stats_json, dict):
+                    raw = stats_json.get(mapped_field) or stats_json.get(stat_field_norm) or stats_json.get(stat_field)
+                value = float(raw) if raw is not None else None
+            else:
+                if stats_json and isinstance(stats_json, dict):
+                    raw = stats_json.get(stat_field_norm) or stats_json.get(stat_field)
+                    value = float(raw) if raw is not None else None
             # Enforce: cannot mark as won/lost unless stat value is present
             if value is None:
                 bet.status = "void"
                 bet.graded_at = datetime.utcnow()
                 bet.result_value = None
                 return {"bet_id": bet.id, "status": "void", "reason": f"Stat '{stat_field}' not found"}
-            try:
-                value = float(value)
-            except (TypeError, ValueError):
-                bet.status = "void"
-                bet.graded_at = datetime.utcnow()
-                bet.result_value = None
-                return {"bet_id": bet.id, "status": "void", "reason": "Invalid stat value"}
             bet.result_value = value
             line = 0.0
             if bet.selection:
-                import re
                 numbers = re.findall(r'[-+]?\d*\.?\d+', bet.selection)
                 if numbers:
                     line = float(numbers[-1])
@@ -157,19 +184,18 @@ class BetGrader:
             game = await self.games.get(bet.game_id)
             game_result = None
             if not game or not self._is_final_status(game.status):
-                #logger.info(f"[Grader] Bet {bet.id}: game not final or not found (game_id={bet.game_id}, status={getattr(game, 'status', None)})")
                 game_result = await self._get_game_result(bet.game_id)
                 if not game_result or not self._is_final_status(game_result.status):
-                    #logger.info(f"[Grader] Bet {bet.id}: game_result not final or not found (game_id={bet.game_id}, status={getattr(game_result, 'status', None)})")
                     return None
-                
+
                 if game and game_result:
                     game.home_score = game_result.home_score
                     game.away_score = game_result.away_score
                     game.status = game_result.status
                     await self.session.flush()
 
-            team_name = bet.selection.split()[0] if bet.selection else None
+            # ── Extract team name (everything before the bet-type keyword) ─────
+            team_name = self._extract_team_name(bet.selection)
             if not team_name:
                 logger.warning(f"[Grader] Bet {bet.id}: could not extract team name from selection '{bet.selection}'")
                 bet.status = "void"
@@ -177,16 +203,32 @@ class BetGrader:
                 return {"bet_id": bet.id, "status": "void"}
 
             team_name_lower = team_name.lower()
-            if game and game.home_team_name and game.away_team_name and game.home_score is not None:
+
+            # ── ESPN is the authoritative final score; DB is fallback ──────────
+            sport = (game.sport if game else None) or "basketball"
+            espn_score = await self._fetch_espn_game_score(bet.game_id, sport)
+
+            if espn_score:
+                home_team_lower = espn_score[0].lower()
+                away_team_lower = espn_score[1].lower()
+                home_score: int = espn_score[2]
+                away_score: int = espn_score[3]
+                logger.debug(
+                    "[Grader] Bet %s: ESPN final score %s %d – %d %s",
+                    bet.id, espn_score[0], home_score, away_score, espn_score[1],
+                )
+            elif game and game.home_team_name and game.away_team_name and game.home_score is not None:
                 home_team_lower = (game.home_team_name or "").lower()
                 away_team_lower = (game.away_team_name or "").lower()
                 home_score = game.home_score or 0
                 away_score = game.away_score or 0
+                logger.debug("[Grader] Bet %s: ESPN unavailable, using games table", bet.id)
             elif game_result:
                 home_team_lower = (game_result.home_team_name or "").lower()
                 away_team_lower = (game_result.away_team_name or "").lower()
                 home_score = game_result.home_score or 0
                 away_score = game_result.away_score or 0
+                logger.debug("[Grader] Bet %s: ESPN unavailable, using games_results table", bet.id)
             else:
                 bet.status = "void"
                 bet.graded_at = datetime.utcnow()
@@ -196,7 +238,10 @@ class BetGrader:
             bet_on_away = team_name_lower in away_team_lower or away_team_lower in team_name_lower
 
             if not (bet_on_home or bet_on_away):
-                logger.warning(f"[Grader] Bet {bet.id}: team name '{team_name_lower}' did not match home '{home_team_lower}' or away '{away_team_lower}'")
+                logger.warning(
+                    "[Grader] Bet %s: team '%s' matched neither home '%s' nor away '%s'",
+                    bet.id, team_name_lower, home_team_lower, away_team_lower,
+                )
                 bet.status = "void"
                 bet.graded_at = datetime.utcnow()
                 return {"bet_id": bet.id, "status": "void"}
@@ -212,7 +257,7 @@ class BetGrader:
             bet.profit = self._calc_profit(bet)
 
             return {"bet_id": bet.id, "status": bet.status, "profit": bet.profit}
-        
+
         except Exception as e:
             logger.error("[Grader] Error grading game bet %s: %s", bet.id, e, exc_info=True)
             bet.status = "void"
@@ -223,6 +268,91 @@ class BetGrader:
         stmt = select(GameResult).where(GameResult.game_id == game_id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
+
+    def _extract_team_name(self, selection: Optional[str]) -> Optional[str]:
+        """
+        Extract the team name from a selection string.
+
+        Examples:
+          'Warriors ML'                 → 'Warriors'
+          'Golden State Warriors ML'    → 'Golden State Warriors'
+          'Celtics -3.5'                → 'Celtics'
+          'Over 215.5'                  → None  (totals handled elsewhere)
+        """
+        if not selection:
+            return None
+        _STOP_WORDS = {"ml", "moneyline", "spread", "total", "over", "under", "pk"}
+        parts = selection.split()
+        team_words = []
+        for part in parts:
+            if part.lower() in _STOP_WORDS:
+                break
+            # Stop at numeric spread/total values like +3.5, -7, O45.5, U220
+            if re.match(r'^[+\-ouOU]?\d', part):
+                break
+            team_words.append(part)
+        if team_words:
+            return " ".join(team_words)
+        # Last resort: use the raw first word
+        return parts[0] if parts else None
+
+    async def _fetch_espn_game_score(
+        self,
+        game_id: str,
+        sport: str = "basketball",
+    ) -> Optional[tuple]:
+        """
+        Fetch the definitive final score from the ESPN summary API.
+
+        Returns (home_team_name, away_team_name, home_score, away_score) or None
+        if the game is not yet complete or the API is unavailable.
+        """
+        sport_map = {
+            "basketball": ("basketball", "nba"),
+            "football":   ("football",   "nfl"),
+            "hockey":     ("hockey",     "nhl"),
+            "baseball":   ("baseball",   "mlb"),
+        }
+        sport_type, league = sport_map.get((sport or "").lower(), ("basketball", "nba"))
+        url = (
+            f"https://site.api.espn.com/apis/site/v2/sports"
+            f"/{sport_type}/{league}/summary?event={game_id}"
+        )
+        data = await self.espn_client.get_json(url)
+        if not data:
+            return None
+        try:
+            competitions = data.get("header", {}).get("competitions", [])
+            if not competitions:
+                return None
+            comp = competitions[0]
+            # Only grade when ESPN also says the game is complete
+            if not comp.get("status", {}).get("type", {}).get("completed", False):
+                return None
+            home_team: Optional[str] = None
+            away_team: Optional[str] = None
+            home_score: Optional[int] = None
+            away_score: Optional[int] = None
+            for competitor in comp.get("competitors", []):
+                ha = competitor.get("homeAway", "")
+                team_name = (
+                    competitor.get("team", {}).get("displayName")
+                    or competitor.get("team", {}).get("name", "")
+                )
+                try:
+                    score = int(competitor.get("score", ""))
+                except (ValueError, TypeError):
+                    score = None
+                if ha == "home":
+                    home_team, home_score = team_name, score
+                elif ha == "away":
+                    away_team, away_score = team_name, score
+            if home_team and away_team and home_score is not None and away_score is not None:
+                return (home_team, away_team, home_score, away_score)
+            return None
+        except Exception as exc:
+            logger.debug("[Grader] ESPN score parse error for %s: %s", game_id, exc)
+            return None
 
     async def _fetch_player_stat_from_espn(self, player_id: str, game_id: str, game) -> Optional[Any]:
         """Fetch player stats from ESPN API if not in database"""
@@ -320,10 +450,16 @@ class BetGrader:
         )
 
     def _calc_profit(self, bet) -> float:
+        """Calculate profit using American odds (e.g. -182, +150)."""
         if bet.status != "won":
             return -bet.stake
-
-        if bet.odds > 0:
-            return bet.stake * (bet.odds / 100)
+        odds = bet.odds
+        stake = bet.stake
+        # Decimal odds (1.01–99 range) stored from older bets — handle gracefully
+        if 1.01 <= odds < 100:
+            return round(stake * (odds - 1), 2)
+        # American odds
+        if odds > 0:
+            return round(stake * (odds / 100), 2)
         else:
-            return bet.stake / (abs(bet.odds) / 100)
+            return round(stake * (100 / abs(odds)), 2)

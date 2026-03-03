@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_
-from sqlalchemy.orm import selectinload
 
 from ..db import get_db
 from ..services.intelligence.prop_intel import PropIntelligenceService
@@ -142,6 +141,6 @@ async def get_player_stats(player_id: str, session: AsyncSession = Depends(get_d
 
 
 @router.get("/{player_id}/{market}")
-async def prop_intel(player_id: int, market: str, session: AsyncSession = Depends(get_db)):
+async def prop_intel(player_id: str, market: str, session: AsyncSession = Depends(get_db)):
     svc = PropIntelligenceService(session)
     return await svc.suggest_prop(player_id, market)

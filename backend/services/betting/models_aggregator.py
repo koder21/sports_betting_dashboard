@@ -72,8 +72,8 @@ class ModelsAggregator:
             probabilities['vegas'] = vegas_prob
         
         # Calculate weighted consensus
-        weighted_sum = 0
-        total_weight = 0
+        weighted_sum = 0.0
+        total_weight = 0.0
         
         for model, prob in probabilities.items():
             weight = self.WEIGHTS.get(model, 0.1)

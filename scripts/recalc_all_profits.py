@@ -16,8 +16,13 @@ for bet_id, stake, odds, status in cur.fetchall():
     stake = float(stake)
     odds = float(odds)
     if status == 'won':
-        # Always use decimal odds
-        profit = (stake * odds) - stake
+        # American odds (e.g. -182, +150); decimal odds (1.01-99) handled as fallback
+        if 1.01 <= odds < 100:
+            profit = stake * (odds - 1)
+        elif odds > 0:
+            profit = stake * (odds / 100)
+        else:
+            profit = stake * (100 / abs(odds))
     elif status == 'lost':
         profit = -stake
     else:

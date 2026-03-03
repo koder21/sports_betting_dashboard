@@ -1,15 +1,13 @@
 """Player statistics for completed games."""
-from __future__ import annotations
-
 from datetime import datetime
-from typing import Optional, ClassVar
+from typing import Optional, TYPE_CHECKING
 
 from sqlalchemy import DateTime, Float, Index, Integer, String, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
-from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from .games_results import GameResult
     from .player import Player
@@ -28,7 +26,7 @@ class PlayerStats(Base):
       separate tables) because queries rarely span multiple sport types at once.
     """
 
-    __tablename__: ClassVar[str] = "player_stats"
+    __tablename__ = "player_stats"  # type: ignore[assignment]
 
     # ── Identity ──────────────────────────────────────────────────────────────
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -67,7 +65,7 @@ class PlayerStats(Base):
     blocks: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     turnovers: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     fouls: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    fg: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)   # "8-15"
+    fg: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
     three_pt: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
     ft: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
 
@@ -145,7 +143,4 @@ class PlayerStats(Base):
             f"game_id={self.game_id!r}, "
             f"sport={self.sport!r})>"
         )
-
-
-# Backwards-compatibility alias
 PlayerStat = PlayerStats

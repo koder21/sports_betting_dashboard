@@ -5,16 +5,19 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from ..espn_client import ESPNClient, SPORT_CONFIG
-BASE = ESPNClient.BASE
 from ..alerts import send_email_alert
 from ...repositories.teams import TeamRepository
 from ...repositories.games import GameRepository
 from ...repositories.players import PlayerRepository
 from ...repositories.injuries import InjuryRepository
-from ...models.alert import Alert
 from ...models import Standing, Team
 from ...utils import safe_sleep, safe_get
 from ...utils.json import normalize_json_payload
+
+BASE = ESPNClient.BASE
+BASE_SITE = "https://site.web.api.espn.com/apis/v2/sports"
+BASE_CORE = "https://sports.core.api.espn.com/v2/sports"
+BASE_CDN  = "https://cdn.espn.com/core"
 
 
 class TeamLeagueScraper:
@@ -39,7 +42,9 @@ class TeamLeagueScraper:
         # Teams
         teams_url = f"{BASE_SITE}{full_path}/teams"
         teams_resp = await self.client.get_json(teams_url)
-        teams_list = safe_get(teams_resp or {}, ["sports", 0, "leagues", 0, "teams"], []) or []
+        teams_raw = (teams_resp or {}).get("sports", [])
+        leagues_raw = teams_raw[0].get("leagues", []) if teams_raw else []
+        teams_list: list = leagues_raw[0].get("teams", []) if leagues_raw else []
         for item in teams_list:
             team_data = item.get("team", {})
             espn_id = team_data.get("id")
@@ -48,7 +53,9 @@ class TeamLeagueScraper:
                 continue
             stats_url = f"{BASE_CORE}{full_path}/seasons/{datetime.utcnow().year}/types/2/teams/{espn_id}/statistics"
             stats = await self.client.get_json(stats_url)
-            record = safe_get(stats, ["record", "items", 0, "displayValue"], "")
+            stats_dict = stats or {}
+            record_items = stats_dict.get("record", {}).get("items", [])
+            record = record_items[0].get("displayValue", "") if record_items else ""
             await team_repo.upsert(
                 espn_id=espn_id,
                 name=name,
@@ -73,7 +80,8 @@ class TeamLeagueScraper:
                 if not team:
                     continue
                 rank = standing.get("rank")
-                rec = safe_get(standing, ["stats", 0, "displayValue"], "")
+                stats_items = standing.get("stats", [])
+                rec = stats_items[0].get("displayValue", "") if stats_items else ""
                 st = Standing(
                     team_id=team.team_id,
                     rank=rank,
@@ -249,7 +257,7 @@ class TeamLeagueScraper:
                 if not athlete_ref:
                     continue
                 player_id_str = athlete_ref.rstrip("/").split("/")[-1]
-                player = await player_repo.get_by_espn_and_team(player_id_str, team.team_id)
+                player = await player_repo.get_by_espn(player_id_str, team.team_id)
                 if not player:
                     continue
                 desc = inj.get("longComment", "")

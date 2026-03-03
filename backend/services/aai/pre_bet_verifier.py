@@ -110,8 +110,8 @@ class PreBetVerifier:
         game = result.scalar_one_or_none()
         
         if not game:
-            stmt = select(Game).where(Game.game_id == game_id)
-            result = await self.session.execute(stmt)
+            game_stmt = select(Game).where(Game.game_id == game_id)
+            result = await self.session.execute(game_stmt)
             game = result.scalar_one_or_none()
         
         return game

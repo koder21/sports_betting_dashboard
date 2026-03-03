@@ -60,21 +60,23 @@ class AnalyticsSummary:
             stake = group_bets[0].original_stake
             if stake is None:
                 return 0.0, 0.0
-            
+
             if status == "won":
                 parlay_odds = group_bets[0].parlay_odds or 0.0
-                # Use decimal odds calculation: profit = stake * (odds - 1)
-                profit = stake * (parlay_odds - 1) if parlay_odds >= 1.01 else 0.0
+                if parlay_odds >= 1.01:
+                    profit = calculate_profit_from_parlay_odds(stake, parlay_odds)
+                else:
+                    # No parlay_odds stored — sum individual leg profits (set by grader)
+                    profit = sum(b.profit for b in group_bets if b.profit is not None)
             elif status == "lost":
                 profit = -stake
         else:
-            # Singles: sum up individual bets
+            # Singles: use stored profit (written correctly by grader)
             for b in group_bets:
                 s = b.original_stake or b.stake or 0
                 stake += s
                 if b.status == "won":
-                    odds = b.odds or 0.0
-                    profit += s * (odds - 1) if odds >= 1.01 else 0.0
+                    profit += b.profit if b.profit is not None else 0.0
                 elif b.status == "lost":
                     profit -= s
 
@@ -138,7 +140,7 @@ class AnalyticsSummary:
             all_bets = await self.bets.list_all_with_relations(limit=1000000) if self.bets else []
             grouped = self._group_bets(all_bets)
 
-            sport_stats = defaultdict(lambda: {
+            sport_stats: defaultdict[str, dict[str, float | int]] = defaultdict(lambda: {
                 "total": 0,
                 "won": 0,
                 "lost": 0,
@@ -239,7 +241,7 @@ class AnalyticsSummary:
         all_bets = await self.bets.list_all_with_relations()
         groups = self._group_bets(all_bets)
 
-        sport_stats = defaultdict(lambda: {
+        sport_stats: defaultdict[str, dict[str, float | int]] = defaultdict(lambda: {
             "total": 0,
             "won": 0,
             "lost": 0,
@@ -279,7 +281,7 @@ class AnalyticsSummary:
         all_bets = await self.bets.list_all_with_relations()
         groups = self._group_bets(all_bets)
 
-        type_stats = defaultdict(lambda: {
+        type_stats: defaultdict[str, dict[str, float | int]] = defaultdict(lambda: {
             "total": 0,
             "won": 0,
             "lost": 0,
@@ -320,7 +322,7 @@ class AnalyticsSummary:
         all_bets = await self.bets.list_all_with_relations()
         
         # Group by parlay_id
-        parlays_by_id = {}
+        parlays_by_id: dict[str, list] = {}
         singles = []
         for bet in all_bets:
             if bet.parlay_id:
@@ -346,7 +348,7 @@ class AnalyticsSummary:
             for parlay_id, legs in parlays_by_id.items():
                 first_leg = legs[0]
                 if first_leg.placed_at and week_start <= first_leg.placed_at < week_end:
-                    if any(l.status == "void" for l in legs):
+                    if any(leg.status == "void" for leg in legs):
                         continue
                     
                     total += 1
@@ -360,7 +362,11 @@ class AnalyticsSummary:
                         if status == "won":
                             won += 1
                             parlay_odds = legs[0].parlay_odds or 0.0
-                            profit += bet_stake * (parlay_odds - 1) if parlay_odds >= 1.01 else 0.0
+                            if parlay_odds >= 1.01:
+                                profit += calculate_profit_from_parlay_odds(bet_stake, parlay_odds)
+                            else:
+                                # No parlay_odds stored — sum individual leg profits
+                                profit += sum(leg.profit for leg in legs if leg.profit is not None)
                         elif status == "lost":
                             lost += 1
                             profit -= bet_stake
@@ -373,9 +379,7 @@ class AnalyticsSummary:
                     total += 1
                     if bet.status == "won":
                         won += 1
-                        stake = bet.original_stake or bet.stake or 0.0
-                        odds = bet.odds or 0.0
-                        profit += stake * (odds - 1) if odds >= 1.01 else 0.0
+                        profit += bet.profit if bet.profit is not None else 0.0
                     elif bet.status == "lost":
                         lost += 1
                         profit -= (bet.original_stake or bet.stake or 0)
@@ -400,7 +404,7 @@ class AnalyticsSummary:
         all_bets = await self.bets.list()
         
         # Group ALL bets by parlay_id
-        bets_by_parlay_id = {}
+        bets_by_parlay_id: dict[str, list] = {}
         singles = []
         for bet in all_bets:
             if bet.parlay_id:
@@ -415,7 +419,7 @@ class AnalyticsSummary:
         
         # Process parlay groups
         for parlay_id, legs in bets_by_parlay_id.items():
-            if any(l.status == "void" for l in legs):
+            if any(leg.status == "void" for leg in legs):
                 continue
             
             status = self._get_group_status(legs)
@@ -465,7 +469,7 @@ class AnalyticsSummary:
         leg_losses = 0
 
         for _, legs in bets_by_parlay_id.items():
-            if any(l.status == "void" for l in legs):
+            if any(leg.status == "void" for leg in legs):
                 continue
             for leg in legs:
                 if leg.status == "won":
@@ -525,7 +529,7 @@ class AnalyticsSummary:
         """Analyze performance by bet source (AAI, Custom, Manual)"""
         all_bets = await self.bets.list_all_with_relations()
         
-        source_stats = defaultdict(lambda: {
+        source_stats: defaultdict[str, dict[str, float | int]] = defaultdict(lambda: {
             "total": 0,
             "won": 0,
             "lost": 0,
@@ -550,7 +554,7 @@ class AnalyticsSummary:
 
         # Process multi-leg parlays
         for _, legs in parlays_by_id.items():
-            if any(l.status == "void" for l in legs):
+            if any(leg.status == "void" for leg in legs):
                 continue
             
             source = self._get_source(legs[0])

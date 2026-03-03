@@ -145,20 +145,20 @@ class FreshDataScraper:
         errors: List[str] = []
 
         try:
-            async with metrics_collector.measure("fresh_scrape_games"):
+            async with metrics_collector.measure("fresh_scrape_games"):  # type: ignore[attr-defined]
                 games_count = await self._scrape_todays_games()
         except Exception as e:
             errors.append(f"Games: {str(e)[:120]}")
             logger.error(f"Games scrape failed: {e}", exc_info=True)
 
         try:
-            async with metrics_collector.measure("fresh_scrape_injuries"):
+            async with metrics_collector.measure("fresh_scrape_injuries"):  # type: ignore[attr-defined]
                 injuries_count = await self._scrape_injuries()
         except Exception as e:
             errors.append(f"Injuries: {str(e)[:120]}")
 
         try:
-            async with metrics_collector.measure("fresh_scrape_weather"):
+            async with metrics_collector.measure("fresh_scrape_weather"):  # type: ignore[attr-defined]
                 weather_count = await self._update_weather()
         except Exception as e:
             errors.append(f"Weather: {str(e)[:120]}")
@@ -297,20 +297,38 @@ class FreshDataScraper:
                 except Exception as e:
                     logger.warning(f"Parse error ({sport_name}): {e}")
 
-        # ── Write in FK order ────────────────────────────────────────────────
-        if teams:
-            await self._upsert_teams(list(teams.values()))
+        from backend.db import AsyncSessionLocal
+        
+        async def upsert_teams():
+            if teams:
+                async with AsyncSessionLocal() as session:
+                    await self._upsert_teams(session, list(teams.values()))
+                    await session.commit()
 
-        if game_rows:
-            await self._upsert_games(game_rows)
+        async def upsert_games():
+            if game_rows:
+                async with AsyncSessionLocal() as session:
+                    await self._upsert_games(session, game_rows)
+                    await session.commit()
 
-        if upcoming:
-            await self._upsert_upcoming(upcoming)
+        async def upsert_upcoming():
+            if upcoming:
+                async with AsyncSessionLocal() as session:
+                    await self._upsert_upcoming(session, upcoming)
+                    await session.commit()
 
-        if live:
-            await self._upsert_live(live)
+        async def upsert_live():
+            if live:
+                async with AsyncSessionLocal() as session:
+                    await self._upsert_live(session, live)
+                    await session.commit()
 
-        await self.session.commit()
+        await asyncio.gather(
+            upsert_teams(),
+            upsert_games(),
+            upsert_upcoming(),
+            upsert_live(),
+        )
 
         # ── Fetch odds concurrently and patch games_upcoming ─────────────────
         if odds_needed:
@@ -347,7 +365,7 @@ class FreshDataScraper:
 
         odds_updates: List[dict] = []
         for item in results:
-            if isinstance(item, Exception) or item is None:
+            if not isinstance(item, tuple) or len(item) != 2:
                 continue
             game_id, data = item
             if not data:
@@ -382,7 +400,7 @@ class FreshDataScraper:
 
     # ── DB helpers ────────────────────────────────────────────────────────────
 
-    async def _upsert_teams(self, rows: List[dict]) -> None:
+    async def _upsert_teams(self, session: AsyncSession, rows: List[dict]) -> None:
         from sqlalchemy.dialects.postgresql import insert as pg_insert
         if not rows:
             return
@@ -396,10 +414,10 @@ class FreshDataScraper:
                 "logo": stmt.excluded.logo,
             },
         )
-        await self.session.execute(stmt)
-        await self.session.flush()
+        await session.execute(stmt)
+        await session.flush()
 
-    async def _upsert_games(self, rows: List[dict]) -> None:
+    async def _upsert_games(self, session: AsyncSession, rows: List[dict]) -> None:
         from sqlalchemy.dialects.postgresql import insert as pg_insert
         stmt = pg_insert(Game).values(rows)
         stmt = stmt.on_conflict_do_update(
@@ -414,10 +432,10 @@ class FreshDataScraper:
                 "status":         stmt.excluded.status,
             },
         )
-        await self.session.execute(stmt)
-        await self.session.flush()
+        await session.execute(stmt)
+        await session.flush()
 
-    async def _upsert_upcoming(self, rows: List[dict]) -> None:
+    async def _upsert_upcoming(self, session: AsyncSession, rows: List[dict]) -> None:
         from sqlalchemy.dialects.postgresql import insert as pg_insert
         if not rows:
             return
@@ -428,7 +446,7 @@ class FreshDataScraper:
         from backend.models.team import Team
         logos = {}
         if team_ids:
-            q = await self.session.execute(
+            q = await session.execute(
                 Team.__table__.select().where(Team.team_id.in_(list(team_ids)))
             )
             for t in q.fetchall():
@@ -452,9 +470,9 @@ class FreshDataScraper:
                 "away_logo":      stmt.excluded.away_logo,
             },
         )
-        await self.session.execute(stmt)
+        await session.execute(stmt)
 
-    async def _upsert_live(self, rows: List[dict]) -> None:
+    async def _upsert_live(self, session: AsyncSession, rows: List[dict]) -> None:
         from sqlalchemy.dialects.postgresql import insert as pg_insert
         if not rows:
             return
@@ -464,7 +482,7 @@ class FreshDataScraper:
         from backend.models.team import Team
         logos = {}
         if team_ids:
-            q = await self.session.execute(
+            q = await session.execute(
                 Team.__table__.select().where(Team.team_id.in_(list(team_ids)))
             )
             for t in q.fetchall():
@@ -486,7 +504,7 @@ class FreshDataScraper:
                 "away_logo":      stmt.excluded.away_logo,
             },
         )
-        await self.session.execute(stmt)
+        await session.execute(stmt)
 
     async def _scrape_injuries(self) -> int:
         """
@@ -537,6 +555,8 @@ class FreshDataScraper:
             #     ...
             #   ]
             # }
+            if not data:
+                return []
             for team_block in data.get("injuries", []):
                 team_id   = str(team_block.get("id", "")).strip()
                 team_name = team_block.get("displayName", "")
@@ -586,7 +606,7 @@ class FreshDataScraper:
         for label, result in zip([s[2] for s in INJURY_SPORTS], all_injuries_nested):
             if isinstance(result, Exception):
                 pass
-            else:
+            elif isinstance(result, list):
                 all_injuries.extend(result)
 
         print(f"[InjuryScrape] TOTAL injuries to upsert: {len(all_injuries)}")

@@ -19,8 +19,6 @@ from backend.scheduler.tasks import Scheduler
 log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.DEBUG)
-
-# Console handler (stdout)
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.DEBUG)
 console_handler.setFormatter(log_formatter)
@@ -35,7 +33,7 @@ root_logger.addHandler(file_handler)
 logger = logging.getLogger(__name__)
 
 # Scheduler configuration constants
-STARTUP_DELAY_SECONDS = 30  # Wait before first scrape (reduced from 120s)
+STARTUP_DELAY_SECONDS = 30  # Wait before first scrape
 LIVE_UPDATE_INTERVAL_SECONDS = 60
 MAIN_UPDATE_INTERVAL_SECONDS = 1800  # 30 minutes
 SCRAPE_INTERVAL_MINUTES = 30
@@ -44,7 +42,6 @@ BACKFILL_INTERVAL_MINUTES = 30
 
 app = FastAPI(title="Sports Intelligence Platform", version="1.0.0")
 
-# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[str(origin) for origin in settings.CORS_ORIGINS],
@@ -53,14 +50,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global scheduler state
 _scheduler_task = None
 _scheduler_instance = None
 
-
 class SchedulerManager:
-    """Manages scheduler instance lifecycle and error recovery."""
-    
     def __init__(self, session_factory):
         self.session_factory = session_factory
         self.scheduler = None
@@ -68,7 +61,6 @@ class SchedulerManager:
         self.last_backfill = None
     
     async def ensure_scheduler(self) -> Scheduler:
-        """Ensure scheduler instance exists, recreate if needed."""
         if self.scheduler is None:
             logger.warning("Scheduler instance lost, recreating...")
             self.scheduler = Scheduler(self.session_factory)
@@ -76,7 +68,6 @@ class SchedulerManager:
         return self.scheduler
     
     async def update_live_games_loop(self):
-        """Continuously update live game data."""
         while True:
             try:
                 scheduler = await self.ensure_scheduler()
@@ -89,7 +80,6 @@ class SchedulerManager:
             await asyncio.sleep(LIVE_UPDATE_INTERVAL_SECONDS)
     
     async def main_update_loop(self):
-        """Continuously run main updates (scraping, grading, etc)."""
         scrape_interval = timedelta(minutes=SCRAPE_INTERVAL_MINUTES)
         backfill_interval = timedelta(minutes=BACKFILL_INTERVAL_MINUTES)
         
@@ -98,19 +88,16 @@ class SchedulerManager:
                 scheduler = await self.ensure_scheduler()
                 now = datetime.now()
                 
-                # Full scrape every N minutes
                 if self.last_full_scrape is None or (now - self.last_full_scrape) >= scrape_interval:
                     logger.info("Running scheduled full scrape (%d min interval)...", SCRAPE_INTERVAL_MINUTES)
                     await scheduler.run_scrapers()
                     self.last_full_scrape = now
                 
-                # Player stats backfill every N minutes
                 if self.last_backfill is None or (now - self.last_backfill) >= backfill_interval:
                     logger.info("Running scheduled player stats backfill (%d min interval)...", BACKFILL_INTERVAL_MINUTES)
                     await scheduler.backfill_player_stats()
                     self.last_backfill = now
                 
-                # Always update game statuses and grade bets
                 await scheduler.update_game_statuses()
                 await scheduler.grade_bets()
                 
@@ -123,12 +110,8 @@ class SchedulerManager:
             await asyncio.sleep(MAIN_UPDATE_INTERVAL_SECONDS)
     
     async def run(self):
-        """Start both update loops concurrently."""
-        # Wait before starting to avoid startup congestion
         logger.info("Scheduler: Waiting %d seconds before starting...", STARTUP_DELAY_SECONDS)
-        await asyncio.sleep(STARTUP_DELAY_SECONDS)
-        
-        # Start both loops
+        await asyncio.sleep(STARTUP_DELAY_SECONDS)        
         await asyncio.gather(
             self.update_live_games_loop(),
             self.main_update_loop(),
@@ -136,7 +119,6 @@ class SchedulerManager:
         )
     
     async def stop(self):
-        """Stop the scheduler and cleanup resources."""
         if self.scheduler:
             try:
                 await self.scheduler.stop()
@@ -146,31 +128,23 @@ class SchedulerManager:
             finally:
                 self.scheduler = None
 
-
 @app.on_event("startup")
 async def on_startup() -> None:
-    """Initialize database and start background scheduler."""
     global _scheduler_task, _scheduler_instance
     
     await init_db()
     logger.info("Database initialized: %s", settings.DATABASE_URL)
-    
-    # Create and start scheduler manager
     _scheduler_instance = SchedulerManager(AsyncSessionLocal)
     _scheduler_task = asyncio.create_task(_scheduler_instance.run())
     logger.info("Background scheduler started")
 
-
 @app.on_event("shutdown")
 async def on_shutdown() -> None:
-    """Shutdown background scheduler and cleanup resources."""
     global _scheduler_task, _scheduler_instance
     
-    # Stop scheduler
     if _scheduler_instance:
         await _scheduler_instance.stop()
     
-    # Cancel background task
     if _scheduler_task:
         _scheduler_task.cancel()
         try:
@@ -180,8 +154,6 @@ async def on_shutdown() -> None:
     
     logger.info("Application shutdown complete")
 
-
-# Register routers
 app.include_router(health.router, prefix="/api/health", tags=["health"])
 app.include_router(games.router, prefix="/api/games", tags=["games"])
 app.include_router(props.router, prefix="/api/props", tags=["props"])
@@ -191,6 +163,7 @@ app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"]
 app.include_router(sports_analytics.router, prefix="/api/sports-analytics", tags=["sports-analytics"])
 app.include_router(aai_bets.router, prefix="/api/aai-bets", tags=["aai-bets"])
 app.include_router(bet_placement.router, prefix="/bets")
+app.include_router(bets_pending.router, prefix="/api/bets", tags=["bets"])
 app.include_router(live.router, prefix="/api/live", tags=["live"])
 app.include_router(leaderboards.router, prefix="/api/leaderboards", tags=["leaderboards"])
 app.include_router(scraping.router, prefix="/api/scrape", tags=["scrape"])

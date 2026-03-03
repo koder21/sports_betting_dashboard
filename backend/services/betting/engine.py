@@ -2,9 +2,9 @@ import asyncio
 from datetime import datetime
 from typing import Optional, Dict, Any, List, Sequence
 import json
+import logging
 import re
 import uuid
-import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from .parser import BetParser
@@ -17,6 +17,8 @@ from ...models.games_results import GameResult
 from ...models.games_live import GameLive
 from ...models.bet import Bet
 
+logger = logging.getLogger(__name__)
+
 
 class BettingEngine:
     def __init__(self, session: AsyncSession):
@@ -28,8 +30,7 @@ class BettingEngine:
         self.grader = BetGrader(session)
 
     async def place_bets_from_text(self, raw_text: str) -> Dict[str, Any]:
-        """Parse and place multiple bets from text format with robust error handling"""
-        logger = logging.getLogger("backend.services.betting.engine")
+        """Parse and place multiple bets from text format."""
         try:
             parsed_bets = await self.parser.parse_multiple(raw_text)
             if not parsed_bets:
@@ -44,7 +45,6 @@ class BettingEngine:
                 game_id = bet_data.get("game_id")
                 player_id = bet_data.get("player_id")
                 selection = bet_data.get("selection", "")
-                sport_id = bet_data.get("sport_id")
 
                 # Moneyline and spread bets MUST have a game_id AND it must exist in the database
                 if bet_type in ["moneyline", "spread"]:
@@ -85,10 +85,10 @@ class BettingEngine:
 
             created_bets = []
             parlay_ids = {}
-            parlay_legs = {}  # Track legs for each parlay to calculate odds
+            parlay_legs: Dict[str, List[Any]] = {}  # Track legs for each parlay to calculate odds
 
             # First pass: group bets by parlay and count legs
-            parlay_groups = {}
+            parlay_groups: Dict[str, List[Any]] = {}
             for bet_data in parsed_bets:
                 parlay_name = bet_data.get('parlay_name', 'Single')
                 if parlay_name not in parlay_groups:
@@ -149,18 +149,32 @@ class BettingEngine:
                         "game_id": bet.game_id,
                         "parlay_id": bet.parlay_id
                     })
+
+
+            logger.info("[BettingEngine] Adding %d bets to session.", len(bet_objects))
+            for bet in bet_objects:
+                logger.debug(
+                    "  Bet: selection=%s, parlay_id=%s, status=%s, stake=%s, odds=%s, game_id=%s",
+                    bet.selection, bet.parlay_id, bet.status, bet.stake, bet.odds, bet.game_id,
+                )
+
             # Bulk add bets
             for bet in bet_objects:
-                await self.bets.add(bet)
+                self.bets.add(bet)
+
             await self.session.commit()
+            logger.info("[BettingEngine] Bets committed.")
+
             # Update parlay odds sequentially - concurrent updates on the same session
-            # cause silent commit failures leaving parlay_odds null in the DB
+            # can cause silent commit failures leaving parlay_odds null in the DB
             for parlay_name, leg_odds in parlay_legs.items():
                 if len(leg_odds) > 1:  # Only calculate for actual parlays
                     parlay_odds = self._calculate_parlay_odds(leg_odds)
                     parlay_id = parlay_ids[parlay_name]
                     await self.bets.update_parlay_odds(parlay_id, parlay_odds)
+
             await self.session.commit()
+            logger.info("[BettingEngine] Parlay odds committed.")
 
             return {
                 "status": "ok",
@@ -196,7 +210,7 @@ class BettingEngine:
             status="pending",
         )
 
-        await self.bets.add(bet)
+        self.bets.add(bet)
         await self.session.commit()
 
         return {"status": "ok", "bet_id": bet.id}
@@ -218,7 +232,7 @@ class BettingEngine:
                         final_score = reason
                 except Exception:
                     final_score = None
-            bet_detail = {
+            bet_detail: Dict[str, Any] = {
                 "id": bet.id,
                 "placed_at": bet.placed_at.isoformat() if bet.placed_at else None,
                 "bet_type": bet.bet_type,
@@ -297,7 +311,7 @@ class BettingEngine:
         espn_client = ESPNClient()
         pending = await self.bets.list_pending()
         results = []
-        parlays_to_check = {}
+        parlays_to_check: Dict[str, Any] = {}
         parlays_touched = set()
 
 
@@ -460,9 +474,10 @@ class BettingEngine:
             stmt = select(self.bets.model).where(self.bets.model.parlay_id.in_(list(parlays_touched)))
             result = await self.session.execute(stmt)
             all_legs = result.scalars().all()
-            parlay_legs_map = {}
+            parlay_legs_map: Dict[str, List[Any]] = {}
             for leg in all_legs:
-                parlay_legs_map.setdefault(leg.parlay_id, []).append(leg)
+                if leg.parlay_id is not None:
+                    parlay_legs_map.setdefault(leg.parlay_id, []).append(leg)
             for parlay_id in parlays_touched:
                 legs = parlay_legs_map.get(parlay_id, [])
                 if not legs:

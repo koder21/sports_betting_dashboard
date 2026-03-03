@@ -1,28 +1,46 @@
-import React from "react";
+import React from 'react';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import SuspenseFallback from '../components/SuspenseFallback.jsx';
-import api from "../services/api.js";
+import api from '../services/api.js';
 import {
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-  AreaChart, Area, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  AreaChart,
+  Area,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
 } from 'recharts';
-import "./AnalyticsPage.css";
-import { useApi } from "../hooks/useApi";
-import { useMetrics } from "../hooks/useMetrics";
+import './AnalyticsPage.css';
+import { useApi } from '../hooks/useApi';
+import { useMetrics } from '../hooks/useMetrics';
 
 function AnalyticsPage() {
-  useMetrics("AnalyticsPage");
+  useMetrics('AnalyticsPage');
   const fetchSummary = React.useCallback(() => {
-    return api.get("/api/analytics/summary").then(res => res.data || null);
+    return api.get('/api/analytics/summary').then((res) => res.data || null);
   }, []);
-  const { data: summary, loading, error, refetch } = useApi(fetchSummary, null);
-
+  const { data: summary, loading } = useApi(fetchSummary, null);
 
   if (loading) {
     return (
       <div className="analytics-container" role="main" aria-label="Analytics Page">
-        <div className="loading" role="status" aria-live="polite">Loading analytics...</div>
+        <div className="loading" role="status" aria-live="polite">
+          Loading analytics...
+        </div>
       </div>
     );
   }
@@ -30,16 +48,30 @@ function AnalyticsPage() {
   if (!summary) {
     return (
       <div className="analytics-container" role="main" aria-label="Analytics Page">
-        <div className="no-data" role="status" aria-live="polite">No betting data available for analysis</div>
+        <div className="no-data" role="status" aria-live="polite">
+          No betting data available for analysis
+        </div>
       </div>
     );
   }
 
-  const { roi, trends, by_sport, by_bet_type, over_time, parlay_performance, streaks, ev_kelly, player_trends, betting_patterns, by_source } = summary;
+  const {
+    roi,
+    trends,
+    by_sport,
+    by_bet_type,
+    over_time,
+    parlay_performance,
+    streaks,
+    ev_kelly,
+    player_trends,
+    betting_patterns,
+    by_source,
+  } = summary;
 
   // Colors for charts
   const COLORS = ['#4a90e2', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22'];
-  
+
   // Prepare data for sport performance chart
   const sportData = Object.entries(by_sport || {})
     .filter(([, stats]) => stats.total > 0)
@@ -48,7 +80,7 @@ function AnalyticsPage() {
       winRate: parseFloat(stats.win_rate?.toFixed(1) || 0),
       roi: parseFloat(stats.roi?.toFixed(1) || 0),
       profit: parseFloat(stats.total_profit?.toFixed(2) || 0),
-      total: stats.total || 0
+      total: stats.total || 0,
     }));
 
   // Prepare data for bet type comparison
@@ -60,7 +92,7 @@ function AnalyticsPage() {
       lost: stats.lost || 0,
       pending: stats.pending || 0,
       winRate: parseFloat(stats.win_rate?.toFixed(1) || 0),
-      profit: parseFloat(stats.total_profit?.toFixed(2) || 0)
+      profit: parseFloat(stats.total_profit?.toFixed(2) || 0),
     }));
 
   // Prepare parlay vs singles comparison
@@ -69,27 +101,27 @@ function AnalyticsPage() {
       name: 'Singles',
       winRate: parseFloat((parlay_performance?.singles?.win_rate || 0).toFixed(1)),
       roi: parseFloat((parlay_performance?.singles?.roi || 0).toFixed(1)),
-      profit: parseFloat((parlay_performance?.singles?.profit || 0).toFixed(2))
+      profit: parseFloat((parlay_performance?.singles?.profit || 0).toFixed(2)),
     },
     {
       name: 'Parlays',
       winRate: parseFloat((parlay_performance?.parlays?.win_rate || 0).toFixed(1)),
       roi: parseFloat((parlay_performance?.parlays?.roi || 0).toFixed(1)),
-      profit: parseFloat((parlay_performance?.parlays?.profit || 0).toFixed(2))
-    }
+      profit: parseFloat((parlay_performance?.parlays?.profit || 0).toFixed(2)),
+    },
   ];
 
   // Prepare win/loss distribution
   const winLossData = [
     { name: 'Won', value: trends?.wins || 0, color: '#2ecc71' },
     { name: 'Lost', value: trends?.losses || 0, color: '#e74c3c' },
-    { name: 'Pending', value: trends?.pending || 0, color: '#f39c12' }
-  ].filter(item => item.value > 0); // Only show categories with data
+    { name: 'Pending', value: trends?.pending || 0, color: '#f39c12' },
+  ].filter((item) => item.value > 0); // Only show categories with data
 
   const totalProfit = roi?.profit || 0;
   const totalStaked = roi?.total_staked || 0;
   const roiPercent = roi?.roi || 0;
-  
+
   // Use backend summary values for KPIs
   const totalBets = roi?.total_bets || 0;
   const winRate = roi?.win_rate?.toFixed(1) || 0;
@@ -114,7 +146,8 @@ function AnalyticsPage() {
         <div className="kpi-card roi">
           <div className="kpi-label">ROI</div>
           <div className={`kpi-value ${roiPercent >= 0 ? 'positive' : 'negative'}`}>
-            {roiPercent >= 0 ? '+' : ''}{roiPercent.toFixed(2)}%
+            {roiPercent >= 0 ? '+' : ''}
+            {roiPercent.toFixed(2)}%
           </div>
           <div className="kpi-sublabel">Return on Investment</div>
         </div>
@@ -122,7 +155,9 @@ function AnalyticsPage() {
         <div className="kpi-card winrate">
           <div className="kpi-label">Win Rate</div>
           <div className="kpi-value">{winRate}%</div>
-          <div className="kpi-sublabel">{won}W - {lost}L</div>
+          <div className="kpi-sublabel">
+            {won}W - {lost}L
+          </div>
         </div>
 
         <div className="kpi-card total">
@@ -136,9 +171,14 @@ function AnalyticsPage() {
         <div className="kpi-card streak">
           <div className="kpi-label">Current Streak</div>
           <div className={`kpi-value ${streaks?.current_win_streak > 0 ? 'positive' : 'negative'}`}>
-            {streaks?.current_win_streak > 0 ? `${streaks.current_win_streak}W` : `${streaks?.current_loss_streak || 0}L`}
+            {streaks?.current_win_streak > 0
+              ? `${streaks.current_win_streak}W`
+              : `${streaks?.current_loss_streak || 0}L`}
           </div>
-          <div className="kpi-sublabel">Longest: {Math.max(streaks?.longest_win_streak || 0, streaks?.longest_loss_streak || 0)} bets</div>
+          <div className="kpi-sublabel">
+            Longest: {Math.max(streaks?.longest_win_streak || 0, streaks?.longest_loss_streak || 0)}{' '}
+            bets
+          </div>
         </div>
 
         <div className="kpi-card ev">
@@ -156,7 +196,6 @@ function AnalyticsPage() {
 
       {/* Charts Grid */}
       <div className="charts-grid">
-        
         {/* Win/Loss Distribution */}
         <div className="chart-card">
           <h2 className="chart-title">🎲 Win/Loss Distribution</h2>
@@ -174,14 +213,19 @@ function AnalyticsPage() {
                   dataKey="value"
                 >
                   {winLossData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} stroke="rgba(26, 26, 46, 0.8)" strokeWidth={2} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={entry.color}
+                      stroke="rgba(26, 26, 46, 0.8)"
+                      strokeWidth={2}
+                    />
                   ))}
                 </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'rgba(26, 26, 46, 0.95)', 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(26, 26, 46, 0.95)',
                     border: '1px solid rgba(78, 205, 196, 0.3)',
-                    borderRadius: '8px'
+                    borderRadius: '8px',
                   }}
                   labelStyle={{ color: '#4ECDC4' }}
                 />
@@ -201,17 +245,29 @@ function AnalyticsPage() {
                 <PolarGrid stroke="rgba(78, 205, 196, 0.2)" />
                 <PolarAngleAxis dataKey="name" stroke="#4ECDC4" />
                 <PolarRadiusAxis stroke="#4ECDC4" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'rgba(26, 26, 46, 0.95)', 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(26, 26, 46, 0.95)',
                     border: '1px solid rgba(78, 205, 196, 0.3)',
-                    borderRadius: '8px'
+                    borderRadius: '8px',
                   }}
                   labelStyle={{ color: '#4ECDC4' }}
                 />
                 <Legend />
-                <Radar name="Win Rate %" dataKey="winRate" stroke="#4ECDC4" fill="#4ECDC4" fillOpacity={0.6} />
-                <Radar name="ROI %" dataKey="roi" stroke="#FFE66D" fill="#FFE66D" fillOpacity={0.6} />
+                <Radar
+                  name="Win Rate %"
+                  dataKey="winRate"
+                  stroke="#4ECDC4"
+                  fill="#4ECDC4"
+                  fillOpacity={0.6}
+                />
+                <Radar
+                  name="ROI %"
+                  dataKey="roi"
+                  stroke="#FFE66D"
+                  fill="#FFE66D"
+                  fillOpacity={0.6}
+                />
               </RadarChart>
             </ResponsiveContainer>
           ) : (
@@ -228,11 +284,11 @@ function AnalyticsPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(78, 205, 196, 0.1)" />
                 <XAxis dataKey="name" stroke="#4ECDC4" />
                 <YAxis stroke="#4ECDC4" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'rgba(26, 26, 46, 0.95)', 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(26, 26, 46, 0.95)',
                     border: '1px solid rgba(78, 205, 196, 0.3)',
-                    borderRadius: '8px'
+                    borderRadius: '8px',
                   }}
                   labelStyle={{ color: '#4ECDC4' }}
                 />
@@ -249,17 +305,17 @@ function AnalyticsPage() {
         {/* Parlays vs Singles Comparison */}
         <div className="chart-card">
           <h2 className="chart-title">🔀 Parlays vs Singles</h2>
-          {parlayComparison.some(p => p.roi !== 0 || p.winRate !== 0) ? (
+          {parlayComparison.some((p) => p.roi !== 0 || p.winRate !== 0) ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={parlayComparison}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(78, 205, 196, 0.1)" />
                 <XAxis dataKey="name" stroke="#4ECDC4" />
                 <YAxis stroke="#4ECDC4" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'rgba(26, 26, 46, 0.95)', 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(26, 26, 46, 0.95)',
                     border: '1px solid rgba(78, 205, 196, 0.3)',
-                    borderRadius: '8px'
+                    borderRadius: '8px',
                   }}
                   labelStyle={{ color: '#4ECDC4' }}
                 />
@@ -278,24 +334,24 @@ function AnalyticsPage() {
           <div className="chart-card">
             <h2 className="chart-title">🤖 Performance by Source</h2>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart 
+              <BarChart
                 data={Object.entries(by_source).map(([source, stats]) => ({
                   name: source,
                   winRate: parseFloat(stats.win_rate?.toFixed(1) || 0),
                   roi: parseFloat(stats.roi?.toFixed(1) || 0),
                   profit: parseFloat(stats.total_profit?.toFixed(2) || 0),
-                  total: stats.total || 0
+                  total: stats.total || 0,
                 }))}
                 layout="vertical"
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(78, 205, 196, 0.1)" />
                 <XAxis type="number" stroke="#4ECDC4" />
                 <YAxis type="category" dataKey="name" stroke="#4ECDC4" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'rgba(26, 26, 46, 0.95)', 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(26, 26, 46, 0.95)',
                     border: '1px solid rgba(78, 205, 196, 0.3)',
-                    borderRadius: '8px'
+                    borderRadius: '8px',
                   }}
                   labelStyle={{ color: '#4ECDC4' }}
                   formatter={(value, name) => {
@@ -320,29 +376,45 @@ function AnalyticsPage() {
               <AreaChart data={over_time.weekly}>
                 <defs>
                   <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4ECDC4" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#4ECDC4" stopOpacity={0.1}/>
+                    <stop offset="5%" stopColor="#4ECDC4" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#4ECDC4" stopOpacity={0.1} />
                   </linearGradient>
                   <linearGradient id="winRateGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#FFE66D" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#FFE66D" stopOpacity={0.1}/>
+                    <stop offset="5%" stopColor="#FFE66D" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#FFE66D" stopOpacity={0.1} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(78, 205, 196, 0.1)" />
                 <XAxis dataKey="week" stroke="#4ECDC4" />
                 <YAxis stroke="#4ECDC4" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'rgba(26, 26, 46, 0.95)', 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(26, 26, 46, 0.95)',
                     border: '1px solid rgba(78, 205, 196, 0.3)',
                     borderRadius: '8px',
-                    backdropFilter: 'blur(10px)'
+                    backdropFilter: 'blur(10px)',
                   }}
                   labelStyle={{ color: '#4ECDC4' }}
                 />
                 <Legend />
-                <Area type="monotone" dataKey="profit" stroke="#4ECDC4" strokeWidth={3} fillOpacity={1} fill="url(#profitGradient)" name="Profit ($)" />
-                <Area type="monotone" dataKey="winRate" stroke="#FFE66D" strokeWidth={3} fillOpacity={1} fill="url(#winRateGradient)" name="Win Rate %" />
+                <Area
+                  type="monotone"
+                  dataKey="profit"
+                  stroke="#4ECDC4"
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#profitGradient)"
+                  name="Profit ($)"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="winRate"
+                  stroke="#FFE66D"
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#winRateGradient)"
+                  name="Win Rate %"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -354,21 +426,31 @@ function AnalyticsPage() {
             <h2 className="chart-title">💡 +EV vs -EV Performance</h2>
             {ev_kelly.ev_bets > 0 || ev_kelly.negative_ev_bets > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart 
+                <BarChart
                   data={[
-                    { name: '+EV Bets', roi: ev_kelly.roi_on_positive_ev, count: ev_kelly.ev_bets, color: '#4ECDC4' },
-                    { name: '-EV Bets', roi: ev_kelly.roi_on_negative_ev, count: ev_kelly.negative_ev_bets, color: '#FF6B6B' }
+                    {
+                      name: '+EV Bets',
+                      roi: ev_kelly.roi_on_positive_ev,
+                      count: ev_kelly.ev_bets,
+                      color: '#4ECDC4',
+                    },
+                    {
+                      name: '-EV Bets',
+                      roi: ev_kelly.roi_on_negative_ev,
+                      count: ev_kelly.negative_ev_bets,
+                      color: '#FF6B6B',
+                    },
                   ]}
                   layout="vertical"
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(78, 205, 196, 0.1)" />
                   <XAxis type="number" stroke="#4ECDC4" />
                   <YAxis type="category" dataKey="name" stroke="#4ECDC4" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'rgba(26, 26, 46, 0.95)', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(26, 26, 46, 0.95)',
                       border: '1px solid rgba(78, 205, 196, 0.3)',
-                      borderRadius: '8px'
+                      borderRadius: '8px',
                     }}
                     labelStyle={{ color: '#4ECDC4' }}
                     formatter={(value) => `${value.toFixed(2)}%`}
@@ -376,10 +458,21 @@ function AnalyticsPage() {
                   <Legend />
                   <Bar dataKey="roi" fill="#4ECDC4" name="ROI %" radius={[0, 8, 8, 0]}>
                     {[
-                      { name: '+EV Bets', roi: ev_kelly.roi_on_positive_ev, count: ev_kelly.ev_bets },
-                      { name: '-EV Bets', roi: ev_kelly.roi_on_negative_ev, count: ev_kelly.negative_ev_bets }
+                      {
+                        name: '+EV Bets',
+                        roi: ev_kelly.roi_on_positive_ev,
+                        count: ev_kelly.ev_bets,
+                      },
+                      {
+                        name: '-EV Bets',
+                        roi: ev_kelly.roi_on_negative_ev,
+                        count: ev_kelly.negative_ev_bets,
+                      },
                     ].map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.name === '+EV Bets' ? '#4ECDC4' : '#FF6B6B'} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.name === '+EV Bets' ? '#4ECDC4' : '#FF6B6B'}
+                      />
                     ))}
                   </Bar>
                 </BarChart>
@@ -389,14 +482,13 @@ function AnalyticsPage() {
             )}
           </div>
         )}
-
       </div>
 
       {/* Player & Team Insights */}
       {player_trends && (
         <div className="insights-section">
           <h2 className="section-title">🔥 Player Form Analysis</h2>
-          
+
           <div className="insights-grid">
             {/* Hot Players */}
             {player_trends.hot_players?.length > 0 && (
@@ -415,7 +507,7 @@ function AnalyticsPage() {
                 </div>
               </div>
             )}
-            
+
             {/* Cold Players */}
             {player_trends.cold_players?.length > 0 && (
               <div className="insight-card">
@@ -441,7 +533,7 @@ function AnalyticsPage() {
       {betting_patterns && (
         <div className="insights-section">
           <h2 className="section-title">📊 Your Betting Patterns</h2>
-          
+
           <div className="patterns-grid">
             {/* Best Sports */}
             {betting_patterns.best_sports?.length > 0 && (
@@ -452,15 +544,17 @@ function AnalyticsPage() {
                     <div key={sport.name} className="pattern-item">
                       <div className="pattern-name">{sport.name}</div>
                       <div className="pattern-bar">
-                        <div className="bar-fill" style={{width: `${sport.win_rate}%`}}></div>
+                        <div className="bar-fill" style={{ width: `${sport.win_rate}%` }}></div>
                       </div>
-                      <div className="pattern-stats">{sport.win_rate}% ({sport.total})</div>
+                      <div className="pattern-stats">
+                        {sport.win_rate}% ({sport.total})
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-            
+
             {/* Best Bet Types */}
             {betting_patterns.best_bet_types?.length > 0 && (
               <div className="pattern-card">
@@ -470,9 +564,11 @@ function AnalyticsPage() {
                     <div key={type.name} className="pattern-item">
                       <div className="pattern-name">{type.name}</div>
                       <div className="pattern-bar">
-                        <div className="bar-fill" style={{width: `${type.win_rate}%`}}></div>
+                        <div className="bar-fill" style={{ width: `${type.win_rate}%` }}></div>
                       </div>
-                      <div className="pattern-stats">{type.win_rate}% ({type.total})</div>
+                      <div className="pattern-stats">
+                        {type.win_rate}% ({type.total})
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -488,9 +584,11 @@ function AnalyticsPage() {
                     <div key={day.day} className="pattern-item">
                       <div className="pattern-name">{day.day}</div>
                       <div className="pattern-bar">
-                        <div className="bar-fill" style={{width: `${day.win_rate}%`}}></div>
+                        <div className="bar-fill" style={{ width: `${day.win_rate}%` }}></div>
                       </div>
-                      <div className="pattern-stats">{day.win_rate}% ({day.total})</div>
+                      <div className="pattern-stats">
+                        {day.win_rate}% ({day.total})
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -522,7 +620,9 @@ function AnalyticsPage() {
                 <tbody>
                   {sportData.map((sport) => (
                     <tr key={sport.name}>
-                      <td><strong>{sport.name}</strong></td>
+                      <td>
+                        <strong>{sport.name}</strong>
+                      </td>
                       <td>{sport.total}</td>
                       <td className="positive">{by_sport[sport.name].won}</td>
                       <td className="negative">{by_sport[sport.name].lost}</td>
@@ -563,7 +663,9 @@ function AnalyticsPage() {
                 <tbody>
                   {betTypeData.map((type) => (
                     <tr key={type.name}>
-                      <td><strong>{type.name}</strong></td>
+                      <td>
+                        <strong>{type.name}</strong>
+                      </td>
                       <td>{type.won + type.lost + type.pending}</td>
                       <td className="positive">{type.won}</td>
                       <td className="negative">{type.lost}</td>
@@ -578,10 +680,11 @@ function AnalyticsPage() {
               </table>
             </div>
           ) : (
-            <div className="no-table-data" role="status" aria-live="polite">No bet type data available</div>
+            <div className="no-table-data" role="status" aria-live="polite">
+              No bet type data available
+            </div>
           )}
         </div>
-
       </div>
     </div>
   );

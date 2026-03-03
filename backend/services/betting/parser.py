@@ -70,11 +70,12 @@ class BetParser:
         
         return bets
 
-    async def _parse_leg(self, line: str, parlay_name: str = None) -> Optional[Dict[str, Any]]:
+    async def _parse_leg(self, line: str, parlay_name: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """Parse a single leg from a line"""
         parsed = {}
-        
+
         # Extract fields using regex
+        sport_match = re.search(r'sport:\s*([a-zA-Z0-9_.-]+)', line, re.IGNORECASE)
         type_match = re.search(r'type:\s*(\w+)', line, re.IGNORECASE)
         selection_match = re.search(r'selection:\s*([^,]+)', line, re.IGNORECASE)
         game_match = re.search(r'game:\s*([^,]+)', line, re.IGNORECASE)
@@ -82,11 +83,11 @@ class BetParser:
         game_id_match = re.search(r'game\s+id:\s*(\d+)', line, re.IGNORECASE)
         odds_match = re.search(r'odds:\s*([+-]?\d+\.?\d*)', line, re.IGNORECASE)
         stake_match = re.search(r'stake:\s*([\d.]+)', line, re.IGNORECASE)
-        reason_match = re.search(r'reason:\s*([^.]+\.?)', line, re.IGNORECASE)
-        
+        reason_match = re.search(r'reason:\s*(.+)$', line, re.IGNORECASE)
+
         if not type_match or not selection_match:
             return None
-        
+
         bet_type = type_match.group(1).lower()
         selection = selection_match.group(1).strip()
         game_str = game_match.group(1).strip() if game_match else None
@@ -110,8 +111,20 @@ class BetParser:
         elif 'over' in selection_lower or 'under' in selection_lower:
             bet_type = 'total'
 
-        # Detect sport from game teams or selection
-        sport = await self._detect_sport(game_str, selection)
+        # Use explicit sport if present, otherwise fall back to detection
+        sport = None
+        if sport_match:
+            sport_str = sport_match.group(1).strip().lower()
+            # Try league code first, then name
+            sport = await self.sports.get_by_league_code(sport_str)
+            if not sport:
+                # Try by name (e.g., 'nba', 'nfl', 'mlb', etc.)
+                from ...models.sport import Sport as SportModel
+                stmt = select(SportModel).where(SportModel.name.ilike(sport_str))
+                result = await self.session.execute(stmt)
+                sport = result.scalar_one_or_none()
+        if not sport:
+            sport = await self._detect_sport(game_str, selection)
         if not sport:
             return None
 
@@ -129,7 +142,7 @@ class BetParser:
         # Additional parsing for prop bets
         if bet_type.lower() == 'prop' or bet_type.lower() == 'total':
             await self._parse_prop(parsed, selection)
-        
+
         # Find game_id - use provided game_id first, otherwise look it up
         if game_id:
             # Game ID was provided directly
@@ -139,7 +152,7 @@ class BetParser:
             game = await self._find_game(game_str, date_str, sport.id)
             if game:
                 parsed['game_id'] = game.game_id
-        
+
         return parsed
 
     async def _parse_prop(self, parsed: Dict, selection: str) -> None:
@@ -162,18 +175,21 @@ class BetParser:
             parsed['stat_type'] = 'passing_yards' if 'pass' in selection_lower else 'rushing_yards'
         
         # Extract player name
-        player_match = re.search(r'^([^o].*?)\s+over|\s+under', selection_lower)
+        # Extract player name: everything before ' over ' or ' under '
+        player_match = re.search(r'^(.+?)\s+(?:over|under)\s+[\d.]+', selection, re.IGNORECASE)
         if player_match:
             player_name = player_match.group(1).strip()
             # Try to find player
             player = await self.players.search_by_name(player_name)
             if player:
-                parsed['player_id'] = player.player_id
-                parsed['player_name'] = player.full_name or player.player_name
+                # If player is a list or sequence, take the first match
+                first_player = player[0] if isinstance(player, (list, tuple)) else player
+                parsed['player_id'] = getattr(first_player, 'player_id', None)
+                parsed['player_name'] = getattr(first_player, 'full_name', None) or getattr(first_player, 'player_name', None)
             else:
                 parsed['player_name'] = player_name
 
-    async def _detect_sport(self, game_str: str = None, selection: str = None) -> Optional[Any]:
+    async def _detect_sport(self, game_str: Optional[str] = None, selection: Optional[str] = None) -> Optional[Any]:
         """Detect sport from game or selection text"""
         search_text = (game_str or '') + ' ' + (selection or '')
         search_text = search_text.lower()
@@ -235,7 +251,7 @@ class BetParser:
         
         return None
 
-    async def _find_game(self, game_str: str, date_str: str = None, sport_id: int = None) -> Optional[Any]:
+    async def _find_game(self, game_str: str, date_str: Optional[str] = None, sport_id: Optional[int] = None) -> Optional[Any]:
         """Find a game by team names and date - query database first, then ESPN API"""
         teams = [t.strip() for t in game_str.split('vs')]
         if len(teams) != 2:
@@ -269,7 +285,7 @@ class BetParser:
                             search_date = dt.datetime.strptime(date_str, '%Y-%m-%d').date()
                             if game_date != search_date:
                                 continue
-                        except:
+                        except Exception:
                             pass
                 
                 return game
@@ -284,7 +300,7 @@ class BetParser:
         
         return None
 
-    async def _find_game_in_espn(self, team1: str, team2: str, date_str: str = None, sport_name: str = None) -> Optional[Dict]:
+    async def _find_game_in_espn(self, team1: str, team2: str, date_str: Optional[str] = None, sport_name: Optional[str] = None) -> Optional[Dict]:
         """Search ESPN API for a game matching the team names"""
         # Map sport name to ESPN API path
         sport_map = {
@@ -342,16 +358,16 @@ class BetParser:
                         search_date = dt.datetime.strptime(date_str, '%Y-%m-%d').date()
                         if game_date != search_date:
                             continue
-                    except:
+                    except Exception:
                         pass
                 
-                # Return a dict-like object with the game info
-                return type('Game', (), {
+                # Return a plain dictionary with the game info
+                return {
                     'game_id': event.get('id'),
                     'home_team_name': home_team.get("team", {}).get("displayName"),
                     'away_team_name': away_team.get("team", {}).get("displayName"),
                     'start_time': event.get("date"),
-                })()
+                }
         
         except Exception as e:
             print(f"Error querying ESPN API: {e}")

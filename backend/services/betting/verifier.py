@@ -25,13 +25,13 @@ class BetVerifier:
 
     async def _verify_single_bet(self, bet: Bet) -> Optional[Dict[str, Any]]:
         """Verify a single bet and return discrepancy if found."""
+        current_status = bet.status or ""
         expected_status = await self._calculate_expected_status(bet)
         if expected_status is None:
             return None
-        profit = None
-        # For prop bets, regrade if result_value is missing
-        if bet.bet_type in ("prop", "total") and (bet.result_value is None):
-            # Force regrade as void
+
+        # For prop bets missing a result value, void them immediately
+        if bet.bet_type in ("prop", "total") and bet.result_value is None:
             bet.status = "void"
             bet.profit = 0
             bet.graded_at = datetime.utcnow()
@@ -40,39 +40,39 @@ class BetVerifier:
                 "type": "single",
                 "bet_id": bet.id,
                 "selection": bet.selection or "",
-                "current_status": bet.status,
+                "current_status": current_status,
                 "expected_status": "void",
                 "current_profit": bet.profit,
                 "stake": bet.stake,
                 "odds": bet.odds,
                 "reason": "Missing stat value for grading",
             }
+
+        profit = None
         if expected_status == "won":
             profit = bet.stake * (bet.odds - 1)
         elif expected_status == "lost":
             profit = -bet.stake
 
-        discrepancy = None
-        # Only report if expected status differs from current status
-        if expected_status != (bet.status or ""):
-            # Update bet in DB
-            bet.status = expected_status
-            bet.profit = profit
-            bet.graded_at = datetime.utcnow()
-            await self.session.flush()
-            discrepancy = {
-                "type": "single",
-                "bet_id": bet.id,
-                "selection": bet.selection or "",
-                "current_status": bet.status,
-                "expected_status": expected_status,
-                "current_profit": bet.profit,
-                "stake": bet.stake,
-                "odds": bet.odds,
-                "reason": await self._get_verification_reason(bet, str(expected_status)),
-            }
-        return discrepancy
-    # Only one __init__ method should exist; remove duplicate
+        if expected_status == current_status:
+            return None
+
+        # Status mismatch — correct it
+        bet.status = expected_status
+        bet.profit = profit
+        bet.graded_at = datetime.utcnow()
+        await self.session.flush()
+        return {
+            "type": "single",
+            "bet_id": bet.id,
+            "selection": bet.selection or "",
+            "current_status": current_status,
+            "expected_status": expected_status,
+            "current_profit": bet.profit,
+            "stake": bet.stake,
+            "odds": bet.odds,
+            "reason": await self._get_verification_reason(bet, str(expected_status)),
+        }
 
     async def verify_all_graded_bets(self) -> Dict[str, Any]:
         """
@@ -228,11 +228,21 @@ class BetVerifier:
         if home_score is None or away_score is None:
             return None
 
-        # Extract team name from selection
+        # Extract team name from selection (strip trailing bet-type keywords)
         if not bet.selection:
             return None
 
-        team_name = bet.selection.split()[0].lower()
+        _STOP_WORDS = {"ml", "moneyline", "spread", "total", "over", "under", "pk"}
+        parts = bet.selection.split()
+        team_words = []
+        for part in parts:
+            if part.lower() in _STOP_WORDS:
+                break
+            if re.match(r'^[+\-ouOU]?\d', part):
+                break
+            team_words.append(part)
+        team_name = (" ".join(team_words) if team_words else parts[0]).lower()
+
         home_team_lower = (home_team or "").lower()
         away_team_lower = (away_team or "").lower()
 
@@ -414,92 +424,77 @@ class BetVerifier:
         }
 
     async def _correct_parlay(self, correction: Dict[str, Any]) -> None:
-        """Correct all legs of a parlay"""
+        """Correct all legs of a parlay."""
         parlay_id = correction["parlay_id"]
         stmt = select(Bet).where(Bet.parlay_id == parlay_id)
         result = await self.session.execute(stmt)
         legs = list(result.scalars().all())
 
-        # Log leg statuses before update
-        logger.info(f"[DEBUG] Parlay {parlay_id} leg statuses BEFORE: {[leg.status for leg in legs]}")
-        print(f"[DEBUG] Parlay {parlay_id} leg statuses BEFORE: {[leg.status for leg in legs]}")
+        logger.debug("Parlay %s leg statuses BEFORE: %s", parlay_id, [leg.status for leg in legs])
 
-        # Re-grade each leg and collect statuses
+        # Re-grade each leg
         for leg in legs:
             expected_status = await self._calculate_expected_status(leg)
             if expected_status:
-                logger.info(f"Updating parlay leg {leg.id}: status={expected_status}")
-                print(f"Updating parlay leg {leg.id}: status={expected_status}")
+                logger.info("Updating parlay leg %s: status=%s", leg.id, expected_status)
                 leg.status = expected_status
                 leg.graded_at = datetime.utcnow()
         await self.session.flush()
-        logger.info(f"Parlay {parlay_id} legs updated and flushed.")
-        print(f"Parlay {parlay_id} legs updated and flushed.")
+        logger.debug("Parlay %s legs updated and flushed.", parlay_id)
 
-        # Use expected_status from correction payload if present
         expected_status = correction.get("expected_status")
         original_stake = legs[0].original_stake
         if expected_status == "void":
             for leg in legs:
                 leg.status = "void"
                 leg.profit = 0.0
-                logger.info(f"Parlay leg {leg.id} set to void, profit set to 0.0 (parlay void by correction)")
-                print(f"Parlay leg {leg.id} set to void, profit set to 0.0 (parlay void by correction)")
+                logger.info("Parlay leg %s set to void (correction override).", leg.id)
             parlay_status = "void"
         else:
             active_legs = [leg for leg in legs if leg.status not in ("void", "push")]
             void_legs = [leg for leg in legs if leg.status in ("void", "push")]
-            all_won = all(leg.status == "won" or leg.status in ("void", "push") for leg in legs) and any(leg.status == "won" for leg in legs)
+            all_won = (
+                all(leg.status in ("won", "void", "push") for leg in legs)
+                and any(leg.status == "won" for leg in legs)
+            )
             any_lost = any(leg.status == "lost" for leg in legs)
             if any_lost:
                 stake_per_leg = original_stake / len(legs)
                 for leg in legs:
                     leg.status = "lost"
                     leg.profit = -stake_per_leg
-                    logger.info(f"Parlay leg {leg.id} set to lost, profit set to {-stake_per_leg}")
-                    print(f"Parlay leg {leg.id} set to lost, profit set to {-stake_per_leg}")
+                    logger.info("Parlay leg %s set to lost, profit=%s.", leg.id, -stake_per_leg)
                 parlay_status = "lost"
             elif all_won:
                 if active_legs:
                     combined_odds = 1.0
                     for leg in active_legs:
-                        # Always use decimal odds for backend
                         combined_odds *= leg.odds
                     total_profit = original_stake * (combined_odds - 1)
                     profit_per_leg = total_profit / len(active_legs)
                     for leg in active_legs:
                         leg.status = "won"
                         leg.profit = profit_per_leg
-                        logger.info(f"Parlay leg {leg.id} set to won, profit set to {profit_per_leg}")
-                        print(f"Parlay leg {leg.id} set to won, profit set to {profit_per_leg}")
+                        logger.info("Parlay leg %s set to won, profit=%s.", leg.id, profit_per_leg)
                     for leg in void_legs:
                         leg.status = "void"
                         leg.profit = 0.0
-                        logger.info(f"Parlay leg {leg.id} set to void, profit set to 0.0 (void/push)")
-                        print(f"Parlay leg {leg.id} set to void, profit set to 0.0 (void/push)")
                 else:
                     for leg in legs:
                         leg.status = "void"
                         leg.profit = 0.0
-                        logger.info(f"Parlay leg {leg.id} set to void, profit set to 0.0 (all void/push)")
-                        print(f"Parlay leg {leg.id} set to void, profit set to 0.0 (all void/push)")
                 parlay_status = "won"
             else:
                 for leg in legs:
                     leg.status = "void"
                     leg.profit = 0.0
-                    logger.info(f"Parlay leg {leg.id} set to void, profit set to 0.0 (parlay void)")
-                    print(f"Parlay leg {leg.id} set to void, profit set to 0.0 (parlay void)")
+                    logger.info("Parlay leg %s set to void (parlay void).", leg.id)
                 parlay_status = "void"
 
         await self.session.flush()
-        logger.info(f"[DEBUG] Parlay {parlay_id} leg statuses AFTER: {[leg.status for leg in legs]}")
-        print(f"[DEBUG] Parlay {parlay_id} leg statuses AFTER: {[leg.status for leg in legs]}")
-        logger.info(f"Parlay {parlay_id} status set to {parlay_status} (not forced on all legs) and flushed.")
-        print(f"Parlay {parlay_id} status set to {parlay_status} (not forced on all legs) and flushed.")
+        logger.debug("Parlay %s leg statuses AFTER: %s", parlay_id, [leg.status for leg in legs])
+        logger.info("Parlay %s resolved to %s, committing.", parlay_id, parlay_status)
         await self.session.commit()
-        logger.info(f"Parlay {parlay_id} changes committed.")
-        print(f"Parlay {parlay_id} changes committed.")
 
     async def _correct_single_bet(self, correction: Dict[str, Any]) -> None:
         """Correct a single bet"""

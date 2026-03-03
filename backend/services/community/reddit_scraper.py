@@ -3,12 +3,10 @@ Reddit prop mention scraper
 Scrapes r/sportsbooks, r/nba, r/nfl for popular prop discussions
 """
 import re
-import asyncio
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 import aiohttp
 import xml.etree.ElementTree as ET
-from collections import Counter
 import logging
 
 logger = logging.getLogger(__name__)
@@ -90,6 +88,7 @@ class RedditPropScraper:
         """
         if not self.session:
             await self.initialize()
+        assert self.session is not None
         
         try:
             if self.reddit_disabled:
@@ -97,7 +96,7 @@ class RedditPropScraper:
             if self.pushshift_disabled:
                 return await self._scrape_reddit_search(subreddit, time_filter, limit)
             # Use Pushshift API (free, no auth required)
-            params = {
+            params: dict[str, Any] = {
                 "subreddit": subreddit,
                 "sort": "comments",  # Most commented posts
                 "sort_type": "desc",
@@ -142,9 +141,10 @@ class RedditPropScraper:
         """Fallback to Reddit public JSON search when Pushshift fails."""
         if not self.session:
             await self.initialize()
+        assert self.session is not None
 
         query = "(over OR under OR props OR prop OR pick OR bet)"
-        params = {
+        params: dict[str, Any] = {
             "q": query,
             "restrict_sr": 1,
             "sort": "new",
@@ -173,8 +173,9 @@ class RedditPropScraper:
         """Fallback to subreddit /new listing."""
         if not self.session:
             await self.initialize()
+        assert self.session is not None
 
-        params = {
+        params: dict[str, Any] = {
             "limit": min(limit, 100),
             "raw_json": 1,
         }
@@ -199,8 +200,9 @@ class RedditPropScraper:
         """Fallback to subreddit hot listing."""
         if not self.session:
             await self.initialize()
+        assert self.session is not None
 
-        params = {
+        params: dict[str, Any] = {
             "limit": min(limit, 100),
             "raw_json": 1,
         }
@@ -225,6 +227,7 @@ class RedditPropScraper:
         """Fallback to subreddit RSS feed."""
         if not self.session:
             await self.initialize()
+        assert self.session is not None
 
         try:
             for url_tpl in self.reddit_rss_urls:
@@ -355,7 +358,7 @@ class RedditPropScraper:
             all_props.extend(props)
         
         # Group by prop (player + market + line)
-        grouped = {}
+        grouped: dict[str, list[Any]] = {}
         for prop in all_props:
             key = f"{prop['player_name']}_{prop['market']}_{prop['line']}"
             if key not in grouped:
