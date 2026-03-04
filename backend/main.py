@@ -131,9 +131,21 @@ class SchedulerManager:
 @app.on_event("startup")
 async def on_startup() -> None:
     global _scheduler_task, _scheduler_instance
-    
-    await init_db()
-    logger.info("Database initialized: %s", settings.DATABASE_URL)
+
+    # Retry DB connection — Railway Postgres may take a few seconds to be ready
+    max_retries = 10
+    for attempt in range(1, max_retries + 1):
+        try:
+            await init_db()
+            logger.info("Database initialized: %s", settings.DATABASE_URL)
+            break
+        except Exception as e:
+            if attempt == max_retries:
+                logger.error("Could not connect to database after %d attempts: %s", max_retries, e)
+                raise
+            logger.warning("DB connection attempt %d/%d failed: %s — retrying in 3s", attempt, max_retries, e)
+            await asyncio.sleep(3)
+
     _scheduler_instance = SchedulerManager(AsyncSessionLocal)
     _scheduler_task = asyncio.create_task(_scheduler_instance.run())
     logger.info("Background scheduler started")
