@@ -67,8 +67,15 @@ AsyncSessionLocal = _SessionFactoryProxy()
 
 async def init_db() -> None:
     """Initialize database by creating all tables."""
-    async with _get_engine().begin() as conn:
-        await conn.run_sync(lambda c: Base.metadata.create_all(c, checkfirst=True))
+    import sqlalchemy.exc
+    try:
+        async with _get_engine().begin() as conn:
+            await conn.run_sync(lambda c: Base.metadata.create_all(c, checkfirst=True))
+    except sqlalchemy.exc.ProgrammingError as e:
+        if "already exists" in str(e):
+            # Schema already initialised from a previous deploy — safe to continue
+            return
+        raise
 
 @asynccontextmanager
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
