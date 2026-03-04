@@ -68,7 +68,7 @@ AsyncSessionLocal = _SessionFactoryProxy()
 async def init_db() -> None:
     """Initialize database by creating all tables."""
     async with _get_engine().begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(lambda c: Base.metadata.create_all(c, checkfirst=True))
 
 @asynccontextmanager
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
