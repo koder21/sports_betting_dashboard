@@ -9,7 +9,7 @@ from .base import Base
 
 
 class Sport(Base):
-    __tablename__: str = "sports"
+    __tablename__: str = "sports" # type: ignore[assignment]
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)

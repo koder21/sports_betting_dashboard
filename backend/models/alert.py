@@ -12,7 +12,7 @@ from .base import Base
 from typing import Annotated
 
 class Alert(Base):
-    __tablename__: Annotated[str, Base.__tablename__] = "alerts"
+    __tablename__: Annotated[str, Base.__tablename__] = "alerts" # type: ignore[assignment]
 
     # ── Identity ──────────────────────────────────────────────────────────────
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

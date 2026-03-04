@@ -12,7 +12,7 @@ from .team import Team
 
 
 class Player(Base):
-    __tablename__: str = "players"
+    __tablename__: str = "players" # type: ignore[assignment]
 
     # ── Identity ──────────────────────────────────────────────────────────────
     player_id: Mapped[str] = mapped_column(String(64), primary_key=True)

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from .player import Player
 
 class Injury(Base):
-    __tablename__: str = "injuries"
+    __tablename__: str = "injuries" # type: ignore[assignment]
 
     # ── Identity ──────────────────────────────────────────────────────────────
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

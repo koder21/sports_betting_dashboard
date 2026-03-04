@@ -23,7 +23,7 @@ class Game(Base):
     populated at a time; the current lifecycle state is reflected by `status`.
     """
 
-    __tablename__: str = "games"
+    __tablename__ = "games" # type: ignore[assignment]
 
     # ── Identity ──────────────────────────────────────────────────────────────
     game_id: Mapped[str] = mapped_column(String(64), primary_key=True)

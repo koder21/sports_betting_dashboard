@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from .game import Game
     
 class GameLive(Base):
-    __tablename__: ClassVar[str] = "games_live"
+    __tablename__ = "games_live" # type: ignore[assignment]
 
     # ── Identity (shared PK with games) ──────────────────────────────────────
     game_id: Mapped[str] = mapped_column(

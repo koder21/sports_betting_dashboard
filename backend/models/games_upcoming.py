@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 class GameUpcoming(Base):
-    __tablename__: str = "games_upcoming"
+    __tablename__ = "games_upcoming" # type: ignore[assignment]
 
     # ── Identity (shared PK with games) ──────────────────────────────────────
     game_id: Mapped[str] = mapped_column(

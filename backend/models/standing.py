@@ -10,7 +10,7 @@ from .team import Team
 
 
 class Standing(Base):
-    __tablename__: str = "standings"
+    __tablename__: str = "standings" # type: ignore[assignment]
 
     # ── Identity ──────────────────────────────────────────────────────────────
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

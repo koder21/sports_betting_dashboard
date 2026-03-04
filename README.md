@@ -113,7 +113,27 @@ This lets you run the dashboard at near-zero cost on the free tier — just manu
 3. Add a **Postgres** plugin to the project (Railway sets `DATABASE_URL` automatically).
 4. Set `CORS_ORIGINS` to your frontend Railway URL.
 5. For the frontend service, point Railway at `frontend/Dockerfile`.
-6. Done — the backend starts, runs migrations, and is ready.
+6. Deploy — uvicorn starts and `init_db()` automatically detects whether the Postgres instance is fresh or existing, builds or migrates the schema accordingly, and marks the alembic revision. No manual database setup needed.
+
+### Database on Fresh Deploy
+
+On a brand-new Railway Postgres instance the startup sequence is:
+
+1. `init_db()` checks for an `alembic_version` row. If none exists (fresh DB), it takes **Path A**; otherwise **Path B**.
+
+**Path A — Fresh DB:**
+
+- `create_all(checkfirst=True)` builds the entire schema directly from the SQLAlchemy models — every table, column, index, and constraint.
+- `alembic stamp head` marks the DB as already at the latest migration revision so future deploys apply only new deltas.
+
+**Path B — Existing DB:**
+
+- `alembic upgrade head` applies any pending migrations since the last deploy.
+- `create_all(checkfirst=True)` runs as a safety net for any new models not yet covered by a migration.
+
+Both paths are **idempotent** — safe to re-run without touching existing data. You should never need to manually port a local database again.
+
+> **Why not just run `alembic upgrade head` on a fresh DB?** All existing migrations are ALTER-type (rename columns, add indexes, drop tables). They assume pre-existing tables and will crash on an empty database. `create_all` produces the correct final schema from the models directly, bypassing that problem entirely.
 
 ## 📚 Documentation
 

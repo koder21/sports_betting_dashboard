@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 class Team(Base):
-    __tablename__: str = "teams"
+    __tablename__: str = "teams" # type: ignore[assignment]
 
     # ── Identity ──────────────────────────────────────────────────────────────
     team_id: Mapped[str] = mapped_column(String(64), primary_key=True)
