@@ -20,6 +20,48 @@ router = APIRouter(tags=["scrape"])
 # In-memory job tracking for long-running tasks
 FILL_NAME_JOBS = {}
 
+# Global flag to prevent concurrent run-all executions
+_run_all_running = False
+
+
+@router.post("/run-all")
+async def run_all_tasks():
+    """
+    Manually trigger all scheduler tasks: scrape sports, update live games,
+    grade bets, backfill player stats, and update game statuses.
+    """
+    global _run_all_running
+    if _run_all_running:
+        return {"status": "already_running", "message": "A refresh is already in progress"}
+
+    _run_all_running = True
+    results = {}
+    try:
+        from ..scheduler.tasks import Scheduler
+        scheduler = Scheduler(AsyncSessionLocal)
+        await scheduler.start()
+        try:
+            for task_name, coro in [
+                ("run_scrapers", scheduler.run_scrapers()),
+                ("update_live_games", scheduler.update_live_games()),
+                ("grade_bets", scheduler.grade_bets()),
+                ("backfill_player_stats", scheduler.backfill_player_stats()),
+                ("update_game_statuses", scheduler.update_game_statuses()),
+            ]:
+                try:
+                    await coro
+                    results[task_name] = "ok"
+                except Exception as e:
+                    results[task_name] = f"error: {str(e)[:100]}"
+        finally:
+            await scheduler.stop()
+    except Exception as e:
+        return {"status": "error", "message": str(e), "results": results}
+    finally:
+        _run_all_running = False
+
+    return {"status": "ok", "results": results}
+
 
 @router.post("/sport/{sport_name}")
 async def scrape_sport(sport_name: str, session: AsyncSession = Depends(get_db)):

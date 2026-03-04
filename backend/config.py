@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost"
     
     BANKROLL: float = 2000.0
+    SCHEDULER_ENABLED: bool = True
     # Plain string to avoid pydantic-settings JSON-parsing a list from env var
     CORS_ORIGINS: str = ""
 

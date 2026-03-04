@@ -157,9 +157,12 @@ async def on_startup() -> None:
             logger.warning("DB connection attempt %d/%d failed: %s — retrying in 3s", attempt, max_retries, e)
             await asyncio.sleep(3)
 
-    _scheduler_instance = SchedulerManager(AsyncSessionLocal)
-    _scheduler_task = asyncio.create_task(_scheduler_instance.run())
-    logger.info("Background scheduler started")
+    if settings.SCHEDULER_ENABLED:
+        _scheduler_instance = SchedulerManager(AsyncSessionLocal)
+        _scheduler_task = asyncio.create_task(_scheduler_instance.run())
+        logger.info("Background scheduler started")
+    else:
+        logger.info("Background scheduler disabled (SCHEDULER_ENABLED=false)")
 
 @app.on_event("shutdown")
 async def on_shutdown() -> None:
