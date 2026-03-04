@@ -134,12 +134,21 @@ class SchedulerManager:
 async def on_startup() -> None:
     global _scheduler_task, _scheduler_instance
 
+    # Log the DATABASE_URL scheme so we can diagnose Railway config issues
+    db_url = settings.DATABASE_URL or ""
+    url_preview = db_url[:40] + "..." if len(db_url) > 40 else db_url
+    logger.info("DATABASE_URL configured as: %s", url_preview)
+
+    if not db_url or "://" not in db_url:
+        logger.error("DATABASE_URL is missing or invalid. Set it in Railway Variables.")
+        raise RuntimeError(f"Invalid DATABASE_URL: {url_preview!r}")
+
     # Retry DB connection — Railway Postgres may take a few seconds to be ready
     max_retries = 10
     for attempt in range(1, max_retries + 1):
         try:
             await init_db()
-            logger.info("Database initialized: %s", settings.DATABASE_URL)
+            logger.info("Database initialized successfully")
             break
         except Exception as e:
             if attempt == max_retries:
