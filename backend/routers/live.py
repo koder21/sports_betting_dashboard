@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime
-from ..db import get_db
+from ..db import get_db, AsyncSessionLocal
 from ..models import GameLive, Game, GameUpcoming
 from .games import classify_game_status
 
@@ -194,3 +194,40 @@ async def _get_live_scores(session: AsyncSession):
 async def get_live_scores(session: AsyncSession = Depends(get_db)):
     """Fetch live games from the database."""
     return await _get_live_scores(session)
+
+
+@router.get("/config")
+async def get_live_config():
+    """Expose runtime config flags needed by the frontend."""
+    from ..config import settings
+    return {"scheduler_enabled": settings.SCHEDULER_ENABLED}
+
+
+_refresh_running = False
+
+@router.post("/refresh")
+async def refresh_live_games():
+    """
+    Manually trigger a live-games refresh — same task the scheduler runs every
+    60 seconds.  Updates scores for in-progress games, promotes upcoming games
+    that have just kicked off, and marks finished games as completed.
+    """
+    global _refresh_running
+    if _refresh_running:
+        return {"status": "already_running", "message": "A live refresh is already in progress"}
+
+    _refresh_running = True
+    try:
+        from ..scheduler.tasks import Scheduler
+        scheduler = Scheduler(AsyncSessionLocal)
+        await scheduler.start()
+        try:
+            await scheduler.update_live_games()
+        finally:
+            await scheduler.stop()
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+    finally:
+        _refresh_running = False
+
+    return {"status": "ok"}
