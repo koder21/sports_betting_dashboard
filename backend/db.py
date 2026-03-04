@@ -66,14 +66,26 @@ AsyncSessionLocal = _SessionFactoryProxy()
 
 
 async def init_db() -> None:
-    """Initialize database by creating all tables."""
+    """Initialize database by creating all tables if they don't exist yet."""
+    from sqlalchemy import text
     import sqlalchemy.exc
+
+    engine = _get_engine()
+
+    # Check if schema is already initialised by testing for a known table
     try:
-        async with _get_engine().begin() as conn:
-            await conn.run_sync(lambda c: Base.metadata.create_all(c, checkfirst=True))
+        async with engine.connect() as conn:
+            result = await conn.execute(text("SELECT 1 FROM teams LIMIT 1"))
+            # Table exists — schema is already set up, nothing to do
+            return
+    except Exception:
+        pass  # Table doesn't exist yet — proceed with create_all
+
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
     except sqlalchemy.exc.ProgrammingError as e:
         if "already exists" in str(e):
-            # Schema already initialised from a previous deploy — safe to continue
             return
         raise
 
