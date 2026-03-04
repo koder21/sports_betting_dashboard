@@ -42,10 +42,12 @@ BACKFILL_INTERVAL_MINUTES = 30
 
 app = FastAPI(title="Sports Intelligence Platform", version="1.0.0")
 
+# When CORS_ORIGINS is not set, allow all origins without credentials (safe default for initial deploy)
+_cors_origins = [str(o) for o in settings.CORS_ORIGINS]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[str(origin) for origin in settings.CORS_ORIGINS],
-    allow_credentials=True,
+    allow_origins=_cors_origins if _cors_origins else ["*"],
+    allow_credentials=bool(_cors_origins),
     allow_methods=["*"],
     allow_headers=["*"],
 )
