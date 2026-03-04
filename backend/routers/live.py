@@ -84,8 +84,8 @@ async def get_upcoming_games(session: AsyncSession = Depends(get_db)):
             sport = game_dict["sport"]
             home_tid = getattr(game, 'home_team_id', None)
             away_tid = getattr(game, 'away_team_id', None)
-            game_dict["home_logo"] = espn_logo_url(home_tid, sport) if home_tid else (game.home_logo if hasattr(game, 'home_logo') else "")
-            game_dict["away_logo"] = espn_logo_url(away_tid, sport) if away_tid else (game.away_logo if hasattr(game, 'away_logo') else "")
+            game_dict["home_logo"] = espn_logo_url(home_tid, str(sport)) if home_tid else (game.home_logo if hasattr(game, 'home_logo') else "")
+            game_dict["away_logo"] = espn_logo_url(away_tid, str(sport)) if away_tid else (game.away_logo if hasattr(game, 'away_logo') else "")
             games_list.append(game_dict)
     return games_list
 
@@ -150,7 +150,7 @@ async def _get_live_scores(session: AsyncSession):
         if start_time:
             if isinstance(start_time, str):
                 try:
-                    parsed_start = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                    parsed_start = datetime.fromisoformat(str(start_time).replace('Z', '+00:00'))
                 except Exception:
                     parsed_start = None
             elif hasattr(start_time, 'isoformat'):
@@ -211,6 +211,11 @@ async def refresh_live_games():
     Manually trigger a live-games refresh — same task the scheduler runs every
     60 seconds.  Updates scores for in-progress games, promotes upcoming games
     that have just kicked off, and marks finished games as completed.
+
+    Uses direct_write=True so the ESPN fetch and DB write are fully awaited
+    before returning.  No background worker is started/stopped, which avoids
+    the race condition where stop() cancels the write-queue worker before it
+    finishes executing the enqueued _write_live_games coroutine.
     """
     global _refresh_running
     if _refresh_running:
@@ -220,11 +225,9 @@ async def refresh_live_games():
     try:
         from ..scheduler.tasks import Scheduler
         scheduler = Scheduler(AsyncSessionLocal)
-        await scheduler.start()
-        try:
-            await scheduler.update_live_games()
-        finally:
-            await scheduler.stop()
+        # direct_write=True: awaits _write_live_games inline — no need to start
+        # or stop background workers for this one-shot call.
+        await scheduler.update_live_games(direct_write=True)
     except Exception as e:
         return {"status": "error", "message": str(e)}
     finally:

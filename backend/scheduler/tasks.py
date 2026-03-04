@@ -238,8 +238,14 @@ class Scheduler:
         await self.client.close()
 
     @log_duration("update_live_games")
-    async def update_live_games(self):
-        """Fetch today's games from ESPN and queue database updates"""
+    async def update_live_games(self, direct_write: bool = False):
+        """Fetch today's games from ESPN and queue database updates.
+        
+        When direct_write=True the DB write is awaited directly instead of being
+        handed to the background write-queue worker.  Use this for on-demand
+        (non-scheduled) calls where stopping the worker immediately after would
+        race against the enqueued task.
+        """
         try:
             from zoneinfo import ZoneInfo
             
@@ -394,13 +400,16 @@ class Scheduler:
                             "updated_at": datetime.now(timezone.utc)
                         })
             
-            # Queue the database write operation
+            # Write game data — directly when called on-demand, queued when scheduled
             if game_data:
-                self.write_queue.enqueue(
-                    "update_live_games",
-                    self._write_live_games,
-                    game_data
-                )
+                if direct_write:
+                    await self._write_live_games(game_data)
+                else:
+                    self.write_queue.enqueue(
+                        "update_live_games",
+                        self._write_live_games,
+                        game_data
+                    )
             
         except Exception as e:
             print(f"Live games update failed: {e}")
@@ -420,7 +429,7 @@ class Scheduler:
                 # Purge only stale rows from previous days to keep today's games visible
                 await session.execute(text("""
                     DELETE FROM games_live
-                    WHERE DATE(updated_at) < DATE('now')
+                    WHERE updated_at::date < CURRENT_DATE
                 """))
 
                 # Upsert new games
