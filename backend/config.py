@@ -14,7 +14,15 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost"
     
     BANKROLL: float = 2000.0
-    CORS_ORIGINS: list[str] = []
+    # Plain string to avoid pydantic-settings JSON-parsing a list from env var
+    CORS_ORIGINS: str = ""
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Return CORS origins as a list, parsed from comma-separated string."""
+        if not self.CORS_ORIGINS:
+            return []
+        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
@@ -24,14 +32,6 @@ class Settings(BaseSettings):
             return v.replace("postgresql://", "postgresql+asyncpg://", 1)
         if isinstance(v, str) and v.startswith("postgres://"):
             return v.replace("postgres://", "postgresql+asyncpg://", 1)
-        return v
-
-    @field_validator("CORS_ORIGINS", mode="before")
-    @classmethod
-    def assemble_cors_origins(cls, v):
-        """Parse comma-separated CORS origins from environment variable."""
-        if isinstance(v, str):
-            return [i.strip() for i in v.split(",") if i.strip()]
         return v
 
 
