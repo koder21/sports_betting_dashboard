@@ -7,6 +7,8 @@ from sqlalchemy.orm import selectinload
 from .base import BaseRepository
 from ..models import Bet, Game, Player
 
+_ALL_BETS_LIMIT = 10_000  # High ceiling — avoids DEFAULT_LIMIT=100 silently truncating
+
 
 class BetRepository(BaseRepository[Bet]):
     """
@@ -19,7 +21,7 @@ class BetRepository(BaseRepository[Bet]):
     async def list_pending(
         self,
         *,
-        limit: int = BaseRepository.DEFAULT_LIMIT,
+        limit: int = _ALL_BETS_LIMIT,
         offset: int = 0,
     ) -> Sequence[Bet]:
         if limit <= 0:
@@ -29,6 +31,7 @@ class BetRepository(BaseRepository[Bet]):
             select(Bet)
             .where(Bet.status == "pending")
             .options(selectinload(Bet.sport))
+            .order_by(Bet.id.desc())
             .limit(limit)
             .offset(offset)
         )
@@ -39,11 +42,14 @@ class BetRepository(BaseRepository[Bet]):
     async def list_all_with_relations(
         self,
         *,
-        limit: int = BaseRepository.DEFAULT_LIMIT,
+        limit: int = _ALL_BETS_LIMIT,
         offset: int = 0,
     ) -> Sequence[Bet]:
         """
         Fetch bets with deep eager loading for Game, Result, Player, Team, and Sport.
+        Defaults to _ALL_BETS_LIMIT (not DEFAULT_LIMIT=100) so that all bets are
+        returned; results are ordered newest-first so latest pending bets are never
+        truncated below older graded bets.
         """
         if limit <= 0:
             raise ValueError("Limit must be > 0")
@@ -55,6 +61,7 @@ class BetRepository(BaseRepository[Bet]):
                 selectinload(Bet.player).selectinload(Player.team),
                 selectinload(Bet.sport),
             )
+            .order_by(Bet.id.desc())
             .limit(limit)
             .offset(offset)
         )

@@ -1,3 +1,4 @@
+import os
 import redis.asyncio as redis
 import json
 from functools import wraps
@@ -7,7 +8,8 @@ _redis_client = None
 async def get_redis_pool():
     global _redis_client
     if _redis_client is None:
-        _redis_client = redis.from_url("redis://localhost", encoding="utf-8", decode_responses=True)
+        redis_url = os.environ.get("REDIS_URL", "redis://localhost")
+        _redis_client = redis.from_url(redis_url, encoding="utf-8", decode_responses=True)
     return _redis_client
 
 # Decorator for caching expensive endpoints

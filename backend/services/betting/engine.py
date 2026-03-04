@@ -326,8 +326,9 @@ class BettingEngine:
             "soccer": ("soccer", "usa.1"), # MLS, update as needed
         }
         # Batch and async ESPN scraping with persistent Redis cache
-        import aioredis
-        redis = await aioredis.from_url("redis://localhost")
+        import os
+        import redis.asyncio as aioredis
+        redis = aioredis.from_url(os.environ.get("REDIS_URL", "redis://localhost"))
         game_id_to_bet = {bet.game_id: bet for bet in pending if bet.game_id}
         game_id_to_game = {}
         for game_id in game_id_to_bet:
