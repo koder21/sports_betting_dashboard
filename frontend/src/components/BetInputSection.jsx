@@ -79,6 +79,37 @@ Type: spread, Selection: Lakers -5.5, Game: Lakers vs Suns, Date: 2026-02-08, Ga
           chat to get betting recommendations. Paste the AI's recommendations here and click "Place
           Bets".
         </div>
+
+        <details className="ai-format-guide">
+          <summary>📐 AI Format Guide — how to instruct your AI</summary>
+          <div className="ai-format-guide-body">
+            <p>
+              After pasting the game data, tell your AI to respond using <strong>exactly</strong>{' '}
+              the format below so the parser can read it correctly.
+            </p>
+            <p className="ai-format-guide-prompt">Suggested system / opening prompt:</p>
+            <pre className="ai-format-guide-pre">{`When recommending bets, always respond using this exact format:
+
+Parlay #N (X-leg [sport or "mixed"])
+Sport: ..., Type: moneyline, Selection: [Team] ML, Game: [Away] vs [Home], Date: YYYY-MM-DD, Game ID: ..., Odds: X.XX, Stake: $XXX, Reason: ...
+Sport: ..., Type: prop, Selection: [Player] Over/Under X.X [stat], Game: [Away] vs [Home], Date: YYYY-MM-DD, Game ID: ..., Odds: X.XX, Stake: $XXX, Reason: ...
+Sport: ..., Type: total, Selection: [Teams] Over/Under X.X, Game: [Away] vs [Home], Date: YYYY-MM-DD, Game ID: ..., Odds: X.XX, Stake: $XXX, Reason: ...
+Sport: ..., Type: spread, Selection: [Team] +/-X.X, Game: [Away] vs [Home], Date: YYYY-MM-DD, Game ID: ..., Odds: X.XX, Stake: $XXX, Reason: ...
+
+Single Bet #N
+Sport: ..., Type: spread, Selection: [Team] +/-X.X, Game: [Away] vs [Home], Date: YYYY-MM-DD, Game ID: ..., Odds: X.XX, Stake: $XXX, Reason: ...
+
+Rules:
+- Odds must be decimal (e.g. 1.91, not -110).
+- Stake is the amount wagered per leg.
+- Game ID must match the ID from the game data I provided.
+- Do not deviate from this format — extra fields or missing commas will break parsing.`}</pre>
+            <p className="ai-format-guide-note">
+              <strong>Supported types:</strong> <code>moneyline</code>, <code>spread</code>,{' '}
+              <code>total</code>, <code>prop</code>
+            </p>
+          </div>
+        </details>
       </div>
     );
   }

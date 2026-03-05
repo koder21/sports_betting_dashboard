@@ -194,3 +194,75 @@
     font-size: 0.8rem;
   }
 }
+
+/* AI Format Guide */
+.ai-format-guide {
+  margin-top: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #f0f4ff;
+  overflow: hidden;
+}
+
+.ai-format-guide summary {
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+.ai-format-guide summary::-webkit-details-marker {
+  display: none;
+}
+
+.ai-format-guide[open] summary {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ai-format-guide-body {
+  padding: 12px 14px 14px;
+  font-size: 0.82rem;
+  color: #374151;
+}
+
+.ai-format-guide-body p {
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+
+.ai-format-guide-prompt {
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 6px !important;
+}
+
+.ai-format-guide-pre {
+  background: #1e1e2e;
+  color: #cdd6f4;
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0 0 10px;
+  font-family: 'Fira Code', 'Consolas', 'Menlo', monospace;
+}
+
+.ai-format-guide-note {
+  margin: 0 !important;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.ai-format-guide-note code {
+  background: #e5e7eb;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 0.78rem;
+  color: #1f2937;
+}
