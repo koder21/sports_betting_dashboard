@@ -472,13 +472,13 @@ class BettingEngine:
 
         # Bulk fetch all parlay legs
         if parlays_touched:
-            stmt = select(self.bets.model).where(self.bets.model.parlay_id.in_(list(parlays_touched)))
+            stmt = select(self.bets.model).where(self.bets.model.parlay_id.in_(list(parlays_touched)))  # type: ignore[attr-defined]
             result = await self.session.execute(stmt)
             all_legs = result.scalars().all()
             parlay_legs_map: Dict[str, List[Any]] = {}
             for leg in all_legs:
-                if leg.parlay_id is not None:
-                    parlay_legs_map.setdefault(leg.parlay_id, []).append(leg)
+                if leg.parlay_id is not None:  # type: ignore[attr-defined]
+                    parlay_legs_map.setdefault(leg.parlay_id, []).append(leg)  # type: ignore[attr-defined]
             for parlay_id in parlays_touched:
                 legs = parlay_legs_map.get(parlay_id, [])
                 if not legs:

@@ -28,7 +28,7 @@ class BetParser:
         
         lines = text.strip().split('\n')
         
-        current_parlay = []
+        current_parlay: list[Any] = []
         current_parlay_name = None
         current_parlay_explicit = False
         parlay_counter = 1
@@ -72,7 +72,7 @@ class BetParser:
 
     async def _parse_leg(self, line: str, parlay_name: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """Parse a single leg from a line"""
-        parsed = {}
+        parsed: Dict[str, Any] = {}
 
         # Extract fields using regex
         sport_match = re.search(r'sport:\s*([a-zA-Z0-9_.-]+)', line, re.IGNORECASE)
@@ -372,6 +372,8 @@ class BetParser:
         except Exception as e:
             print(f"Error querying ESPN API: {e}")
             return None
+
+        return None
 
     async def parse(self, text: str) -> Optional[Dict[str, Any]]:
         """Legacy single-bet parser for backward compatibility"""

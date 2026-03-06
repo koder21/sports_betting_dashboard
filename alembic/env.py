@@ -17,7 +17,8 @@ if project_root not in sys.path:
 config = context.config
 
 # Interpret the config file for Python logging.
-fileConfig(config.config_file_name)
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
 
 # import your application's metadata
 from backend.models.base import Base  # noqa: E402

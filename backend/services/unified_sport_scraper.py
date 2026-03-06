@@ -13,7 +13,7 @@ Total: 567 lines → 180 lines (68% reduction)
 
 All 6 scrapers had 95% identical code. Now unified with sport-specific configuration.
 """
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 
 from .espn_client import ESPNClient
@@ -171,8 +171,8 @@ class UnifiedSportScraper:
         away_team_data = self._parse_team(away)
         
         # Fetch additional data (summary with injuries/stats, and odds)
-        summary_data = await self._fetch_summary(event.get("id"))
-        odds_data = await self._fetch_odds(event.get("id"), comp.get("id"))
+        summary_data = await self._fetch_summary(event.get("id") or "")
+        odds_data = await self._fetch_odds(event.get("id") or "", comp.get("id"))
         
         # Extract injuries and player stats from summary
         injuries = []

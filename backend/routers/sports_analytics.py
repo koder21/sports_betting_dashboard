@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, distinct, case, extract
 from datetime import datetime, timedelta
+from typing import Any, Dict
 
 from ..db import get_db
 from ..models.games_results import GameResult
@@ -248,7 +249,7 @@ async def get_sports_overview(session: AsyncSession = Depends(get_db)):
     
     # Get monthly trend for all sports combined
     twelve_months_ago = datetime.utcnow() - timedelta(days=365)
-    monthly_all_sports = {}
+    monthly_all_sports: Dict[str, Dict[str, Any]] = {}
     
     for sport_code in sports:
         monthly_result = await session.execute(

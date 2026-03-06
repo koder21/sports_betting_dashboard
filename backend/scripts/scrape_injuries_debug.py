@@ -14,7 +14,7 @@ async def main() -> None:
     Prints the total number of injuries upserted.
     """
     engine = create_async_engine(DATABASE_URL, echo=True)
-    async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    async_session = sessionmaker(bind=engine, expire_on_commit=False, class_=AsyncSession)  # type: ignore[call-overload]
     async with async_session() as session:
         scraper = FreshDataScraper(session)
         count = await scraper._scrape_injuries()

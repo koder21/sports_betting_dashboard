@@ -356,19 +356,19 @@ async def _build_ai_context(
                 select(Game).where(Game.game_id.in_(missing_ids))
             )
             games = list(game_rows.scalars().all())
-            for game in games:
-                if not game.game_id:
+            for g in games:
+                if not g.game_id:
                     continue
-                game_map[game.game_id] = {
-                    "home_team_id": game.home_team_id,
-                    "away_team_id": game.away_team_id,
-                    "home_team_name": game.home_team_name,
-                    "away_team_name": game.away_team_name,
+                game_map[g.game_id] = {
+                    "home_team_id": g.home_team_id,
+                    "away_team_id": g.away_team_id,
+                    "home_team_name": g.home_team_name,
+                    "away_team_name": g.away_team_name,
                 }
-                if game.home_team_id:
-                    team_ids.append(game.home_team_id)
-                if game.away_team_id:
-                    team_ids.append(game.away_team_id)
+                if g.home_team_id:
+                    team_ids.append(g.home_team_id)
+                if g.away_team_id:
+                    team_ids.append(g.away_team_id)
 
     if upcoming:
         team_names = list(
@@ -479,20 +479,20 @@ async def _build_ai_context(
     output_lines.append("")
 
     if results_sorted:
-        for game in results_sorted:
-            sport = getattr(game, "sport", "Unknown Sport")
-            away_name = getattr(game, "away_team_name", None) or "Away"
-            home_name = getattr(game, "home_team_name", None) or "Home"
-            away_score = getattr(game, "away_score", "N/A")
-            home_score = getattr(game, "home_score", "N/A")
+        for result in results_sorted:
+            sport = getattr(result, "sport", "Unknown Sport")
+            away_name = getattr(result, "away_team_name", None) or "Away"
+            home_name = getattr(result, "home_team_name", None) or "Home"
+            away_score = getattr(result, "away_score", "N/A")
+            home_score = getattr(result, "home_score", "N/A")
 
             output_lines.append(f"{sport}")
             output_lines.append(f"{away_name} @ {home_name}")
             output_lines.append(
                 f"Final Score: {away_name} {away_score} - {home_score} {home_name}"
             )
-            if getattr(game, "game_id", None):
-                output_lines.append(f"Game ID: {game.game_id}")
+            if getattr(result, "game_id", None):
+                output_lines.append(f"Game ID: {result.game_id}")
             output_lines.append("")
     else:
         output_lines.append("No completed games found for yesterday.")
@@ -505,21 +505,21 @@ async def _build_ai_context(
     output_lines.append("")
 
     if upcoming:
-        for game in upcoming:
-            sport = getattr(game, "sport", "Unknown Sport")
-            away_name = getattr(game, "away_team_name", None) or "Away"
-            home_name = getattr(game, "home_team_name", None) or "Home"
+        for gl in upcoming:
+            sport = getattr(gl, "sport", "Unknown Sport")
+            away_name = getattr(gl, "away_team_name", None) or "Away"
+            home_name = getattr(gl, "home_team_name", None) or "Home"
 
             output_lines.append(f"{sport}")
             output_lines.append(f"{away_name} @ {home_name}")
-            if getattr(game, "game_id", None):
-                output_lines.append(f"Game ID: {game.game_id}")
+            if getattr(gl, "game_id", None):
+                output_lines.append(f"Game ID: {gl.game_id}")
             # Use start_time from joined Game object if available
             start_time = None
             if "start_time" in locals():
                 start_time = start_time
-            elif hasattr(game, "start_time"):
-                start_time = getattr(game, "start_time", None)
+            elif hasattr(gl, "start_time"):
+                start_time = getattr(gl, "start_time", None)
             if start_time:
                 try:
                     game_time_pst = (
@@ -534,15 +534,15 @@ async def _build_ai_context(
                     output_lines.append(
                         f"Start Time: {start_time}"
                     )
-            if getattr(game, "home_odds", None):
-                away_odds = getattr(game, "away_odds", "N/A")
-                home_odds = getattr(game, "home_odds", "N/A")
+            if getattr(gl, "home_odds", None):
+                away_odds = getattr(gl, "away_odds", "N/A")
+                home_odds = getattr(gl, "home_odds", "N/A")
                 output_lines.append(
                     f"Odds: {away_name} {away_odds} / {home_name} {home_odds}"
                 )
-            if getattr(game, "home_record", None):
-                away_record = getattr(game, "away_record", "N/A")
-                home_record = getattr(game, "home_record", "N/A")
+            if getattr(gl, "home_record", None):
+                away_record = getattr(gl, "away_record", "N/A")
+                home_record = getattr(gl, "home_record", "N/A")
                 output_lines.append(
                     f"Records: {away_name} ({away_record}) / "
                     f"{home_name} ({home_record})"
@@ -560,19 +560,19 @@ async def _build_ai_context(
 
     any_injuries = False
     if upcoming and injuries_by_team:
-        for game in upcoming:
-            if not game.game_id:
+        for gl in upcoming:
+            if not gl.game_id:
                 continue
 
-            meta = game_map.get(game.game_id, {})
+            meta = game_map.get(gl.game_id, {})
             home_name = (
                 meta.get("home_team_name")
-                or game.home_team_name
+                or gl.home_team_name
                 or "Home"
             )
             away_name = (
                 meta.get("away_team_name")
-                or game.away_team_name
+                or gl.away_team_name
                 or "Away"
             )
             home_team_id = meta.get("home_team_id") or team_id_by_name.get(
@@ -614,27 +614,15 @@ async def _build_ai_context(
             if home_injuries:
                 output_lines.append(f"{home_name} Injuries:")
                 for inj in home_injuries:
-                    desc = (
-                        f" - {inj['description']}"
-                        if inj.get("description")
-                        else ""
-                    )
                     output_lines.append(
-                        f"  - {inj['player_name']} "
-                        f"({inj['status']}){desc}"
+                        f"  - {inj['player_name']} ({inj['status']})"
                     )
 
             if away_injuries:
                 output_lines.append(f"{away_name} Injuries:")
                 for inj in away_injuries:
-                    desc = (
-                        f" - {inj['description']}"
-                        if inj.get("description")
-                        else ""
-                    )
                     output_lines.append(
-                        f"  - {inj['player_name']} "
-                        f"({inj['status']}){desc}"
+                        f"  - {inj['player_name']} ({inj['status']})"
                     )
 
             output_lines.append("")
@@ -846,7 +834,7 @@ async def get_game_details(
                 (ps for ps in all_player_stats if ps.player_id == bet.player_id),
                 None,
             )
-            stat_value = None
+            stat_value: Optional[object] = None
             stat_display = None
 
             if player_stat and bet.stat_type:

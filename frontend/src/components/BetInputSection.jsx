@@ -21,12 +21,13 @@ const BetInputSection = React.memo(
         <textarea
           value={rawText}
           onChange={(e) => onTextChange(e.target.value)}
-          placeholder={`Parlay #1 (2 legs)
-Type: moneyline, Selection: Celtics ML, Game: Celtics vs Heat, Date: 2026-02-07, Game ID: 123, Odds: -150, Stake: 300, Reason: Strong matchup.
-Type: prop, Selection: Anthony Edwards over 27.5 pts, Game: Timberwolves vs Pelicans, Date: 2026-02-07, Game ID: 456, Odds: -110, Stake: 300, Reason: High usage.
+          placeholder={`Parlay #N (X-leg [mixed/nba/nhl etc])
+Sport: ..., Type: moneyline, Selection: [Team] ML, Game: ..., Date: ..., Game ID: ..., Odds: X.XX, Stake: $XXX, Reason: ...
+Sport: ..., Type: prop, Selection: [Player] Over/Under X.X [Stat], Game: ..., Date: ..., Game ID: ..., Odds: X.XX, Stake: $XXX, Reason: ...
+Sport: ..., Type: total, Selection: [Teams] Over/Under X.X, Game: ..., Date: ..., Game ID: ..., Odds: X.XX, Stake: $XXX, Reason: ...
 
-Singles
-Type: spread, Selection: Lakers -5.5, Game: Lakers vs Suns, Date: 2026-02-08, Game ID: 789, Odds: -110, Stake: 100, Reason: Home advantage.`}
+Single Bet #N
+Sport: ..., Type: spread, Selection: [Team] +/-X.X, Game: ..., Date: ..., Game ID: ..., Odds: X.XX, Stake: $XXX, Reason: ...`}
           rows={8}
           className="bet-textarea"
           aria-label="Enter bet details"

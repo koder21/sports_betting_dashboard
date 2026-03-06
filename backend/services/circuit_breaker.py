@@ -5,7 +5,7 @@ Prevents cascading failures by stopping requests to failing endpoints.
 import asyncio
 from datetime import datetime
 from enum import Enum
-from typing import Callable, Any
+from typing import Callable, Any, Type
 
 
 class CircuitState(Enum):
@@ -29,7 +29,7 @@ class CircuitBreaker:
         self,
         failure_threshold: int = 5,
         recovery_timeout: int = 60,
-        expected_exception: type = Exception,
+        expected_exception: Type[BaseException] = Exception,
     ):
         """
         Initialize circuit breaker.
@@ -77,7 +77,7 @@ class CircuitBreaker:
                 # FIX: Use self.recovery_timeout instead of undefined variable
                 raise Exception(
                     f"Circuit breaker OPEN, retry in "
-                    f"{self.recovery_timeout - (datetime.now() - self.last_open_time).total_seconds():.0f}s"
+                    f"{self.recovery_timeout - (datetime.now() - (self.last_open_time or datetime.now())).total_seconds():.0f}s"
                 )
         
         try:

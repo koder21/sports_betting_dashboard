@@ -1,4 +1,4 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Union, Optional
 from datetime import datetime
 import logging
 import re
@@ -39,7 +39,7 @@ class BetPlacementService:
         from ..models.games_upcoming import GameUpcoming
         stmt = select(Game).where(Game.game_id == game_id)
         result = await self.session.execute(stmt)
-        game_obj = result.scalar_one_or_none()
+        game_obj: Union[Any, None] = result.scalar_one_or_none()
         if not game_obj:
             # Try games_upcoming
             stmt2 = select(GameUpcoming).where(GameUpcoming.game_id == game_id)

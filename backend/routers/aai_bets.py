@@ -10,7 +10,7 @@ Endpoints:
 """
 import asyncio
 import logging
-from typing import Optional, Set
+from typing import Optional, Set, Dict, Any
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -100,7 +100,7 @@ async def refresh_and_calculate(
     logger.info("Scraping recent completed games...")
     client = ESPNClient()
     stats_scraper = PlayerStatsScraper(client)
-    stats_summary = {"success": False, "games_scraped": 0}
+    stats_summary: Dict[str, Any] = {"success": False, "games_scraped": 0}
     
     try:
         await asyncio.wait_for(

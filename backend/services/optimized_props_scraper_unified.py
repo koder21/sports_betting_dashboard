@@ -68,7 +68,7 @@ class PropsScraperUnified:
         if sources is None:
             sources = ["draftkings", "espn"]
         
-        errors = []
+        errors: List[Any] = []
         
         # Try each source in priority order
         for source in sources:

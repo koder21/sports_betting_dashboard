@@ -46,7 +46,7 @@ async def upsert_injuries(session: AsyncSession, injuries: List[Dict[str, Any]])
             except ValueError:
                 last_updated = None
         else:
-            last_updated = last_updated_raw
+            last_updated = None
         if not player_id or not team_id:
             continue
         player_rows.append(dict(

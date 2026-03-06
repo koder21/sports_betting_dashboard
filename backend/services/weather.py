@@ -5,25 +5,67 @@ from datetime import datetime
 from dataclasses import dataclass
 import math
 
-
-# Venue coordinates for common stadiums
 VENUE_COORDINATES = {
-    # NFL
+    # NFL (outdoor only)
     "metlife stadium": (40.8128, -74.0742),
     "lambeau field": (44.5013, -88.0622),
     "soldier field": (41.8623, -87.6167),
     "arrowhead stadium": (39.0489, -94.4839),
     "gillette stadium": (42.0909, -71.2643),
-    "at&t stadium": (32.7473, -97.0945),
     "lumen field": (47.5952, -122.3316),
-    # MLB
+    "nissan stadium": (36.1665, -86.7713),
+    "acrisure stadium": (40.4468, -80.0158),
+    "bank of america stadium": (35.2258, -80.8529),
+    "m&t bank stadium": (39.2780, -76.6228),
+    "raymond james stadium": (27.9760, -82.5034),
+    "empower field at mile high": (39.7439, -105.0201),
+    "levi's stadium": (37.4030, -121.9700),
+    "lincoln financial field": (39.9008, -75.1675),
+    "firstenergy stadium": (41.5061, -81.6995),
+    "paul brown stadium": (39.0954, -84.5160),
+    "highmark stadium": (42.7738, -78.7869),
+    "fedex field": (38.9076, -76.8645),
+    #MLB (outdoor only)
     "fenway park": (42.3467, -71.0972),
     "yankee stadium": (40.8296, -73.9262),
     "wrigley field": (41.9484, -87.6553),
     "dodger stadium": (34.0739, -118.2400),
-    # NBA (indoor, but for completeness)
-    "madison square garden": (40.7505, -73.9934),
-    "staples center": (34.0430, -118.2673),
+    "oracle park": (37.7786, -122.3892),
+    "citi field": (40.7571, -73.8458),
+    "pnc park": (40.4469, -80.0058),
+    "busch stadium": (38.6226, -90.1924),
+    "coors field": (39.7558, -104.9942),
+    "kauffman stadium": (39.0514, -94.4800),
+    "target field": (44.9817, -93.2775),
+    "globe life field": (32.7473, -97.0945),
+    "petco park": (32.7072, -117.1564),
+    "t-mobile park": (47.5914, -122.3325),
+    "guaranteed rate field": (41.8300, -87.6339),
+    "minute maid park": (29.7572, -95.3555),
+    "progressive field": (41.4962, -81.6852),
+    "great american ball park": (39.0975, -84.5071),
+    "nationals park": (38.8730, -77.0074),
+    "camden yards": (39.2830, -76.6219),
+    "angel stadium": (33.8003, -117.8827),
+    "citizens bank park": (39.9050, -75.1667),
+    "oakland coliseum": (37.7516, -122.2005),
+    "suntrust park": (33.8908, -84.4677),
+    # NCAAF (major outdoor venues)
+    "kinnick stadium": (41.6588, -91.5513),
+    "husky stadium": (47.6503, -122.3018),
+    "spartan stadium": (42.7282, -84.4850),
+    "camp randall stadium": (43.0699, -89.4128),
+    "donald w. reynolds razorback stadium": (36.0681, -94.1793),
+    "williams-brice stadium": (33.9731, -81.0193),
+    "gaylord family oklahoma memorial stadium": (35.2059, -97.4424),
+    "notre dame stadium": (41.6984, -86.2340),
+    "memorial stadium (clemson)": (34.6786, -82.8439),
+    "michigan stadium": (42.2658, -83.7487),
+    "ohio stadium": (40.0017, -83.0197),
+    "beaver stadium": (40.8122, -77.8561),
+    "bryant-denny stadium": (33.2083, -87.5505),
+    "tiger stadium": (30.4122, -91.1839),
+    "rose bowl": (34.1614, -118.1675),
 }
 
 
@@ -100,7 +142,7 @@ class WeatherService:
         try:
             lat, lon = coords
             async with aiohttp.ClientSession() as session:
-                params = {
+                params: Dict[str, Any] = {
                     "latitude": lat,
                     "longitude": lon,
                     "hourly": "temperature_2m,relativehumidity_2m,precipitation,windspeed_10m,winddirection_10m,apparent_temperature",
@@ -200,7 +242,7 @@ class WeatherService:
         if not weather:
             return {"weather": None, "impact": None}
         
-        impact = {
+        impact: Dict[str, Any] = {
             "weather": {
                 "temp": weather.temp,
                 "wind_speed": weather.wind_speed,

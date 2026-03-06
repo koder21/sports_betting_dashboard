@@ -272,7 +272,7 @@ class PlayerStatsScraper:
                 # Build flat list of (game_id, sport_type, league, sport_name)
                 all_games = []
                 for (sport_type, league, sport_name), game_ids in zip(self.SPORTS_CONFIG, all_game_id_results):
-                    if isinstance(game_ids, Exception):
+                    if isinstance(game_ids, BaseException):
                         logger.error(f"Error fetching game ids for {sport_name}: {game_ids}")
                         continue
                     print(f"{sport_name}: Found {len(game_ids)} completed games")
@@ -634,7 +634,7 @@ class PlayerStatsScraper:
                         logger.warning(f"[Boxscore] No players found in boxscore for game {game_id}")
                     # --- Patch: Aggregate all stat groups per player for all sports ---
                     from collections import defaultdict
-                    player_stats_agg = {}
+                    player_stats_agg: Dict[str, Any] = {}
                     player_names = {}
                     player_team_ids = {}
                     for team_players in players_by_team:
@@ -1041,7 +1041,7 @@ class PlayerStatsScraper:
     
     def _parse_stats(self, sport: str, stats_list: List[str], stat_type: str = "", stat_labels: Optional[List[str]] = None) -> Dict[str, Any]:
         """Parse ESPN stats array into database columns"""
-        parsed = {}
+        parsed: Dict[str, Any] = {}
         stat_labels = stat_labels or []
         
         # Handle soccer stats which come as [{name: ..., value: ...}] format

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 import asyncio
 import uuid
+from typing import Any, Dict, Union
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from ..db import get_db, AsyncSessionLocal
@@ -18,7 +19,7 @@ from ..services.scraping import (
 router = APIRouter(tags=["scrape"])
 
 # In-memory job tracking for long-running tasks
-FILL_NAME_JOBS = {}
+FILL_NAME_JOBS: Dict[str, Any] = {}
 
 # Global flag to prevent concurrent run-all executions
 _run_all_running = False
@@ -67,6 +68,7 @@ async def run_all_tasks():
 async def scrape_sport(sport_name: str, session: AsyncSession = Depends(get_db)):
     client = ESPNClient()
     try:
+        scraper: Union[NFLScraper, NBAScraper, NCAAFScraper, NCAABScraper, NHLScraper, SoccerScraper, MLBScraper]
         if sport_name == "nfl":
             scraper = NFLScraper(session, client)
         elif sport_name == "nba":

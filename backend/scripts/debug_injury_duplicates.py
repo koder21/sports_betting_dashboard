@@ -15,7 +15,7 @@ async def main() -> None:
     from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
     from sqlalchemy.orm import sessionmaker
     engine = create_async_engine(DATABASE_URL, echo=False)
-    async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    async_session = sessionmaker(bind=engine, expire_on_commit=False, class_=AsyncSession)  # type: ignore[call-overload]
     async with async_session() as session:
         scraper = FreshDataScraper(session)
         # Only fetch injuries, don't upsert
