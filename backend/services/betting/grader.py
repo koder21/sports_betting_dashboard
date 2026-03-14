@@ -67,9 +67,11 @@ class BetGrader:
                     game.status = game_result.status
                     await self.session.flush()
 
-            # Totals bet logic: if stat_type is 'total' or selection contains 'over'/'under', use game scores
+            # Totals bet logic: only treat as game total if there's NO player attached
             sel = (bet.selection or "").strip().lower()
-            is_totals = 'over' in sel or 'under' in sel or (bet.stat_type and bet.stat_type.lower() == 'total')
+            is_totals = (not bet.player_id) and (
+                'over' in sel or 'under' in sel or (bet.stat_type and bet.stat_type.lower() == 'total')
+            )
             value: Optional[float] = None
             if is_totals and game and game.home_score is not None and game.away_score is not None:
                 score: float = float(game.home_score + game.away_score)
@@ -98,6 +100,21 @@ class BetGrader:
                 bet.status = "void"
                 bet.graded_at = datetime.utcnow()
                 return {"bet_id": bet.id, "status": "void", "reason": "Player stats not available"}
+
+            # Auto-void if player did not play (DNP / injured)
+            minutes = getattr(stat, 'minutes', None)
+            try:
+                min_val = float(minutes) if minutes is not None else None
+            except (TypeError, ValueError):
+                min_val = None
+            if min_val is None or min_val == 0:
+                logger.info(f"[Grader] Bet {bet.id}: Player DNP (minutes={minutes}), voiding")
+                bet.status = "void"
+                bet.result_value = None
+                bet.graded_at = datetime.utcnow()
+                bet.profit = 0
+                return {"bet_id": bet.id, "status": "void", "reason": "Player did not play (DNP)"}
+
             stat_field = bet.stat_type or bet.market
 
             # Guard: if no stat field at all, void the bet

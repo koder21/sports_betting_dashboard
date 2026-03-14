@@ -265,7 +265,9 @@ class BetVerifier:
             return None
 
         sel_lower = (bet.selection or '').lower()
-        is_totals = 'over' in sel_lower or 'under' in sel_lower or (bet.stat_type and bet.stat_type.lower() == 'total')
+        is_totals = (not bet.player_id) and (
+            'over' in sel_lower or 'under' in sel_lower or (bet.stat_type and bet.stat_type.lower() == 'total')
+        )
 
         # Totals bet: use game scores if player stats are missing
         if is_totals:
@@ -349,20 +351,47 @@ class BetVerifier:
             elif game_result:
                 return f"Final: {game_result.home_team_name} {game_result.home_score} - {game_result.away_score} {game_result.away_team_name}"
 
-        elif bet.bet_type == "prop" and bet.player_id and bet.game_id:
+        elif bet.bet_type in ("prop", "total") and bet.player_id and bet.game_id:
             stat = await self.stats.get_for_player_game(bet.player_id, bet.game_id)
             if stat:
+                # Check DNP
+                minutes = getattr(stat, 'minutes', None)
+                try:
+                    min_val = float(minutes) if minutes is not None else None
+                except (TypeError, ValueError):
+                    min_val = None
+                if min_val is None or min_val == 0:
+                    return "Final: Player did not play (DNP) - bet voided"
+
                 stat_field = bet.stat_type or bet.market
                 if stat_field:
-                    value = getattr(stat, stat_field, None)
-                    if value is None and hasattr(stat, "stats_json") and stat.stats_json:
-                        value = stat.stats_json.get(stat_field)
+                    # Use same alias resolution as grader
+                    _FIELD_ALIASES = {
+                        "pts": "points", "points": "points",
+                        "reb": "rebounds", "rebounds": "rebounds", "trb": "rebounds",
+                        "ast": "assists", "assists": "assists",
+                        "stl": "steals", "steals": "steals",
+                        "blk": "blocks", "blocks": "blocks",
+                        "pra": None,
+                    }
+                    mapped = _FIELD_ALIASES.get(stat_field.lower().strip(), stat_field.lower().strip())
+                    if stat_field.lower().strip() == "pra":
+                        p = getattr(stat, "points", None) or 0
+                        r = getattr(stat, "rebounds", None) or 0
+                        a = getattr(stat, "assists", None) or 0
+                        value = float(p + r + a) if any([p, r, a]) else None
+                    elif mapped:
+                        value = getattr(stat, mapped, None)
+                        if value is None and hasattr(stat, "stats_json") and stat.stats_json:
+                            value = stat.stats_json.get(mapped) or stat.stats_json.get(stat_field)
+                    else:
+                        value = None
                 
-                if value is not None:
-                    import re
-                    numbers = re.findall(r'[-+]?\d*\.?\d+', bet.selection or "")
-                    line = float(numbers[-1]) if numbers else 0
-                    return f"Player stat: {value} (line: {line})"
+                    if value is not None:
+                        numbers = re.findall(r'[-+]?\d*\.?\d+', bet.selection or "")
+                        line = float(numbers[-1]) if numbers else 0
+                        player_name = bet.player_name or "Player"
+                        return f"Final: {player_name} {stat_field}: {value} (line: {line})"
 
         return "Verified against actual game data"
 
