@@ -69,6 +69,8 @@ function BetsPage() {
   const [expandedBets, setExpandedBets] = React.useState({});
   const [aiContextData, setAiContextData] = React.useState(null);
   const [showCopyRetry, setShowCopyRetry] = React.useState(false);
+  const [showAIModal, setShowAIModal] = React.useState(false);
+  const [aiModalCopied, setAiModalCopied] = React.useState(false);
 
   // API hook for bets
   const fetchBetsApi = useCallback(async () => {
@@ -89,26 +91,18 @@ function BetsPage() {
 
       if (response.data.text) {
         setAiContextData(response.data);
+        setShowAIModal(true);
 
         if (response.data.scrape_errors && response.data.scrape_errors.length > 0) {
           setError('⚠️ Scrape errors: ' + response.data.scrape_errors.join('; '));
+        } else {
+          setError(null);
         }
 
         try {
           await navigator.clipboard.writeText(response.data.text);
-          setError(
-            `✓ Copied ${response.data.yesterday_count} yesterday's results and ${response.data.today_count} upcoming games with fresh data!`
-          );
-          setTimeout(() => setError(null), 3000);
-        } catch (clipboardErr) {
-          if (clipboardErr.message.includes('Document is not focused')) {
-            setError(
-              '⚠️ Failed to copy: Browser tab is not focused. Please click on the webpage and try again.'
-            );
-            setShowCopyRetry(true);
-          } else {
-            setError('Failed to copy to clipboard: ' + clipboardErr.message);
-          }
+        } catch {
+          // clipboard failure is fine — user can copy from the modal
         }
       }
     } catch (err) {
@@ -460,6 +454,50 @@ function BetsPage() {
           />
         )}
       </div>
+
+      {showAIModal && aiContextData && (
+        <div className="modal-overlay" onClick={() => setShowAIModal(false)}>
+          <div className="modal-content ai-context-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>📋 AI Context</h2>
+              <div className="ai-modal-meta">
+                <span className="ai-modal-stat">{aiContextData.yesterday_count} yesterday</span>
+                <span className="ai-modal-stat">{aiContextData.today_count} upcoming</span>
+                <span className="ai-modal-char-count">
+                  {aiContextData.text.length.toLocaleString()} chars
+                </span>
+              </div>
+              <button className="modal-close" onClick={() => setShowAIModal(false)}>
+                ×
+              </button>
+            </div>
+            <div className="ai-context-modal-body">
+              <textarea
+                className="ai-context-textarea"
+                readOnly
+                value={aiContextData.text}
+                aria-label="AI context text"
+              />
+            </div>
+            <div className="ai-context-modal-footer">
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  navigator.clipboard.writeText(aiContextData.text).then(() => {
+                    setAiModalCopied(true);
+                    setTimeout(() => setAiModalCopied(false), 2000);
+                  });
+                }}
+              >
+                {aiModalCopied ? '✓ Copied!' : '📋 Copy All'}
+              </button>
+              <button className="btn btn-secondary" onClick={() => setShowAIModal(false)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

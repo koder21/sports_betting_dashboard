@@ -856,6 +856,72 @@
   font-size: 0.85rem;
 }
 
+/* AI Context Modal */
+.ai-context-modal {
+  max-width: 860px;
+  width: 100%;
+}
+
+.ai-modal-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex: 1;
+  margin-left: 12px;
+}
+
+.ai-modal-stat {
+  font-size: 0.8rem;
+  background: rgba(74, 144, 226, 0.2);
+  color: #4a90e2;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.ai-modal-char-count {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.ai-context-modal-body {
+  flex: 1;
+  overflow: hidden;
+  padding: 16px 24px 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-context-textarea {
+  width: 100%;
+  flex: 1;
+  min-height: 420px;
+  max-height: 55vh;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  padding: 12px 14px;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.ai-context-textarea:focus {
+  border-color: rgba(74, 144, 226, 0.5);
+}
+
+.ai-context-modal-footer {
+  padding: 14px 24px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 @media (max-width: 768px) {
   .bets-header {
     flex-direction: column;
