@@ -104,7 +104,13 @@ class BetGrader:
             # Auto-void if player did not play (DNP / injured)
             minutes = getattr(stat, 'minutes', None)
             try:
-                min_val = float(minutes) if minutes is not None else None
+                if minutes is None:
+                    min_val = None
+                elif ':' in str(minutes):
+                    # ESPN returns minutes as "MM:SS" — extract whole minutes
+                    min_val = float(str(minutes).split(':')[0])
+                else:
+                    min_val = float(minutes)
             except (TypeError, ValueError):
                 min_val = None
             if min_val is None or min_val == 0:
@@ -263,12 +269,51 @@ class BetGrader:
                 bet.graded_at = datetime.utcnow()
                 return {"bet_id": bet.id, "status": "void"}
 
-            home_won = home_score > away_score
+            if bet.bet_type == "spread":
+                # Extract the spread line from the selection (e.g. "Knicks -6.5" → -6.5)
+                spread_line = 0.0
+                if bet.selection:
+                    # Last numeric token (with optional sign) is the spread value
+                    raw_spread = None
+                    sel_parts = bet.selection.split()
+                    for part in reversed(sel_parts):
+                        m = re.match(r'^([+\-]?\d+\.?\d*)$', part)
+                        if m:
+                            raw_spread = m.group(1)
+                            break
+                    if raw_spread is not None:
+                        spread_line = float(raw_spread)
 
-            if bet_on_home:
-                bet.status = "won" if home_won else "lost"
+                # Apply spread from the perspective of the betted team.
+                # If bet is on home team: home_score + spread vs away_score
+                if bet_on_home:
+                    adjusted = home_score + spread_line
+                    if adjusted > away_score:
+                        bet.status = "won"
+                    elif adjusted == away_score:
+                        bet.status = "push"
+                    else:
+                        bet.status = "lost"
+                else:
+                    adjusted = away_score + spread_line
+                    if adjusted > home_score:
+                        bet.status = "won"
+                    elif adjusted == home_score:
+                        bet.status = "push"
+                    else:
+                        bet.status = "lost"
+
+                logger.debug(
+                    "[Grader] Bet %s spread: team=%s line=%s home=%d away=%d adjusted=%s → %s",
+                    bet.id, team_name_lower, spread_line, home_score, away_score, adjusted, bet.status,
+                )
             else:
-                bet.status = "won" if not home_won else "lost"
+                # Moneyline: straight win/loss
+                home_won = home_score > away_score
+                if bet_on_home:
+                    bet.status = "won" if home_won else "lost"
+                else:
+                    bet.status = "won" if not home_won else "lost"
 
             bet.graded_at = datetime.utcnow()
             bet.profit = self._calc_profit(bet)
@@ -432,6 +477,8 @@ class BetGrader:
                                     return None
 
                             if stat_obj.stats_json:
+                                if 'min' in stat_obj.stats_json:
+                                    stat_obj.minutes = str(stat_obj.stats_json['min'])
                                 if 'pts' in stat_obj.stats_json or 'points' in stat_obj.stats_json:
                                     stat_obj.points = safe_int(stat_obj.stats_json.get('pts', stat_obj.stats_json.get('points', 0)))
                                 if 'reb' in stat_obj.stats_json or 'rebounds' in stat_obj.stats_json:
