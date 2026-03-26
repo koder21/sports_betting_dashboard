@@ -74,7 +74,7 @@ function BetsPage() {
     try {
       // First run all scrapers and update data
       setError('🚀 Running scrapers and updating game data...');
-      const scrapeResponse = await api.post('/api/scraping/run-and-grade');
+      const scrapeResponse = await api.post('/api/scrape/run-and-grade');
       
       if (scrapeResponse.data.status === 'ok') {
         setError('✓ Data updated successfully. Verifying bets...');
