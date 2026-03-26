@@ -33,12 +33,16 @@ async def run_all_tasks():
     """
     global _run_all_running
     if _run_all_running:
-        return {"status": "already_running", "message": "A refresh is already in progress"}
+        return {
+            "status": "already_running",
+            "message": "A refresh is already in progress",
+        }
 
     _run_all_running = True
     results = {}
     try:
         from ..scheduler.tasks import Scheduler
+
         scheduler = Scheduler(AsyncSessionLocal)
         await scheduler.start()
         try:
@@ -64,11 +68,63 @@ async def run_all_tasks():
     return {"status": "ok", "results": results}
 
 
+@router.post("/run-and-grade")
+async def run_and_grade_tasks():
+    """
+    Manually trigger scheduler tasks in the order: scrape sports, update live games,
+    update game statuses, backfill last 7 days of games and player stats, and grade bets.
+    This ensures all data is up-to-date before grading bets.
+    """
+    global _run_all_running
+    if _run_all_running:
+        return {
+            "status": "already_running",
+            "message": "A refresh is already in progress",
+        }
+
+    _run_all_running = True
+    results = {}
+    try:
+        from ..scheduler.tasks import Scheduler
+
+        scheduler = Scheduler(AsyncSessionLocal)
+        await scheduler.start()
+        try:
+            for task_name, coro in [
+                ("run_scrapers", scheduler.run_scrapers()),
+                ("update_live_games", scheduler.update_live_games()),
+                ("update_game_statuses", scheduler.update_game_statuses()),
+                ("backfill_last_7_days", scheduler.backfill_last_7_days()),
+                ("grade_bets", scheduler.grade_bets()),
+            ]:
+                try:
+                    await coro
+                    results[task_name] = "ok"
+                except Exception as e:
+                    results[task_name] = f"error: {str(e)[:100]}"
+        finally:
+            await scheduler.stop()
+    except Exception as e:
+        return {"status": "error", "message": str(e), "results": results}
+    finally:
+        _run_all_running = False
+
+    return {"status": "ok", "results": results}
+
+
 @router.post("/sport/{sport_name}")
 async def scrape_sport(sport_name: str, session: AsyncSession = Depends(get_db)):
     client = ESPNClient()
     try:
-        scraper: Union[NFLScraper, NBAScraper, NCAAFScraper, NCAABScraper, NHLScraper, SoccerScraper, MLBScraper]
+        scraper: Union[
+            NFLScraper,
+            NBAScraper,
+            NCAAFScraper,
+            NCAABScraper,
+            NHLScraper,
+            SoccerScraper,
+            MLBScraper,
+        ]
         if sport_name == "nfl":
             scraper = NFLScraper(session, client)
         elif sport_name == "nba":
@@ -98,8 +154,9 @@ async def fix_orphaned_players(session: AsyncSession = Depends(get_db)):
     This fixes the issue where player_stats exist but the player doesn't.
     """
     import logging
+
     logger = logging.getLogger(__name__)
-    
+
     try:
         # Get all unique player_ids from player_stats that don't have a player record
         result = await session.execute(
@@ -110,12 +167,12 @@ async def fix_orphaned_players(session: AsyncSession = Depends(get_db)):
                 WHERE p.player_id IS NULL
             """)
         )
-        
+
         orphaned = result.fetchall()
         created_count = 0
         failed_count = 0
         errors = []
-        
+
         for player_id, sport in orphaned:
             try:
                 # Insert minimal player record with player_id and sport
@@ -124,7 +181,11 @@ async def fix_orphaned_players(session: AsyncSession = Depends(get_db)):
                         INSERT OR IGNORE INTO players (player_id, name, sport)
                         VALUES (:player_id, :name, :sport)
                     """),
-                    {"player_id": player_id, "name": f"Player {player_id}", "sport": sport}
+                    {
+                        "player_id": player_id,
+                        "name": f"Player {player_id}",
+                        "sport": sport,
+                    },
                 )
                 created_count += 1
                 await session.commit()  # Commit per record to isolate failures
@@ -134,13 +195,13 @@ async def fix_orphaned_players(session: AsyncSession = Depends(get_db)):
                 error_msg = f"Failed to create player {player_id}: {str(e)}"
                 logger.error(error_msg, exc_info=True)
                 errors.append(error_msg)
-        
+
         return {
             "status": "ok" if failed_count == 0 else "partial",
             "message": f"Created {created_count} players, failed {failed_count}",
             "orphaned_fixed": created_count,
             "orphaned_failed": failed_count,
-            "errors": errors[:10]  # Return first 10 errors for debugging
+            "errors": errors[:10],  # Return first 10 errors for debugging
         }
     except Exception as e:
         logger.error("[Scraping] fix-orphaned-players failed: %s", e, exc_info=True)
@@ -149,12 +210,14 @@ async def fix_orphaned_players(session: AsyncSession = Depends(get_db)):
             "status": "error",
             "message": f"Batch operation failed: {str(e)}",
             "orphaned_fixed": 0,
-            "orphaned_failed": 0
+            "orphaned_failed": 0,
         }
 
 
 @router.post("/fill-player-names-direct")
-async def fill_player_names_direct(limit: int = 100, session: AsyncSession = Depends(get_db)):
+async def fill_player_names_direct(
+    limit: int = 100, session: AsyncSession = Depends(get_db)
+):
     """
     Fill placeholder player names ("Player ####") using ESPN athlete data.
     """
@@ -176,7 +239,7 @@ async def fill_player_names_direct(limit: int = 100, session: AsyncSession = Dep
                 WHERE name IS NULL OR name LIKE 'Player %'
                 LIMIT :limit
             """),
-            {"limit": limit}
+            {"limit": limit},
         )
 
         rows = result.fetchall()
@@ -226,7 +289,7 @@ async def fill_player_names_direct(limit: int = 100, session: AsyncSession = Dep
                     SET name = :name
                     WHERE player_id = :player_id
                 """),
-                {"name": new_name, "player_id": player_id}
+                {"name": new_name, "player_id": player_id},
             )
             updated += 1
 
@@ -242,10 +305,7 @@ async def fill_player_names_direct(limit: int = 100, session: AsyncSession = Dep
             "total_remaining": total_remaining,
         }
     except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        return {"status": "error", "message": str(e)}
     finally:
         await client.close()
 
@@ -263,11 +323,13 @@ async def _run_fill_player_names_job(job_id: str, limit: int = 200) -> None:
             )
             total_remaining = total_result.scalar() or 0
 
-            FILL_NAME_JOBS[job_id].update({
-                "status": "running",
-                "starting_remaining": total_remaining,
-                "remaining": total_remaining,
-            })
+            FILL_NAME_JOBS[job_id].update(
+                {
+                    "status": "running",
+                    "starting_remaining": total_remaining,
+                    "remaining": total_remaining,
+                }
+            )
 
             sport_map = {
                 "NBA": ("basketball", "nba"),
@@ -291,7 +353,7 @@ async def _run_fill_player_names_job(job_id: str, limit: int = 200) -> None:
                         WHERE name IS NULL OR name LIKE 'Player %'
                         LIMIT :limit
                     """),
-                    {"limit": limit}
+                    {"limit": limit},
                 )
                 rows = result.fetchall()
 
@@ -330,7 +392,7 @@ async def _run_fill_player_names_job(job_id: str, limit: int = 200) -> None:
                             SET name = :name
                             WHERE player_id = :player_id
                         """),
-                        {"name": new_name, "player_id": player_id}
+                        {"name": new_name, "player_id": player_id},
                     )
                     updated += 1
 
@@ -341,26 +403,33 @@ async def _run_fill_player_names_job(job_id: str, limit: int = 200) -> None:
                         SELECT COUNT(*)
                         FROM players
                         WHERE name IS NULL OR name LIKE 'Player %'
-                    """))
+                    """)
+                )
                 remaining = remaining_result.scalar() or 0
 
-                FILL_NAME_JOBS[job_id].update({
+                FILL_NAME_JOBS[job_id].update(
+                    {
+                        "updated": updated,
+                        "skipped": skipped,
+                        "remaining": remaining,
+                    }
+                )
+
+            FILL_NAME_JOBS[job_id].update(
+                {
+                    "status": "completed",
                     "updated": updated,
                     "skipped": skipped,
-                    "remaining": remaining,
-                })
-
-            FILL_NAME_JOBS[job_id].update({
-                "status": "completed",
-                "updated": updated,
-                "skipped": skipped,
-                "remaining": 0,
-            })
+                    "remaining": 0,
+                }
+            )
     except Exception as e:
-        FILL_NAME_JOBS[job_id].update({
-            "status": "error",
-            "error": str(e),
-        })
+        FILL_NAME_JOBS[job_id].update(
+            {
+                "status": "error",
+                "error": str(e),
+            }
+        )
     finally:
         await client.close()
 

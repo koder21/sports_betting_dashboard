@@ -46,6 +46,7 @@ function BetsPage() {
   const [verificationResults, setVerificationResults] = React.useState(null);
   const [showVerificationModal, setShowVerificationModal] = React.useState(false);
   const [verifying, setVerifying] = React.useState(false);
+  const [grading, setGrading] = React.useState(false);
   // Restore verifyBets logic
   const verifyBets = React.useCallback(async () => {
     setVerifying(true);
@@ -64,7 +65,37 @@ function BetsPage() {
     } finally {
       setVerifying(false);
     }
-  }, []);
+  }, [setError]);
+
+  // Grade and verify bets - runs scrapers then grades bets
+  const gradeAndVerifyBets = React.useCallback(async () => {
+    setGrading(true);
+    setError(null);
+    try {
+      // First run all scrapers and update data
+      setError('🚀 Running scrapers and updating game data...');
+      const scrapeResponse = await api.post('/api/scraping/run-and-grade');
+      
+      if (scrapeResponse.data.status === 'ok') {
+        setError('✓ Data updated successfully. Verifying bets...');
+        // Then verify bets to check for discrepancies
+        const verifyResponse = await api.post('/api/bets/verify');
+        setVerificationResults(verifyResponse.data);
+        if (verifyResponse.data.discrepancies_found > 0) {
+          setShowVerificationModal(true);
+        } else {
+          setError('✓ All bets graded and verified correctly! No discrepancies found.');
+          setTimeout(() => setError(null), 5000);
+        }
+      } else {
+        setError('Failed to run scrapers: ' + (scrapeResponse.data.message || 'Unknown error'));
+      }
+    } catch (err) {
+      setError('Failed to grade and verify bets: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setGrading(false);
+    }
+  }, [setError]);
   const [collapsedDays, setCollapsedDays] = React.useState({});
   const [expandedBets, setExpandedBets] = React.useState({});
   const [aiContextData, setAiContextData] = React.useState(null);
@@ -343,33 +374,51 @@ function BetsPage() {
 
   return (
     <div className="bets-page">
-      <div
-        className="bets-header"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 16,
-        }}
-      >
-        <h1>Betting Tracker</h1>
-        <button
-          className="verify-btn"
-          onClick={verifyBets}
-          disabled={verifying || loading}
-          style={{
-            padding: '8px 16px',
-            fontWeight: 600,
-            background: '#ffc107',
-            color: '#222',
-            border: 'none',
-            borderRadius: 4,
-            cursor: verifying || loading ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {verifying ? 'Verifying...' : '🔍 Verify Bets'}
-        </button>
-      </div>
+       <div
+         className="bets-header"
+         style={{
+           display: 'flex',
+           alignItems: 'center',
+           justifyContent: 'space-between',
+           marginBottom: 16,
+         }}
+       >
+         <h1>Betting Tracker</h1>
+         <div style={{ display: 'flex', gap: '8px' }}>
+           <button
+             className="verify-btn"
+             onClick={verifyBets}
+             disabled={verifying || loading}
+             style={{
+               padding: '8px 16px',
+               fontWeight: 600,
+               background: '#ffc107',
+               color: '#222',
+               border: 'none',
+               borderRadius: 4,
+               cursor: verifying || loading ? 'not-allowed' : 'pointer',
+             }}
+           >
+             {verifying ? 'Verifying...' : '🔍 Verify Bets'}
+           </button>
+           <button
+             className="grade-btn"
+             onClick={gradeAndVerifyBets}
+             disabled={grading || loading}
+             style={{
+               padding: '8px 16px',
+               fontWeight: 600,
+               background: '#28a745',
+               color: '#fff',
+               border: 'none',
+               borderRadius: 4,
+               cursor: grading || loading ? 'not-allowed' : 'pointer',
+             }}
+           >
+             {grading ? 'Grading...' : '🚀 Grade Pending Bets'}
+           </button>
+         </div>
+       </div>
       {error && (
         <ErrorMessage
           message={error}
