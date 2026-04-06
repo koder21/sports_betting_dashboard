@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import LiveTicker from './LiveTicker.jsx';
 import AlertToasts from './AlertToasts.jsx';
 import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api.js';
@@ -77,11 +76,6 @@ function Layout({ children }) {
         </nav>
       </aside>
       <main className="main-content">
-        {/* Hide ticker on analytics pages, live page, and AAI Bets page for better performance */}
-        {!location.pathname.startsWith('/analytics') &&
-          !location.pathname.startsWith('/sports-analytics') &&
-          !location.pathname.startsWith('/live') &&
-          !location.pathname.startsWith('/aai-bets') && <LiveTicker />}
         {children}
       </main>
       <AlertToasts />
