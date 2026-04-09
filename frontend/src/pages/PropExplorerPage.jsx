@@ -67,11 +67,13 @@ function PropExplorerPage() {
   };
 
   const getUniqueSports = () => {
+    if (!Array.isArray(players)) return [];
     const sports = [...new Set(players.map((p) => p.sport).filter(Boolean))];
     return sports.sort();
   };
 
   const getUniqueTeams = () => {
+    if (!Array.isArray(players)) return [];
     let teamPlayers = players;
     if (sportFilter !== 'all') {
       teamPlayers = players.filter((p) => p.sport === sportFilter);

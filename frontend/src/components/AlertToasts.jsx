@@ -35,15 +35,16 @@ function AlertToasts() {
   const fetchAlerts = React.useCallback(async () => {
     try {
       const res = await api.get('/api/alerts/');
-      const alerts = res.data || [];
+      const data = res.data;
+      const alertsList = Array.isArray(data) ? data : (data?.alerts || data?.data || []);
 
       if (!initialized.current) {
-        alerts.forEach((a) => seenIds.current.add(a.id));
+        alertsList.forEach((a) => seenIds.current.add(a.id));
         initialized.current = true;
         return;
       }
 
-      alerts.forEach((alert) => {
+      alertsList.forEach((alert) => {
         if (!seenIds.current.has(alert.id)) {
           seenIds.current.add(alert.id);
           enqueueToast(alert);

@@ -26,6 +26,7 @@ function LiveScoresPage() {
 
   const buildPendingMap = React.useCallback((betsList) => {
     const map = {};
+    if (!Array.isArray(betsList)) return map;
     betsList
       .filter(
         (b) => (b.status === 'pending' || b.status === 'won' || b.status === 'lost') && b.game_id
@@ -201,6 +202,7 @@ function LiveScoresPage() {
   );
 
   const groupGamesBySport = (gamesList) => {
+    if (!Array.isArray(gamesList)) return {};
     const grouped = {};
     gamesList.forEach((g) => {
       const sport = (g.sport || 'OTHER').toUpperCase();
