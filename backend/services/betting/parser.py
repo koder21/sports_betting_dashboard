@@ -214,177 +214,69 @@ class BetParser:
     async def _detect_sport(
         self, game_str: Optional[str] = None, selection: Optional[str] = None
     ) -> Optional[Any]:
-        """Detect sport from game or selection text"""
-        search_text = (game_str or "") + " " + (selection or "")
-        search_text = search_text.lower()
+        """Detect sport from game or selection text by querying real teams from DB"""
+        search_text = ((game_str or "") + " " + (selection or "")).lower()
 
-        # NBA teams
-        nba_teams = [
-            "celtics",
-            "heat",
-            "bucks",
-            "pacers",
-            "timberwolves",
-            "pelicans",
-            "kings",
-            "clippers",
-            "lakers",
-            "warriors",
-            "mavericks",
-            "suns",
-            "nets",
-            "wizards",
-            "thunder",
-            "rockets",
-            "magic",
-            "jazz",
-            "hawks",
-            "hornets",
-            "cavaliers",
-            "pistons",
-            "bulls",
-            "raptors",
-            "grizzlies",
-            "nuggets",
-            "trail blazers",
-            "blazers",
-            "spurs",
-            "76ers",
-            "knicks",
-            "lions",
-        ]
+        # Fetch all teams from database
+        from ...models.team import Team
+        from ...models.sport import Sport
 
-        # NCAAB teams
-        ncaab_teams = [
-            "uconn",
-            "st. john's",
-            "duke",
-            "north carolina",
-            "kansas",
-            "purdue",
-            "oregon",
-            "utah",
-            "wisconsin",
-            "loyola chicago",
-            "saint louis",
-            "miami (oh)",
-            "ohio",
-        ]
+        # Get team names grouped by sport
+        stmt = select(Team.name, Sport.league_code).join(
+            Sport, Team.sport_id == Sport.id
+        )
+        result = await self.session.execute(stmt)
+        rows = result.all()
 
-        # NFL teams
-        nfl_teams = [
-            "chiefs",
-            "bills",
-            "ravens",
-            "bengals",
-            "steelers",
-            "browns",
-            "texans",
-            "colts",
-            "titans",
-            "jaguars",
-            "saints",
-            "falcons",
-            "panthers",
-            "buccaneers",
-            "eagles",
-            "cowboys",
-            "giants",
-            "commanders",
-            "rams",
-            "49ers",
-            "seahawks",
-            "cardinals",
-            "broncos",
-            "chargers",
-            "raiders",
-            "chiefs",
-            "packers",
-            "vikings",
-            "lions",
-            "bears",
-            "patriots",
-            "dolphins",
-            "jets",
-        ]
+        # Build dict: league_code -> set of team names
+        teams_by_sport: dict = {}
+        for team_name, league_code in rows:
+            if team_name and league_code:
+                teams_by_sport.setdefault(league_code, set()).add(team_name.lower())
 
-        # NHL teams
-        nhl_teams = [
-            "bruins",
-            "maple leafs",
-            "rangers",
-            "devils",
-            "flyers",
-            "avalanche",
-            "wild",
-            "golden knights",
-            "kings",
-            "sharks",
-            "ducks",
-            "canucks",
-            "capitals",
-            "hurricanes",
-            "blue jackets",
-            "islanders",
-            "penguins",
-            "stars",
-            "blackhawks",
-            "red wings",
-            "lightning",
-            "panthers",
-            "kraken",
-            "flames",
-            "oilers",
-            "jets",
-        ]
+        # Also check games table for team names
+        from ...models.game import Game
 
-        # Soccer teams
-        soccer_teams = [
-            "leeds",
-            "nottingham forest",
-            "manchester",
-            "liverpool",
-            "arsenal",
-            "chelsea",
-            "tottenham",
-            "everton",
-            "west ham",
-            "newcastle",
-            "fulham",
-            "crystal palace",
-            "brighton",
-            "sunderland",
-            "aston villa",
-        ]
+        game_stmt = select(Game.home_team_name, Game.away_team_name, Game.league).where(
+            Game.home_team_name.isnot(None)
+        )
+        game_result = await self.session.execute(game_stmt)
+        for home, away, league in game_result.all():
+            if home and league:
+                teams_by_sport.setdefault(league, set()).add(home.lower())
+            if away and league:
+                teams_by_sport.setdefault(league, set()).add(away.lower())
 
-        # Player names (helps detect sport)
-        nba_players = [
-            "anthony edwards",
-            "derrick white",
-            "de'aaron fox",
-            "paolo banchero",
-            "lamelo ball",
-        ]
-        ncaab_players = ["stephon castle"]
+        # Also check games_live table
+        from ...models.games_live import GameLive
 
-        # Check context clues - order matters, check most specific first
-        if any(team in search_text for team in nba_teams) or any(
-            p in search_text for p in nba_players
-        ):
-            return await self.sports.get_by_league_code("nba")
-        elif any(team in search_text for team in nfl_teams):
-            return await self.sports.get_by_league_code("nfl")
-        elif any(team in search_text for team in nhl_teams):
-            return await self.sports.get_by_league_code("nhl")
-        elif any(team in search_text for team in ncaab_teams) or any(
-            p in search_text for p in ncaab_players
-        ):
-            return await self.sports.get_by_league_code("ncaab")
-        elif any(team in search_text for team in soccer_teams):
-            # For soccer, we need to search by name since league_code is "eng.1" not "soccer"
-            stmt = select(Sport).where(Sport.name == "soccer")
-            result = await self.session.execute(stmt)
-            return result.scalar_one_or_none()
+        live_stmt = select(
+            GameLive.home_team_name, GameLive.away_team_name, GameLive.sport
+        ).where(GameLive.home_team_name.isnot(None))
+        live_result = await self.session.execute(live_stmt)
+        for home, away, sport in live_result.all():
+            if home and sport:
+                teams_by_sport.setdefault(sport, set()).add(home.lower())
+            if away and sport:
+                teams_by_sport.setdefault(sport, set()).add(away.lower())
+
+        # Also check games_upcoming table
+        from ...models.games_upcoming import GameUpcoming
+
+        upcoming_stmt = select(
+            GameUpcoming.home_team_name, GameUpcoming.away_team_name, GameUpcoming.sport
+        ).where(GameUpcoming.home_team_name.isnot(None))
+        upcoming_result = await self.session.execute(upcoming_stmt)
+        for home, away, sport in upcoming_result.all():
+            if home and sport:
+                teams_by_sport.setdefault(sport, set()).add(home.lower())
+            if away and sport:
+                teams_by_sport.setdefault(sport, set()).add(away.lower())
+
+        # Try to match search text against teams
+        for league_code, team_names in teams_by_sport.items():
+            if any(team in search_text for team in team_names):
+                return await self.sports.get_by_league_code(league_code)
 
         return None
 
