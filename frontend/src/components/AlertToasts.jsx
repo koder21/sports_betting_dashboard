@@ -20,9 +20,11 @@ function AlertToasts() {
   );
 
   const dismissAllToasts = React.useCallback(() => {
-    toasts.forEach((toast) => {
-      dismissToast(toast.id);
-    });
+    if (Array.isArray(toasts)) {
+      toasts.forEach((toast) => {
+        dismissToast(toast.id);
+      });
+    }
   }, [toasts, dismissToast]);
 
   const enqueueToast = React.useCallback((alert) => {
