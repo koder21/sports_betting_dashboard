@@ -1,5 +1,14 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
+  "plugins": [
+    {
+      "name": "static"
+    }
+  ],
+  "build": {
+    "buildCommand": "cd frontend && npm install && npm run build",
+    "outputDirectory": "frontend/dist"
+  },
   "deploy": {
     "restartPolicyType": "ON_FAILURE"
   }
