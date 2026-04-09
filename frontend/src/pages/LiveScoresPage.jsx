@@ -63,9 +63,10 @@ function LiveScoresPage() {
       const res = await api.get('/api/live');
       const upcomingRes = await api.get('/api/live/upcoming');
       const betsRes = await api.get('/api/bets/all');
-      const newGames = res.data || [];
-      const newUpcoming = upcomingRes.data || [];
-      setPendingBetsByGame(buildPendingMap(betsRes.data?.bets || []));
+      const newGames = Array.isArray(res.data) ? res.data : [];
+      const newUpcoming = Array.isArray(upcomingRes.data) ? upcomingRes.data : [];
+      const bets = betsRes?.data?.bets || [];
+      setPendingBetsByGame(buildPendingMap(bets));
       // Track score changes
       newGames.forEach((g) => {
         const key = g.game_id;
