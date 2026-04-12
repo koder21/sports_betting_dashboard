@@ -1034,19 +1034,31 @@ class Scheduler:
     @log_duration("backfill_last_7_days")
     async def backfill_last_7_days(self):
         """Fetch and insert game records for the last 7 days for all sports."""
+        import logging
         from zoneinfo import ZoneInfo
         from datetime import timedelta
 
-        now_pst = datetime.now(ZoneInfo("America/Los_Angeles"))
-        for days_ago in range(0, 7):  # 0 to 6 inclusive (today and last 6 days)
-            date = now_pst - timedelta(days=days_ago)
-            date_str = date.strftime("%Y%m%d")
-            for sport_type, league, sport_name in SPORTS_CONFIG:
-                url = f"https://site.api.espn.com/apis/site/v2/sports/{sport_type}/{league}/scoreboard?dates={date_str}"
-                data = await self.client.get_json(url)
-                if not data:
-                    continue
-                events = data.get("events", [])
+        logger = logging.getLogger(__name__)
+
+        try:
+            now_pst = datetime.now(ZoneInfo("America/Los_Angeles"))
+            total_games = 0
+            for days_ago in range(0, 7):  # 0 to 6 inclusive (today and last 6 days)
+                date = now_pst - timedelta(days=days_ago)
+                date_str = date.strftime("%Y%m%d")
+                for sport_type, league, sport_name in SPORTS_CONFIG:
+                    try:
+                        url = f"https://site.api.espn.com/apis/site/v2/sports/{sport_type}/{league}/scoreboard?dates={date_str}"
+                        data = await self.client.get_json(url)
+                        if not data:
+                            continue
+                    except Exception as e:
+                        logger.warning(
+                            f"Failed to fetch {sport_type}/{league} for {date_str}: {e}"
+                        )
+                        continue
+
+                    events = data.get("events", [])
                 game_data = []
                 for event in events:
                     game_id = event.get("id")
@@ -1118,4 +1130,17 @@ class Scheduler:
                     )
                 if game_data:
                     # Write the game data using the same _write_live_games method (which upserts to games, games_live, games_upcoming)
-                    await self._write_live_games(game_data)
+                    try:
+                        await self._write_live_games(game_data)
+                        total_games += len(game_data)
+                    except Exception as e:
+                        logger.warning(
+                            f"Failed to write games for {sport_type}/{league} {date_str}: {e}"
+                        )
+
+            logger.info(
+                f"Backfill completed: {total_games} games fetched for past 7 days"
+            )
+        except Exception as e:
+            logger.error(f"backfill_last_7_days failed: {e}", exc_info=True)
+            raise
